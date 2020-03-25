@@ -13,7 +13,7 @@ message BoundingBox {
 message JointSensorInfo {
   required int32 id = 1;
   required int32 timestamp = 2;
-  required bool terminate = 3;
+  required bool run_time = 3;
 
   required float q1 = 4;
   required float q2 = 5;
@@ -30,7 +30,4 @@ message JointSensorInfo {
   required float dq5 = 15;
   required float dq6 = 16;
   required float dq7 = 17;
-
-  required float run_time = 18;
 }
-
