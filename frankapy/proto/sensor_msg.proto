@@ -23,12 +23,14 @@ message JointSensorInfo {
   required float q6 = 9;
   required float q7 = 10;
 
-  required float qd1 = 11;
-  required float qd2 = 12;
-  required float qd3 = 13;
-  required float qd4 = 14;
-  required float qd5 = 15;
-  required float qd6 = 16;
-  required float qd7 = 17;
+  required float dq1 = 11;
+  required float dq2 = 12;
+  required float dq3 = 13;
+  required float dq4 = 14;
+  required float dq5 = 15;
+  required float dq6 = 16;
+  required float dq7 = 17;
+
+  required float run_time = 18;
 }
 

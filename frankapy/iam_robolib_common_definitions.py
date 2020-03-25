@@ -18,21 +18,22 @@ class MetaSkillType:
     JointPositionContinuousSkill = 1
 
 class TrajectoryGeneratorType:
-    GoalPoseDmpTrajectoryGenerator = 0
-    GripperTrajectoryGenerator = 1
-    ImpulseTrajectoryGenerator = 2
-    JointDmpTrajectoryGenerator = 3
-    LinearPoseTrajectoryGenerator = 4
-    LinearJointTrajectoryGenerator = 5
-    MinJerkJointTrajectoryGenerator = 6
-    MinJerkPoseTrajectoryGenerator = 7
-    PoseDmpTrajectoryGenerator = 8
-    RelativeLinearPoseTrajectoryGenerator = 9
-    RelativeMinJerkPoseTrajectoryGenerator = 10
-    SineJointTrajectoryGenerator = 11
-    SinePoseTrajectoryGenerator = 12
-    StayInInitialJointsTrajectoryGenerator = 13
-    StayInInitialPoseTrajectoryGenerator = 14
+    CubicHermiteSplineJointTrajectoryGenerator = 0
+    GoalPoseDmpTrajectoryGenerator = 1
+    GripperTrajectoryGenerator = 2
+    ImpulseTrajectoryGenerator = 3
+    JointDmpTrajectoryGenerator = 4
+    LinearPoseTrajectoryGenerator = 5
+    LinearJointTrajectoryGenerator = 6
+    MinJerkJointTrajectoryGenerator = 7
+    MinJerkPoseTrajectoryGenerator = 8
+    PoseDmpTrajectoryGenerator = 9
+    RelativeLinearPoseTrajectoryGenerator = 10
+    RelativeMinJerkPoseTrajectoryGenerator = 11
+    SineJointTrajectoryGenerator = 12
+    SinePoseTrajectoryGenerator = 13
+    StayInInitialJointsTrajectoryGenerator = 14
+    StayInInitialPoseTrajectoryGenerator = 15
 
 class FeedbackControllerType:
     CartesianImpedanceFeedbackController = 0
