@@ -15,9 +15,14 @@ def franka_pose_to_rigid_transform(franka_pose, from_frame='franka_tool_base', t
 
 
 @jit(nopython=True)
-def min_jerk(xi, xf, t, T):
+def min_jerk_weight(t, T):
     r = t/T
-    return xi + (xf - xi) * (10 * r ** 3 - 15 * r ** 4 + 6 * r ** 5)
+    return (10 * r ** 3 - 15 * r ** 4 + 6 * r ** 5)
+
+
+@jit(nopython=True)
+def min_jerk(xi, xf, t, T):
+    return xi + (xf - xi) * min_jerk_weight(t, T)
 
 
 @jit(nopython=True)

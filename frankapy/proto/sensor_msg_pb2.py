@@ -18,7 +18,7 @@ DESCRIPTOR = _descriptor.FileDescriptor(
   package='',
   syntax='proto2',
   serialized_options=None,
-  serialized_pb=b'\n\x10sensor_msg.proto\"S\n\x0b\x42oundingBox\x12\x0c\n\x04name\x18\x01 \x02(\t\x12\n\n\x02id\x18\x02 \x02(\x05\x12\t\n\x01x\x18\x03 \x02(\x05\x12\t\n\x01y\x18\x04 \x02(\x05\x12\t\n\x01w\x18\x05 \x02(\x05\x12\t\n\x01h\x18\x06 \x02(\x05\"\x88\x02\n\"JointPositionVelocitySensorMessage\x12\n\n\x02id\x18\x01 \x02(\x05\x12\x11\n\ttimestamp\x18\x02 \x02(\x01\x12\x14\n\x0cseg_run_time\x18\x03 \x02(\x01\x12\n\n\x02q1\x18\x04 \x02(\x01\x12\n\n\x02q2\x18\x05 \x02(\x01\x12\n\n\x02q3\x18\x06 \x02(\x01\x12\n\n\x02q4\x18\x07 \x02(\x01\x12\n\n\x02q5\x18\x08 \x02(\x01\x12\n\n\x02q6\x18\t \x02(\x01\x12\n\n\x02q7\x18\n \x02(\x01\x12\x0b\n\x03\x64q1\x18\x0b \x02(\x01\x12\x0b\n\x03\x64q2\x18\x0c \x02(\x01\x12\x0b\n\x03\x64q3\x18\r \x02(\x01\x12\x0b\n\x03\x64q4\x18\x0e \x02(\x01\x12\x0b\n\x03\x64q5\x18\x0f \x02(\x01\x12\x0b\n\x03\x64q6\x18\x10 \x02(\x01\x12\x0b\n\x03\x64q7\x18\x11 \x02(\x01'
+  serialized_pb=b'\n\x10sensor_msg.proto\"S\n\x0b\x42oundingBox\x12\x0c\n\x04name\x18\x01 \x02(\t\x12\n\n\x02id\x18\x02 \x02(\x05\x12\t\n\x01x\x18\x03 \x02(\x05\x12\t\n\x01y\x18\x04 \x02(\x05\x12\t\n\x01w\x18\x05 \x02(\x05\x12\t\n\x01h\x18\x06 \x02(\x05\"\x88\x02\n\"JointPositionVelocitySensorMessage\x12\n\n\x02id\x18\x01 \x02(\x05\x12\x11\n\ttimestamp\x18\x02 \x02(\x01\x12\x14\n\x0cseg_run_time\x18\x03 \x02(\x01\x12\n\n\x02q1\x18\x04 \x02(\x01\x12\n\n\x02q2\x18\x05 \x02(\x01\x12\n\n\x02q3\x18\x06 \x02(\x01\x12\n\n\x02q4\x18\x07 \x02(\x01\x12\n\n\x02q5\x18\x08 \x02(\x01\x12\n\n\x02q6\x18\t \x02(\x01\x12\n\n\x02q7\x18\n \x02(\x01\x12\x0b\n\x03\x64q1\x18\x0b \x02(\x01\x12\x0b\n\x03\x64q2\x18\x0c \x02(\x01\x12\x0b\n\x03\x64q3\x18\r \x02(\x01\x12\x0b\n\x03\x64q4\x18\x0e \x02(\x01\x12\x0b\n\x03\x64q5\x18\x0f \x02(\x01\x12\x0b\n\x03\x64q6\x18\x10 \x02(\x01\x12\x0b\n\x03\x64q7\x18\x11 \x02(\x01\"\xf4\x01\n!PosePositionVelocitySensorMessage\x12\n\n\x02id\x18\x01 \x02(\x05\x12\x11\n\ttimestamp\x18\x02 \x02(\x01\x12\x14\n\x0cseg_run_time\x18\x03 \x02(\x01\x12\t\n\x01x\x18\x04 \x02(\x01\x12\t\n\x01y\x18\x05 \x02(\x01\x12\t\n\x01z\x18\x06 \x02(\x01\x12\n\n\x02qw\x18\x07 \x02(\x01\x12\n\n\x02qx\x18\x08 \x02(\x01\x12\n\n\x02qy\x18\t \x02(\x01\x12\n\n\x02qz\x18\n \x02(\x01\x12\n\n\x02\x64x\x18\x0b \x02(\x01\x12\n\n\x02\x64y\x18\x0c \x02(\x01\x12\n\n\x02\x64z\x18\r \x02(\x01\x12\x0b\n\x03\x64rx\x18\x0e \x02(\x01\x12\x0b\n\x03\x64ry\x18\x0f \x02(\x01\x12\x0b\n\x03\x64rz\x18\x10 \x02(\x01'
 )
 
 
@@ -232,8 +232,145 @@ _JOINTPOSITIONVELOCITYSENSORMESSAGE = _descriptor.Descriptor(
   serialized_end=370,
 )
 
+
+_POSEPOSITIONVELOCITYSENSORMESSAGE = _descriptor.Descriptor(
+  name='PosePositionVelocitySensorMessage',
+  full_name='PosePositionVelocitySensorMessage',
+  filename=None,
+  file=DESCRIPTOR,
+  containing_type=None,
+  fields=[
+    _descriptor.FieldDescriptor(
+      name='id', full_name='PosePositionVelocitySensorMessage.id', index=0,
+      number=1, type=5, cpp_type=1, label=2,
+      has_default_value=False, default_value=0,
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR),
+    _descriptor.FieldDescriptor(
+      name='timestamp', full_name='PosePositionVelocitySensorMessage.timestamp', index=1,
+      number=2, type=1, cpp_type=5, label=2,
+      has_default_value=False, default_value=float(0),
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR),
+    _descriptor.FieldDescriptor(
+      name='seg_run_time', full_name='PosePositionVelocitySensorMessage.seg_run_time', index=2,
+      number=3, type=1, cpp_type=5, label=2,
+      has_default_value=False, default_value=float(0),
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR),
+    _descriptor.FieldDescriptor(
+      name='x', full_name='PosePositionVelocitySensorMessage.x', index=3,
+      number=4, type=1, cpp_type=5, label=2,
+      has_default_value=False, default_value=float(0),
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR),
+    _descriptor.FieldDescriptor(
+      name='y', full_name='PosePositionVelocitySensorMessage.y', index=4,
+      number=5, type=1, cpp_type=5, label=2,
+      has_default_value=False, default_value=float(0),
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR),
+    _descriptor.FieldDescriptor(
+      name='z', full_name='PosePositionVelocitySensorMessage.z', index=5,
+      number=6, type=1, cpp_type=5, label=2,
+      has_default_value=False, default_value=float(0),
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR),
+    _descriptor.FieldDescriptor(
+      name='qw', full_name='PosePositionVelocitySensorMessage.qw', index=6,
+      number=7, type=1, cpp_type=5, label=2,
+      has_default_value=False, default_value=float(0),
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR),
+    _descriptor.FieldDescriptor(
+      name='qx', full_name='PosePositionVelocitySensorMessage.qx', index=7,
+      number=8, type=1, cpp_type=5, label=2,
+      has_default_value=False, default_value=float(0),
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR),
+    _descriptor.FieldDescriptor(
+      name='qy', full_name='PosePositionVelocitySensorMessage.qy', index=8,
+      number=9, type=1, cpp_type=5, label=2,
+      has_default_value=False, default_value=float(0),
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR),
+    _descriptor.FieldDescriptor(
+      name='qz', full_name='PosePositionVelocitySensorMessage.qz', index=9,
+      number=10, type=1, cpp_type=5, label=2,
+      has_default_value=False, default_value=float(0),
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR),
+    _descriptor.FieldDescriptor(
+      name='dx', full_name='PosePositionVelocitySensorMessage.dx', index=10,
+      number=11, type=1, cpp_type=5, label=2,
+      has_default_value=False, default_value=float(0),
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR),
+    _descriptor.FieldDescriptor(
+      name='dy', full_name='PosePositionVelocitySensorMessage.dy', index=11,
+      number=12, type=1, cpp_type=5, label=2,
+      has_default_value=False, default_value=float(0),
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR),
+    _descriptor.FieldDescriptor(
+      name='dz', full_name='PosePositionVelocitySensorMessage.dz', index=12,
+      number=13, type=1, cpp_type=5, label=2,
+      has_default_value=False, default_value=float(0),
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR),
+    _descriptor.FieldDescriptor(
+      name='drx', full_name='PosePositionVelocitySensorMessage.drx', index=13,
+      number=14, type=1, cpp_type=5, label=2,
+      has_default_value=False, default_value=float(0),
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR),
+    _descriptor.FieldDescriptor(
+      name='dry', full_name='PosePositionVelocitySensorMessage.dry', index=14,
+      number=15, type=1, cpp_type=5, label=2,
+      has_default_value=False, default_value=float(0),
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR),
+    _descriptor.FieldDescriptor(
+      name='drz', full_name='PosePositionVelocitySensorMessage.drz', index=15,
+      number=16, type=1, cpp_type=5, label=2,
+      has_default_value=False, default_value=float(0),
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR),
+  ],
+  extensions=[
+  ],
+  nested_types=[],
+  enum_types=[
+  ],
+  serialized_options=None,
+  is_extendable=False,
+  syntax='proto2',
+  extension_ranges=[],
+  oneofs=[
+  ],
+  serialized_start=373,
+  serialized_end=617,
+)
+
 DESCRIPTOR.message_types_by_name['BoundingBox'] = _BOUNDINGBOX
 DESCRIPTOR.message_types_by_name['JointPositionVelocitySensorMessage'] = _JOINTPOSITIONVELOCITYSENSORMESSAGE
+DESCRIPTOR.message_types_by_name['PosePositionVelocitySensorMessage'] = _POSEPOSITIONVELOCITYSENSORMESSAGE
 _sym_db.RegisterFileDescriptor(DESCRIPTOR)
 
 BoundingBox = _reflection.GeneratedProtocolMessageType('BoundingBox', (_message.Message,), {
@@ -249,6 +386,13 @@ JointPositionVelocitySensorMessage = _reflection.GeneratedProtocolMessageType('J
   # @@protoc_insertion_point(class_scope:JointPositionVelocitySensorMessage)
   })
 _sym_db.RegisterMessage(JointPositionVelocitySensorMessage)
+
+PosePositionVelocitySensorMessage = _reflection.GeneratedProtocolMessageType('PosePositionVelocitySensorMessage', (_message.Message,), {
+  'DESCRIPTOR' : _POSEPOSITIONVELOCITYSENSORMESSAGE,
+  '__module__' : 'sensor_msg_pb2'
+  # @@protoc_insertion_point(class_scope:PosePositionVelocitySensorMessage)
+  })
+_sym_db.RegisterMessage(PosePositionVelocitySensorMessage)
 
 
 # @@protoc_insertion_point(module_scope)

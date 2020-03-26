@@ -1039,8 +1039,8 @@ class FrankaArm:
          joint_impedances=None,
          k_gains=None,
          d_gains=None,
-         ignore_errors=True,
          buffer_time=FC.DEFAULT_TERM_BUFFER_TIME,
+         ignore_errors=True,
          skill_desc='',
          skill_type=SkillType.ImpedanceControlSkill):
         '''Commands Arm to the given joint configuration
@@ -1089,6 +1089,61 @@ class FrankaArm:
         self._send_goal(goal,
                         cb=lambda x: skill.feedback_callback(x),
                         ignore_errors=ignore_errors)
+
+    def run_dynamic_pose_interpolation(self,
+                   tool_pose,
+                   duration=3,
+                   stop_on_contact_forces=None,
+                   cartesian_impedances=None,
+                   buffer_time=FC.DEFAULT_TERM_BUFFER_TIME,
+                   ignore_errors=True,
+                   ignore_virtual_walls=False,
+                   skill_desc='',
+                   skill_type=None):
+        '''Commands Arm to the given pose via linear interpolation
+
+        Args:
+            tool_pose (RigidTransform) : End-effector pose in tool frame
+            duration (float) : How much time this robot motion should take
+            stop_on_contact_forces (list): List of 6 floats corresponding to
+                force limits on translation (xyz) and rotation about (xyz) axes.
+                Default is None. If None then will not stop on contact.
+        '''
+        if tool_pose.from_frame != 'franka_tool' or tool_pose.to_frame != 'world':
+            raise ValueError('pose has invalid frame names! Make sure pose has \
+                              from_frame=franka_tool and to_frame=world')
+
+        tool_base_pose = tool_pose * self._tool_delta_pose.inverse()
+
+        if not ignore_virtual_walls and np.any([
+            tool_base_pose.translation <= FC.WORKSPACE_WALLS[:, :3].min(axis=0),
+            tool_base_pose.translation >= FC.WORKSPACE_WALLS[:, :3].max(axis=0)]):
+            raise ValueError('Target pose is outside of workspace virtual walls!')
+
+        skill = GoToPoseDynamicsInterpolationSkill(skill_desc, skill_type)
+
+        skill.add_initial_sensor_values(FC.EMPTY_SENSOR_VALUES)
+
+        if cartesian_impedances is not None:
+            skill.add_cartesian_impedances(cartesian_impedances)
+        else:
+            skill.add_feedback_controller_params(FC.DEFAULT_TORQUE_CONTROLLER_PARAMS)
+
+        if stop_on_contact_forces is not None:
+            skill.add_contact_termination_params(buffer_time,
+                                                 stop_on_contact_forces,
+                                                 stop_on_contact_forces)
+        else:
+            skill.add_termination_params([buffer_time])
+
+        skill.add_goal_pose_with_matrix(duration,
+                                        tool_base_pose.matrix.T.flatten().tolist())
+        goal = skill.create_goal()
+
+        self._send_goal(goal,
+                        cb=lambda x: skill.feedback_callback(x),
+                        ignore_errors=ignore_errors)
+
 
     def open_gripper(self):
         '''Opens gripper to maximum width

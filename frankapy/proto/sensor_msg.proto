@@ -31,3 +31,24 @@ message JointPositionVelocitySensorMessage {
   required double dq6 = 16;
   required double dq7 = 17;
 }
+
+message PosePositionVelocitySensorMessage {
+  required int32 id = 1;
+  required double timestamp = 2;
+  required double seg_run_time = 3;
+
+  required double x = 4;
+  required double y = 5;
+  required double z = 6;
+  required double qw = 7;
+  required double qx = 8;
+  required double qy = 9;
+  required double qz = 10;
+
+  required double dx = 11;
+  required double dy = 12;
+  required double dz = 13;
+  required double drx = 14;
+  required double dry = 15;
+  required double drz = 16;
+}

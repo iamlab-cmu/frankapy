@@ -426,13 +426,43 @@ class GoToJointsDynamicsInterpolationSkill(BaseSkill):
                 1)
         else:
             super(GoToJointsDynamicsInterpolationSkill, self).__init__(
-                SkillType.JointPositionSkill,
+                SkillType.ImpedanceControlSkill,
                 skill_desc,
                 MetaSkillType.BaseMetaSkill,
                 0,
                 ['/franka_robot/camera'],
                 TrajectoryGeneratorType.CubicHermiteSplineJointTrajectoryGenerator,
                 FeedbackControllerType.JointImpedanceFeedbackController,
+                TerminationHandlerType.TimeTerminationHandler,
+                1)
+
+    
+class GoToPoseDynamicsInterpolationSkill(BaseSkill):
+
+    def __init__(self, skill_desc='', skill_type=SkillType.ImpedanceControlSkill):
+        if len(skill_desc) == 0:
+            skill_desc = GoToPoseDynamicsInterpolationSkill.__name__
+
+        if skill_type == SkillType.ImpedanceControlSkill:
+            super(GoToPoseDynamicsInterpolationSkill, self).__init__(
+                SkillType.ImpedanceControlSkill,
+                skill_desc,
+                MetaSkillType.BaseMetaSkill,
+                0,
+                ['/franka_robot/camera'],
+                TrajectoryGeneratorType.CubicHermiteSplinePoseTrajectoryGenerator,
+                FeedbackControllerType.CartesianImpedanceFeedbackController,
+                TerminationHandlerType.TimeTerminationHandler,
+                1)
+        else:
+            super(GoToPoseDynamicsInterpolationSkill, self).__init__(
+                SkillType.ImpedanceControlSkill,
+                skill_desc,
+                MetaSkillType.BaseMetaSkill,
+                0,
+                ['/franka_robot/camera'],
+                TrajectoryGeneratorType.CubicHermiteSplinePoseTrajectoryGenerator,
+                FeedbackControllerType.CartesianImpedanceFeedbackController,
                 TerminationHandlerType.TimeTerminationHandler,
                 1)
 
