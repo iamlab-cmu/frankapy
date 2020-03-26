@@ -1,6 +1,7 @@
 import numpy as np 
-
+from numba import jit
 from autolab_core import RigidTransform
+
 
 def franka_pose_to_rigid_transform(franka_pose, from_frame='franka_tool_base', to_frame='world'):
     np_franka_pose = np.array(franka_pose).reshape(4, 4).T
@@ -11,3 +12,15 @@ def franka_pose_to_rigid_transform(franka_pose, from_frame='franka_tool_base', t
             to_frame=to_frame
         )
     return pose
+
+
+@jit(nopython=True)
+def min_jerk(xi, xf, t, T):
+    r = t/T
+    return xi + (xf - xi) * (10 * r ** 3 - 15 * r ** 4 + 6 * r ** 5)
+
+
+@jit(nopython=True)
+def min_jerk_delta(xi, xf, t, T, dt):
+    r = t/T
+    return (xf - xi) * (30 * r ** 2 - 60 * r ** 3 + 30 * r ** 4) / T * dt

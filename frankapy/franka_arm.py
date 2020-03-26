@@ -26,6 +26,7 @@ class FrankaArm:
     def __init__(
             self,
             rosnode_name='franka_arm_client', ros_log_level=rospy.INFO,
+            async_cmds=False,
             robot_num=1,
             offline=False):
 
@@ -39,6 +40,7 @@ class FrankaArm:
         self._connected = False
         self._in_skill = False
         self._offline = offline
+        self._async_cmds = async_cmds
 
         # init ROS
         rospy.init_node(rosnode_name,
@@ -102,6 +104,43 @@ class FrankaArm:
         raise FrankaArmCommException('Robolib status not ready for {}s'.format(
             FC.DEFAULT_ROBOLIB_TIMEOUT))
 
+    def wait_for_skill(self):
+        while not self.is_skill_done():
+            sleep(1e-1)
+
+    def is_skill_done(self, ignore_errors=True):  
+          if not self._async_cmds or not self._in_skill:  
+              return True 
+
+          robolib_status = self._get_current_robolib_status().robolib_status  
+
+          e = None  
+          if rospy.is_shutdown(): 
+              e = RuntimeError('rospy is down!')  
+          elif robolib_status.error_description:  
+              e = FrankaArmException(robolib_status.error_description)  
+          elif not robolib_status.is_ready: 
+              e = FrankaArmRobolibNotReadyException() 
+
+          if e is not None: 
+              if ignore_errors: 
+                  self.wait_for_robolib() 
+              else: 
+                  raise e 
+
+          done = self._client.wait_for_result(rospy.Duration.from_sec(  
+              FC.ACTION_WAIT_LOOP_TIME))  
+
+          if done:  
+              self._in_skill = False  
+
+          return done
+
+    def stop_skill(self): 
+        if self._connected and self._in_skill:
+            self._client.cancel_goal()
+        self._in_skill = False 
+
     def _sigint_handler_gen(self):
         def sigint_handler(sig, frame):
             if self._connected and self._in_skill:
@@ -121,8 +160,14 @@ class FrankaArm:
             logging.warn('In offline mode, FrankaArm will not execute real robot commands.')
             return
 
+        if self._in_skill:  
+            raise ValueError('Cannot send consecutive commands under async mode!')
+
         self._in_skill = True
         self._client.send_goal(goal, feedback_cb=cb)
+
+        if self._async_cmds:  
+            return None
 
         done = False
         while not done:
@@ -995,8 +1040,9 @@ class FrankaArm:
          k_gains=None,
          d_gains=None,
          ignore_errors=True,
+         buffer_time=FC.DEFAULT_TERM_BUFFER_TIME,
          skill_desc='',
-         skill_type=SkillType.JointPositionDynamicInterpolationSkill):
+         skill_type=SkillType.ImpedanceControlSkill):
         '''Commands Arm to the given joint configuration
 
         Args:
@@ -1010,10 +1056,13 @@ class FrankaArm:
         Raises:
             ValueError: If is_joints_reachable(joints) returns False
         '''
+        if isinstance(joints, np.ndarray):
+            joints = joints.tolist()
+
         if not self.is_joints_reachable(joints):
             raise ValueError('Joints not reachable!')
 
-        skill = GoToJointsSkill(skill_desc, skill_type)
+        skill = GoToJointsDynamicsInterpolationSkill(skill_desc, skill_type)
 
         skill.add_initial_sensor_values(FC.EMPTY_SENSOR_VALUES)
 
@@ -1022,17 +1071,17 @@ class FrankaArm:
         elif k_gains is not None and d_gains is not None:
             skill.add_joint_gains(k_gains, d_gains)
         else:
-            if(skill_type == SkillType.ImpedanceControlSkill):
+            if skill_type == SkillType.ImpedanceControlSkill:
                 skill.add_joint_gains(FC.DEFAULT_K_GAINS, FC.DEFAULT_D_GAINS)
             else:
                 skill.add_feedback_controller_params([])
 
         if stop_on_contact_forces is not None:
-            skill.add_contact_termination_params(FC.DEFAULT_TERM_BUFFER_TIME,
+            skill.add_contact_termination_params(buffer_time,
                                                  stop_on_contact_forces,
                                                  stop_on_contact_forces)
         else:
-            skill.add_termination_params([FC.DEFAULT_TERM_BUFFER_TIME])
+            skill.add_termination_params([buffer_time])
 
         skill.add_goal_joints(duration, joints)
         goal = skill.create_goal()

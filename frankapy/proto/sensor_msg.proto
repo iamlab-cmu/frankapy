@@ -10,24 +10,24 @@ message BoundingBox {
   required int32 h = 6;
 }
 
-message JointSensorInfo {
+message JointPositionVelocitySensorMessage {
   required int32 id = 1;
-  required int32 timestamp = 2;
-  required bool run_time = 3;
+  required double timestamp = 2;
+  required double seg_run_time = 3;
 
-  required float q1 = 4;
-  required float q2 = 5;
-  required float q3 = 6;
-  required float q4 = 7;
-  required float q5 = 8;
-  required float q6 = 9;
-  required float q7 = 10;
+  required double q1 = 4;
+  required double q2 = 5;
+  required double q3 = 6;
+  required double q4 = 7;
+  required double q5 = 8;
+  required double q6 = 9;
+  required double q7 = 10;
 
-  required float dq1 = 11;
-  required float dq2 = 12;
-  required float dq3 = 13;
-  required float dq4 = 14;
-  required float dq5 = 15;
-  required float dq6 = 16;
-  required float dq7 = 17;
+  required double dq1 = 11;
+  required double dq2 = 12;
+  required double dq3 = 13;
+  required double dq4 = 14;
+  required double dq5 = 15;
+  required double dq6 = 16;
+  required double dq7 = 17;
 }

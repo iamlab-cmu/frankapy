@@ -18,7 +18,7 @@ DESCRIPTOR = _descriptor.FileDescriptor(
   package='',
   syntax='proto2',
   serialized_options=None,
-  serialized_pb=b'\n\x10sensor_msg.proto\"S\n\x0b\x42oundingBox\x12\x0c\n\x04name\x18\x01 \x02(\t\x12\n\n\x02id\x18\x02 \x02(\x05\x12\t\n\x01x\x18\x03 \x02(\x05\x12\t\n\x01y\x18\x04 \x02(\x05\x12\t\n\x01w\x18\x05 \x02(\x05\x12\t\n\x01h\x18\x06 \x02(\x05\"\xf2\x01\n\x0fJointSensorInfo\x12\n\n\x02id\x18\x01 \x02(\x05\x12\x11\n\ttimestamp\x18\x02 \x02(\x05\x12\x11\n\tterminate\x18\x03 \x02(\x08\x12\n\n\x02q1\x18\x04 \x02(\x02\x12\n\n\x02q2\x18\x05 \x02(\x02\x12\n\n\x02q3\x18\x06 \x02(\x02\x12\n\n\x02q4\x18\x07 \x02(\x02\x12\n\n\x02q5\x18\x08 \x02(\x02\x12\n\n\x02q6\x18\t \x02(\x02\x12\n\n\x02q7\x18\n \x02(\x02\x12\x0b\n\x03qd1\x18\x0b \x02(\x02\x12\x0b\n\x03qd2\x18\x0c \x02(\x02\x12\x0b\n\x03qd3\x18\r \x02(\x02\x12\x0b\n\x03qd4\x18\x0e \x02(\x02\x12\x0b\n\x03qd5\x18\x0f \x02(\x02\x12\x0b\n\x03qd6\x18\x10 \x02(\x02\x12\x0b\n\x03qd7\x18\x11 \x02(\x02'
+  serialized_pb=b'\n\x10sensor_msg.proto\"S\n\x0b\x42oundingBox\x12\x0c\n\x04name\x18\x01 \x02(\t\x12\n\n\x02id\x18\x02 \x02(\x05\x12\t\n\x01x\x18\x03 \x02(\x05\x12\t\n\x01y\x18\x04 \x02(\x05\x12\t\n\x01w\x18\x05 \x02(\x05\x12\t\n\x01h\x18\x06 \x02(\x05\"\x88\x02\n\"JointPositionVelocitySensorMessage\x12\n\n\x02id\x18\x01 \x02(\x05\x12\x11\n\ttimestamp\x18\x02 \x02(\x01\x12\x14\n\x0cseg_run_time\x18\x03 \x02(\x01\x12\n\n\x02q1\x18\x04 \x02(\x01\x12\n\n\x02q2\x18\x05 \x02(\x01\x12\n\n\x02q3\x18\x06 \x02(\x01\x12\n\n\x02q4\x18\x07 \x02(\x01\x12\n\n\x02q5\x18\x08 \x02(\x01\x12\n\n\x02q6\x18\t \x02(\x01\x12\n\n\x02q7\x18\n \x02(\x01\x12\x0b\n\x03\x64q1\x18\x0b \x02(\x01\x12\x0b\n\x03\x64q2\x18\x0c \x02(\x01\x12\x0b\n\x03\x64q3\x18\r \x02(\x01\x12\x0b\n\x03\x64q4\x18\x0e \x02(\x01\x12\x0b\n\x03\x64q5\x18\x0f \x02(\x01\x12\x0b\n\x03\x64q6\x18\x10 \x02(\x01\x12\x0b\n\x03\x64q7\x18\x11 \x02(\x01'
 )
 
 
@@ -90,128 +90,128 @@ _BOUNDINGBOX = _descriptor.Descriptor(
 )
 
 
-_JOINTSENSORINFO = _descriptor.Descriptor(
-  name='JointSensorInfo',
-  full_name='JointSensorInfo',
+_JOINTPOSITIONVELOCITYSENSORMESSAGE = _descriptor.Descriptor(
+  name='JointPositionVelocitySensorMessage',
+  full_name='JointPositionVelocitySensorMessage',
   filename=None,
   file=DESCRIPTOR,
   containing_type=None,
   fields=[
     _descriptor.FieldDescriptor(
-      name='id', full_name='JointSensorInfo.id', index=0,
+      name='id', full_name='JointPositionVelocitySensorMessage.id', index=0,
       number=1, type=5, cpp_type=1, label=2,
       has_default_value=False, default_value=0,
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       serialized_options=None, file=DESCRIPTOR),
     _descriptor.FieldDescriptor(
-      name='timestamp', full_name='JointSensorInfo.timestamp', index=1,
-      number=2, type=5, cpp_type=1, label=2,
-      has_default_value=False, default_value=0,
-      message_type=None, enum_type=None, containing_type=None,
-      is_extension=False, extension_scope=None,
-      serialized_options=None, file=DESCRIPTOR),
-    _descriptor.FieldDescriptor(
-      name='terminate', full_name='JointSensorInfo.terminate', index=2,
-      number=3, type=8, cpp_type=7, label=2,
-      has_default_value=False, default_value=False,
-      message_type=None, enum_type=None, containing_type=None,
-      is_extension=False, extension_scope=None,
-      serialized_options=None, file=DESCRIPTOR),
-    _descriptor.FieldDescriptor(
-      name='q1', full_name='JointSensorInfo.q1', index=3,
-      number=4, type=2, cpp_type=6, label=2,
+      name='timestamp', full_name='JointPositionVelocitySensorMessage.timestamp', index=1,
+      number=2, type=1, cpp_type=5, label=2,
       has_default_value=False, default_value=float(0),
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       serialized_options=None, file=DESCRIPTOR),
     _descriptor.FieldDescriptor(
-      name='q2', full_name='JointSensorInfo.q2', index=4,
-      number=5, type=2, cpp_type=6, label=2,
+      name='seg_run_time', full_name='JointPositionVelocitySensorMessage.seg_run_time', index=2,
+      number=3, type=1, cpp_type=5, label=2,
       has_default_value=False, default_value=float(0),
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       serialized_options=None, file=DESCRIPTOR),
     _descriptor.FieldDescriptor(
-      name='q3', full_name='JointSensorInfo.q3', index=5,
-      number=6, type=2, cpp_type=6, label=2,
+      name='q1', full_name='JointPositionVelocitySensorMessage.q1', index=3,
+      number=4, type=1, cpp_type=5, label=2,
       has_default_value=False, default_value=float(0),
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       serialized_options=None, file=DESCRIPTOR),
     _descriptor.FieldDescriptor(
-      name='q4', full_name='JointSensorInfo.q4', index=6,
-      number=7, type=2, cpp_type=6, label=2,
+      name='q2', full_name='JointPositionVelocitySensorMessage.q2', index=4,
+      number=5, type=1, cpp_type=5, label=2,
       has_default_value=False, default_value=float(0),
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       serialized_options=None, file=DESCRIPTOR),
     _descriptor.FieldDescriptor(
-      name='q5', full_name='JointSensorInfo.q5', index=7,
-      number=8, type=2, cpp_type=6, label=2,
+      name='q3', full_name='JointPositionVelocitySensorMessage.q3', index=5,
+      number=6, type=1, cpp_type=5, label=2,
       has_default_value=False, default_value=float(0),
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       serialized_options=None, file=DESCRIPTOR),
     _descriptor.FieldDescriptor(
-      name='q6', full_name='JointSensorInfo.q6', index=8,
-      number=9, type=2, cpp_type=6, label=2,
+      name='q4', full_name='JointPositionVelocitySensorMessage.q4', index=6,
+      number=7, type=1, cpp_type=5, label=2,
       has_default_value=False, default_value=float(0),
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       serialized_options=None, file=DESCRIPTOR),
     _descriptor.FieldDescriptor(
-      name='q7', full_name='JointSensorInfo.q7', index=9,
-      number=10, type=2, cpp_type=6, label=2,
+      name='q5', full_name='JointPositionVelocitySensorMessage.q5', index=7,
+      number=8, type=1, cpp_type=5, label=2,
       has_default_value=False, default_value=float(0),
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       serialized_options=None, file=DESCRIPTOR),
     _descriptor.FieldDescriptor(
-      name='qd1', full_name='JointSensorInfo.qd1', index=10,
-      number=11, type=2, cpp_type=6, label=2,
+      name='q6', full_name='JointPositionVelocitySensorMessage.q6', index=8,
+      number=9, type=1, cpp_type=5, label=2,
       has_default_value=False, default_value=float(0),
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       serialized_options=None, file=DESCRIPTOR),
     _descriptor.FieldDescriptor(
-      name='qd2', full_name='JointSensorInfo.qd2', index=11,
-      number=12, type=2, cpp_type=6, label=2,
+      name='q7', full_name='JointPositionVelocitySensorMessage.q7', index=9,
+      number=10, type=1, cpp_type=5, label=2,
       has_default_value=False, default_value=float(0),
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       serialized_options=None, file=DESCRIPTOR),
     _descriptor.FieldDescriptor(
-      name='qd3', full_name='JointSensorInfo.qd3', index=12,
-      number=13, type=2, cpp_type=6, label=2,
+      name='dq1', full_name='JointPositionVelocitySensorMessage.dq1', index=10,
+      number=11, type=1, cpp_type=5, label=2,
       has_default_value=False, default_value=float(0),
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       serialized_options=None, file=DESCRIPTOR),
     _descriptor.FieldDescriptor(
-      name='qd4', full_name='JointSensorInfo.qd4', index=13,
-      number=14, type=2, cpp_type=6, label=2,
+      name='dq2', full_name='JointPositionVelocitySensorMessage.dq2', index=11,
+      number=12, type=1, cpp_type=5, label=2,
       has_default_value=False, default_value=float(0),
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       serialized_options=None, file=DESCRIPTOR),
     _descriptor.FieldDescriptor(
-      name='qd5', full_name='JointSensorInfo.qd5', index=14,
-      number=15, type=2, cpp_type=6, label=2,
+      name='dq3', full_name='JointPositionVelocitySensorMessage.dq3', index=12,
+      number=13, type=1, cpp_type=5, label=2,
       has_default_value=False, default_value=float(0),
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       serialized_options=None, file=DESCRIPTOR),
     _descriptor.FieldDescriptor(
-      name='qd6', full_name='JointSensorInfo.qd6', index=15,
-      number=16, type=2, cpp_type=6, label=2,
+      name='dq4', full_name='JointPositionVelocitySensorMessage.dq4', index=13,
+      number=14, type=1, cpp_type=5, label=2,
       has_default_value=False, default_value=float(0),
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       serialized_options=None, file=DESCRIPTOR),
     _descriptor.FieldDescriptor(
-      name='qd7', full_name='JointSensorInfo.qd7', index=16,
-      number=17, type=2, cpp_type=6, label=2,
+      name='dq5', full_name='JointPositionVelocitySensorMessage.dq5', index=14,
+      number=15, type=1, cpp_type=5, label=2,
+      has_default_value=False, default_value=float(0),
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR),
+    _descriptor.FieldDescriptor(
+      name='dq6', full_name='JointPositionVelocitySensorMessage.dq6', index=15,
+      number=16, type=1, cpp_type=5, label=2,
+      has_default_value=False, default_value=float(0),
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR),
+    _descriptor.FieldDescriptor(
+      name='dq7', full_name='JointPositionVelocitySensorMessage.dq7', index=16,
+      number=17, type=1, cpp_type=5, label=2,
       has_default_value=False, default_value=float(0),
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
@@ -229,11 +229,11 @@ _JOINTSENSORINFO = _descriptor.Descriptor(
   oneofs=[
   ],
   serialized_start=106,
-  serialized_end=348,
+  serialized_end=370,
 )
 
 DESCRIPTOR.message_types_by_name['BoundingBox'] = _BOUNDINGBOX
-DESCRIPTOR.message_types_by_name['JointSensorInfo'] = _JOINTSENSORINFO
+DESCRIPTOR.message_types_by_name['JointPositionVelocitySensorMessage'] = _JOINTPOSITIONVELOCITYSENSORMESSAGE
 _sym_db.RegisterFileDescriptor(DESCRIPTOR)
 
 BoundingBox = _reflection.GeneratedProtocolMessageType('BoundingBox', (_message.Message,), {
@@ -243,12 +243,12 @@ BoundingBox = _reflection.GeneratedProtocolMessageType('BoundingBox', (_message.
   })
 _sym_db.RegisterMessage(BoundingBox)
 
-JointSensorInfo = _reflection.GeneratedProtocolMessageType('JointSensorInfo', (_message.Message,), {
-  'DESCRIPTOR' : _JOINTSENSORINFO,
+JointPositionVelocitySensorMessage = _reflection.GeneratedProtocolMessageType('JointPositionVelocitySensorMessage', (_message.Message,), {
+  'DESCRIPTOR' : _JOINTPOSITIONVELOCITYSENSORMESSAGE,
   '__module__' : 'sensor_msg_pb2'
-  # @@protoc_insertion_point(class_scope:JointSensorInfo)
+  # @@protoc_insertion_point(class_scope:JointPositionVelocitySensorMessage)
   })
-_sym_db.RegisterMessage(JointSensorInfo)
+_sym_db.RegisterMessage(JointPositionVelocitySensorMessage)
 
 
 # @@protoc_insertion_point(module_scope)

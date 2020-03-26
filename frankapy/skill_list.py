@@ -384,17 +384,6 @@ class GoToJointsSkill(BaseSkill):
                   FeedbackControllerType.JointImpedanceFeedbackController,
                   TerminationHandlerType.FinalJointTerminationHandler,
                   1)
-        elif skill_type == SkillType.JointPositionDynamicInterpolationSkill:
-            super(GoToJointsSkill, self).__init__(
-                SkillType.JointPositionDynamicInterpolationSkill,
-                skill_desc,
-                MetaSkillType.BaseMetaSkill,
-                0,
-                ['/franka_robot/camera'],
-                TrajectoryGeneratorType.MinJerkJointTrajectoryGenerator,
-                FeedbackControllerType.JointImpedanceFeedbackController,
-                TerminationHandlerType.FinalJointTerminationHandler,
-                1)
         else:
             super(GoToJointsSkill, self).__init__(
                   SkillType.JointPositionSkill,
@@ -407,6 +396,47 @@ class GoToJointsSkill(BaseSkill):
                   TerminationHandlerType.FinalJointTerminationHandler,
                   1)
     
+class GoToJointsDynamicsInterpolationSkill(BaseSkill):
+
+    def __init__(self, skill_desc='', skill_type=SkillType.JointPositionSkill):
+        if len(skill_desc) == 0:
+            skill_desc = GoToJointsDynamicsInterpolationSkill.__name__
+
+        if skill_type == SkillType.JointPositionSkill:
+            super(GoToJointsDynamicsInterpolationSkill, self).__init__(
+                SkillType.JointPositionSkill,
+                skill_desc,
+                MetaSkillType.BaseMetaSkill,
+                0,
+                ['/franka_robot/camera'],
+                TrajectoryGeneratorType.CubicHermiteSplineJointTrajectoryGenerator,
+                FeedbackControllerType.JointImpedanceFeedbackController,
+                TerminationHandlerType.TimeTerminationHandler,
+                1)
+        elif skill_type == SkillType.ImpedanceControlSkill:
+            super(GoToJointsDynamicsInterpolationSkill, self).__init__(
+                SkillType.ImpedanceControlSkill,
+                skill_desc,
+                MetaSkillType.BaseMetaSkill,
+                0,
+                ['/franka_robot/camera'],
+                TrajectoryGeneratorType.CubicHermiteSplineJointTrajectoryGenerator,
+                FeedbackControllerType.JointImpedanceFeedbackController,
+                TerminationHandlerType.TimeTerminationHandler,
+                1)
+        else:
+            super(GoToJointsDynamicsInterpolationSkill, self).__init__(
+                SkillType.JointPositionSkill,
+                skill_desc,
+                MetaSkillType.BaseMetaSkill,
+                0,
+                ['/franka_robot/camera'],
+                TrajectoryGeneratorType.CubicHermiteSplineJointTrajectoryGenerator,
+                FeedbackControllerType.JointImpedanceFeedbackController,
+                TerminationHandlerType.TimeTerminationHandler,
+                1)
+
+
 # Define skill that uses cartesian impedance control relative to base
 class GoToPoseSkill(BaseSkill):
     def __init__(self, skill_desc='', skill_type=SkillType.ImpedanceControlSkill):

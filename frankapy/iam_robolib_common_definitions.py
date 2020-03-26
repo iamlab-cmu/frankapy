@@ -54,3 +54,7 @@ class SkillStatus:
     TO_START = 0
     RUNNING = 1
     FINISHED = 2 
+
+class SensorDataMessageType:
+    JOINT_POSITION_VELOCITY = 0
+    BOUNDING_BOX = 1
