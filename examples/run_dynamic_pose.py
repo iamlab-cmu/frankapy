@@ -12,8 +12,8 @@ import rospy
 
 
 if __name__ == "__main__":
-    fa = FrankaArm(async_cmds=True)
-    fa.reset_joints(); fa.wait_for_skill()
+    fa = FrankaArm()
+    fa.reset_joints()
 
     rospy.loginfo('Generating Trajectory')
     p0 = fa.get_pose()
@@ -23,8 +23,7 @@ if __name__ == "__main__":
         rotation=RigidTransform.z_axis_rotation(np.deg2rad(30)), 
                             from_frame=p1.from_frame, to_frame=p1.from_frame)
     p1 = p1 * T_delta
-
-    fa.goto_pose(p1); fa.wait_for_skill()
+    fa.goto_pose(p1)
 
     T = 5
     dt = 0.02
@@ -34,7 +33,7 @@ if __name__ == "__main__":
     pose_traj = [p1.interpolate_with(p0, w) for w in weights]
 
     p0_array = np.concatenate([p0.translation, p0.euler_angles])
-    p1_array = np.concatenate([p0.translation, p1.euler_angles])
+    p1_array = np.concatenate([p1.translation, p1.euler_angles])
     pose_velocities_traj = [min_jerk_delta(p1_array, p0_array, t, T, dt) for t in ts]
 
     rospy.loginfo('Initializing Sensor Publisher')
@@ -46,7 +45,7 @@ if __name__ == "__main__":
     init_time = rospy.Time.now().to_time()
     for i in range(2, len(ts)):
         proto_msg = make_pose_position_velocity_proto(i, rospy.Time.now().to_time() - init_time, 
-                                                      dt, pose_traj[i], pose_velocities_traj[i])
+                                                      dt, pose_traj[2], pose_velocities_traj[2])
         ros_msg = sensor_proto2ros_msg(proto_msg, SensorDataMessageType.POSE_POSITION_VELOCITY)
         
         rospy.loginfo('Publishing: ID {}'.format(proto_msg.id))

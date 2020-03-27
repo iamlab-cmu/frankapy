@@ -11,14 +11,14 @@ import rospy
 
 
 if __name__ == "__main__":
-    fa = FrankaArm(async_cmds=True)
-    fa.reset_joints(); fa.wait_for_skill()
+    fa = FrankaArm()
+    fa.reset_joints()
 
     rospy.loginfo('Generating Trajectory')
     joints_0 = fa.get_joints()
     p = fa.get_pose()
     p.translation[2] -= 0.2
-    fa.goto_pose(p); fa.wait_for_skill()
+    fa.goto_pose(p)
     joints_1 = fa.get_joints()
 
     T = 5
