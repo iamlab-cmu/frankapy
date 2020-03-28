@@ -6,12 +6,12 @@ import quaternion
 from itertools import product
 
 import roslib
-roslib.load_manifest('franka_action_lib_msgs')
+roslib.load_manifest('franka_msgs')
 import rospy
 import actionlib
 from sensor_msgs.msg import JointState
-from franka_action_lib_msgs.msg import ExecuteSkillAction, RobolibStatus
-from franka_action_lib_msgs.srv import GetCurrentRobolibStatusCmd
+from franka_msgs.msg import ExecuteSkillAction, RobolibStatus
+from franka_msgs.srv import GetCurrentRobolibStatusCmd
 
 from .skill_list import *
 from .exceptions import *
@@ -26,7 +26,6 @@ class FrankaArm:
     def __init__(
             self,
             rosnode_name='franka_arm_client', ros_log_level=rospy.INFO,
-            async_cmds=False,
             robot_num=1,
             offline=False):
 
@@ -40,7 +39,6 @@ class FrankaArm:
         self._connected = False
         self._in_skill = False
         self._offline = offline
-        self._async_cmds = async_cmds
 
         # init ROS
         rospy.init_node(rosnode_name,
@@ -106,35 +104,35 @@ class FrankaArm:
 
     def wait_for_skill(self):
         while not self.is_skill_done():
-            sleep(1e-1)
+            continue
 
     def is_skill_done(self, ignore_errors=True):  
-          if not self._async_cmds or not self._in_skill:  
-              return True 
+        if not self._in_skill:  
+            return True 
 
-          robolib_status = self._get_current_robolib_status().robolib_status  
+        robolib_status = self._get_current_robolib_status().robolib_status  
 
-          e = None  
-          if rospy.is_shutdown(): 
-              e = RuntimeError('rospy is down!')  
-          elif robolib_status.error_description:  
-              e = FrankaArmException(robolib_status.error_description)  
-          elif not robolib_status.is_ready: 
-              e = FrankaArmRobolibNotReadyException() 
+        e = None  
+        if rospy.is_shutdown(): 
+            e = RuntimeError('rospy is down!')  
+        elif robolib_status.error_description:  
+            e = FrankaArmException(robolib_status.error_description)  
+        elif not robolib_status.is_ready: 
+            e = FrankaArmRobolibNotReadyException() 
 
-          if e is not None: 
-              if ignore_errors: 
-                  self.wait_for_robolib() 
-              else: 
-                  raise e 
+        if e is not None: 
+            if ignore_errors: 
+                self.wait_for_robolib() 
+            else: 
+                raise e 
 
-          done = self._client.wait_for_result(rospy.Duration.from_sec(  
-              FC.ACTION_WAIT_LOOP_TIME))  
+        done = self._client.wait_for_result(rospy.Duration.from_sec(  
+            FC.ACTION_WAIT_LOOP_TIME))
 
-          if done:  
-              self._in_skill = False  
+        if done:  
+            self._in_skill = False  
 
-          return done
+        return done
 
     def stop_skill(self): 
         if self._connected and self._in_skill:
@@ -149,7 +147,7 @@ class FrankaArm:
 
         return sigint_handler
 
-    def _send_goal(self, goal, cb, ignore_errors=True):
+    def _send_goal(self, goal, cb, block=True, ignore_errors=True):
         '''
         Raises:
             FrankaArmCommException if a timeout is reached
@@ -160,38 +158,16 @@ class FrankaArm:
             logging.warn('In offline mode, FrankaArm will not execute real robot commands.')
             return
 
-        if self._in_skill:  
-            raise ValueError('Cannot send consecutive commands under async mode!')
+        if not self.is_skill_done():  
+            raise ValueError('Cannot send another command when the previous skill is active!')
 
         self._in_skill = True
         self._client.send_goal(goal, feedback_cb=cb)
 
-        if self._async_cmds:  
+        if not block:  
             return None
 
-        done = False
-        while not done:
-            robolib_status = self._get_current_robolib_status().robolib_status
-
-            e = None
-            if rospy.is_shutdown():
-                e = RuntimeError('rospy is down!')
-            elif robolib_status.error_description:
-                e = FrankaArmException(robolib_status.error_description)
-            elif not robolib_status.is_ready:
-                e = FrankaArmRobolibNotReadyException()
-
-            if e is not None:
-                if ignore_errors:
-                    self.wait_for_robolib()
-                    break
-                else:
-                    raise e
-
-            done = self._client.wait_for_result(rospy.Duration.from_sec(
-                FC.ACTION_WAIT_LOOP_TIME))
-
-        self._in_skill = False
+        self.wait_for_skill()
         return self._client.get_result()
 
     '''
@@ -207,6 +183,7 @@ class FrankaArm:
                   stop_on_contact_torques=None,
                   cartesian_impedances=None,
                   joint_impedances=None,
+                  block=True,
                   ignore_errors=True,
                   ignore_virtual_walls=False):
         '''Commands Arm to the given pose via min jerk interpolation
@@ -237,7 +214,6 @@ class FrankaArm:
                 which may be dangerous.
 
         '''
-
         if use_impedance:
             skill_type=SkillType.ImpedanceControlSkill
         else:
@@ -287,6 +263,7 @@ class FrankaArm:
 
         self._send_goal(goal,
                         cb=lambda x: skill.feedback_callback(x),
+                        block=block,
                         ignore_errors=ignore_errors)
 
     def goto_pose_delta(self,
@@ -298,6 +275,7 @@ class FrankaArm:
                         stop_on_contact_torques=None,
                         cartesian_impedances=None,
                         joint_impedances=None,
+                        block=True,
                         ignore_errors=True,
                         ignore_virtual_walls=False):
         '''Commands Arm to the given delta pose via min jerk interpolation
@@ -379,6 +357,7 @@ class FrankaArm:
 
         self._send_goal(goal,
                         cb=lambda x: skill.feedback_callback(x),
+                        block=block,
                         ignore_errors=ignore_errors)
 
     def goto_joints(self,
@@ -392,6 +371,7 @@ class FrankaArm:
                     joint_impedances=None,
                     k_gains=None,
                     d_gains=None,
+                    block=True,
                     ignore_errors=True,
                     ignore_virtual_walls=False):
         '''Commands Arm to the given joint configuration
@@ -431,7 +411,6 @@ class FrankaArm:
         Raises:
             ValueError: If is_joints_reachable(joints) returns False
         '''
-
         if use_impedance:
             skill_type=SkillType.ImpedanceControlSkill
         else:
@@ -475,6 +454,7 @@ class FrankaArm:
 
         self._send_goal(goal,
                         cb=lambda x: skill.feedback_callback(x),
+                        block=block,
                         ignore_errors=ignore_errors)
 
     def apply_joint_torques(self, torques, duration, ignore_errors=True):
@@ -486,7 +466,7 @@ class FrankaArm:
         '''
         pass
 
-    def execute_joint_dmp(self, dmp_info, duration, ignore_errors=True,
+    def execute_joint_dmp(self, dmp_info, duration, block=True, ignore_errors=True,
                           skill_desc='', skill_type=SkillType.JointPositionSkill):
         '''Commands Arm to execute a given dmp for duration seconds
 
@@ -519,7 +499,7 @@ class FrankaArm:
                         cb=lambda x: skill.feedback_callback(x),
                         ignore_errors=ignore_errors)
 
-    def execute_pose_dmp(self, dmp_info, duration, ignore_errors=True,
+    def execute_pose_dmp(self, dmp_info, duration, ignore_errors=True, block=True,
                          skill_desc='', skill_type=SkillType.CartesianPoseSkill):
         '''Commands Arm to execute a given dmp for duration seconds
 
@@ -550,6 +530,7 @@ class FrankaArm:
 
         self._send_goal(goal,
                         cb=lambda x: skill.feedback_callback(x),
+                        block=block,
                         ignore_errors=ignore_errors)
 
     def execute_goal_pose_dmp(self, dmp_info, duration, ignore_errors=True, 
@@ -587,6 +568,7 @@ class FrankaArm:
 
         self._send_goal(goal,
                         cb=lambda x: skill.feedback_callback(x),
+                        block=block,
                         ignore_errors=ignore_errors)
 
     def apply_effector_forces_torques(self,
@@ -596,6 +578,7 @@ class FrankaArm:
                                       max_rotation,
                                       forces=None,
                                       torques=None,
+                                      block=True,
                                       ignore_errors=True,
                                       skill_desc=''):
         '''Applies the given end-effector forces and torques in N and Nm
@@ -640,6 +623,7 @@ class FrankaArm:
 
         self._send_goal(goal,
                         cb=lambda x: skill.feedback_callback(x),
+                        block=block,
                         ignore_errors=ignore_errors)
 
     def apply_effector_forces_along_axis(self,
@@ -647,6 +631,7 @@ class FrankaArm:
                                          acc_duration,
                                          max_translation,
                                          forces,
+                                         block=True,
                                          ignore_errors=True,
                                          skill_desc=''):
         '''Applies the given end-effector forces and torques in N and Nm
@@ -686,9 +671,10 @@ class FrankaArm:
 
         self._send_goal(goal,
                         cb=lambda x: skill.feedback_callback(x),
+                        block=block,
                         ignore_errors=ignore_errors)
 
-    def goto_gripper(self, width, grasp=False, speed=0.04, force=0.0, ignore_errors=True):
+    def goto_gripper(self, width, grasp=False, speed=0.04, force=0.0, block=True, ignore_errors=True):
         '''Commands gripper to goto a certain width, applying up to the given
             (default is max) force if needed
 
@@ -713,6 +699,7 @@ class FrankaArm:
 
         self._send_goal(goal,
                         cb=lambda x: skill.feedback_callback(x),
+                        block=block,
                         ignore_errors=ignore_errors)
         # this is so the gripper state can be updated, which happens with a
         # small lag
@@ -721,7 +708,7 @@ class FrankaArm:
     def stay_in_position(self, duration=3, translational_stiffness=600,
                          rotational_stiffness=50, k_gains=None, d_gains=None,
                          cartesian_impedances=None, joint_impedances=None, 
-                         ignore_errors=True, skill_desc='', 
+                         block=True, ignore_errors=True, skill_desc='', 
                          skill_type=SkillType.ImpedanceControlSkill,
                          feedback_controller_type=FeedbackControllerType.CartesianImpedanceFeedbackController):
         '''Commands the Arm to stay in its current position with provided
@@ -773,12 +760,13 @@ class FrankaArm:
 
         self._send_goal(goal,
                         cb=lambda x: skill.feedback_callback(x),
+                        block=block,
                         ignore_errors=ignore_errors)
 
     def run_guide_mode_with_selective_joint_compliance(
             self,
             duration=3, joint_impedances=None, k_gains=FC.DEFAULT_K_GAINS,
-            d_gains=FC.DEFAULT_D_GAINS,
+            d_gains=FC.DEFAULT_D_GAINS, block=True,
             ignore_errors=True, skill_desc='', skill_type=SkillType.ImpedanceControlSkill):
         '''Run guide mode with selective joint compliance given k and d gains
             for each joint
@@ -809,13 +797,14 @@ class FrankaArm:
 
         self._send_goal(goal,
                         cb=lambda x: skill.feedback_callback(x),
+                        block=block,
                         ignore_errors=ignore_errors)
 
     def run_guide_mode_with_selective_pose_compliance(
             self, duration=3,
             translational_stiffnesses=FC.DEFAULT_TRANSLATIONAL_STIFFNESSES,
             rotational_stiffnesses=FC.DEFAULT_ROTATIONAL_STIFFNESSES,
-            cartesian_impedances=None,
+            cartesian_impedances=None, block=True,
             ignore_errors=True, skill_desc='', skill_type=SkillType.ImpedanceControlSkill):
         '''Run guide mode with selective pose compliance given translational
         and rotational stiffnesses
@@ -852,6 +841,7 @@ class FrankaArm:
         self._send_goal(
                 goal,
                 cb=lambda x: skill.feedback_callback(x),
+                block=block,
                 ignore_errors=ignore_errors)
 
     def run_dynamic_joint_position_interpolation(self,
@@ -910,6 +900,7 @@ class FrankaArm:
 
         self._send_goal(goal,
                         cb=lambda x: skill.feedback_callback(x),
+                        block=False,
                         ignore_errors=ignore_errors)
 
     def run_dynamic_pose_interpolation(self,
@@ -964,22 +955,24 @@ class FrankaArm:
 
         self._send_goal(goal,
                         cb=lambda x: skill.feedback_callback(x),
+                        block=False,
                         ignore_errors=ignore_errors)
 
 
-    def open_gripper(self):
+    def open_gripper(self, block=True):
         '''Opens gripper to maximum width
         '''
-        self.goto_gripper(FC.GRIPPER_WIDTH_MAX)
+        self.goto_gripper(FC.GRIPPER_WIDTH_MAX, block=block)
 
-    def close_gripper(self, grasp=True):
+    def close_gripper(self, grasp=True, block=True):
         '''Closes the gripper as much as possible
         '''
         self.goto_gripper(FC.GRIPPER_WIDTH_MIN, grasp=grasp,
-                          force=FC.GRIPPER_MAX_FORCE if grasp else None)
+                          force=FC.GRIPPER_MAX_FORCE if grasp else None,
+                          block=block)
 
-    def run_guide_mode(self, duration=100):
-        self.apply_effector_forces_torques(duration, 0, 0, 0)
+    def run_guide_mode(self, duration=10, block=True):
+        self.apply_effector_forces_torques(duration, 0, 0, 0, block=block)
 
     '''
     Reads
@@ -1340,15 +1333,15 @@ class FrankaArm:
     '''
     Misc
     '''
-    def reset_joints(self, skill_desc='', ignore_errors=True):
+    def reset_joints(self, duration=5, skill_desc='', block=True, ignore_errors=True):
         '''Commands Arm to goto hardcoded home joint configuration
         '''
-        self.goto_joints(FC.HOME_JOINTS, duration=5, skill_desc=skill_desc, ignore_errors=ignore_errors)
+        self.goto_joints(FC.HOME_JOINTS, duration=duration, skill_desc=skill_desc, block=block, ignore_errors=ignore_errors)
 
-    def reset_pose(self, skill_desc='', ignore_errors=True):
+    def reset_pose(self, duration=5, skill_desc='', block=True, ignore_errors=True):
         '''Commands Arm to goto hardcoded home pose
         '''
-        self.goto_pose(FC.HOME_POSE, duration=5, skill_desc=skill_desc, ignore_errors=ignore_errors)
+        self.goto_pose(FC.HOME_POSE, duration=duration, skill_desc=skill_desc, block=block, ignore_errors=ignore_errors)
 
     def is_joints_reachable(self, joints):
         '''

@@ -8,6 +8,7 @@ class FrankaArmCommException(Exception):
     def __str__(self):
         return "Communication w/ Robolib ran into a problem: {}. Robolib is probably not ready.".format(self.message)
 
+
 class FrankaArmRobolibNotReadyException(Exception):
     ''' Exception for when robolib is not ready
     '''
@@ -17,6 +18,7 @@ class FrankaArmRobolibNotReadyException(Exception):
 
     def __str__(self):
         return 'Robolib was not ready!'
+
 
 class FrankaArmException(Exception):
     ''' Failure of control, typically due to a kinematically unreachable pose.

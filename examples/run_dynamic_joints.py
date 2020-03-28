@@ -4,21 +4,21 @@ import numpy as np
 from frankapy import FrankaArm, SensorDataMessageType
 from frankapy import FrankaConstants as FC
 from frankapy.proto_utils import make_joint_position_velocity_proto, sensor_proto2ros_msg
-from franka_action_lib_msgs.msg import SensorData
+from franka_msgs.msg import SensorData
 from frankapy.utils import min_jerk, min_jerk_delta
 
 import rospy
 
 
 if __name__ == "__main__":
-    fa = FrankaArm(async_cmds=True)
-    fa.reset_joints(); fa.wait_for_skill()
+    fa = FrankaArm()
+    fa.reset_joints()
 
     rospy.loginfo('Generating Trajectory')
     joints_0 = fa.get_joints()
     p = fa.get_pose()
     p.translation[2] -= 0.2
-    fa.goto_pose(p); fa.wait_for_skill()
+    fa.goto_pose(p)
     joints_1 = fa.get_joints()
 
     T = 5
