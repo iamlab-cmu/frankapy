@@ -6,12 +6,12 @@ import quaternion
 from itertools import product
 
 import roslib
-roslib.load_manifest('franka_msgs')
+roslib.load_manifest('franka_interface_msgs')
 import rospy
 import actionlib
 from sensor_msgs.msg import JointState
-from franka_msgs.msg import ExecuteSkillAction, RobolibStatus
-from franka_msgs.srv import GetCurrentRobolibStatusCmd
+from franka_interface_msgs.msg import ExecuteSkillAction, RobolibStatus
+from franka_interface_msgs.srv import GetCurrentRobolibStatusCmd
 
 from .skill_list import *
 from .exceptions import *

@@ -4,7 +4,7 @@ import numpy as np
 from frankapy import FrankaArm, SensorDataMessageType
 from frankapy import FrankaConstants as FC
 from frankapy.proto_utils import make_joint_position_velocity_proto, sensor_proto2ros_msg
-from franka_msgs.msg import SensorData
+from franka_interface_msgs.msg import SensorData
 from frankapy.utils import min_jerk, min_jerk_delta
 
 import rospy

@@ -1,4 +1,4 @@
-from franka_action_lib_msgs.msg import SensorData
+from franka_interface_msgs.msg import SensorData
 from frankapy.proto import *
 
 ## Feedback Controller Protobufs

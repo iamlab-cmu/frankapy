@@ -3,7 +3,7 @@ from time import sleep
 
 import numpy as np
 import rospy
-from franka_msgs.srv import GetCurrentRobotStateCmd
+from franka_interface_msgs.srv import GetCurrentRobotStateCmd
 
 from .utils import franka_pose_to_rigid_transform
 
