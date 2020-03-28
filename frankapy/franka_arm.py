@@ -201,117 +201,48 @@ class FrankaArm:
     def goto_pose(self,
                   tool_pose,
                   duration=3,
-                  stop_on_contact_forces=None,
-                  cartesian_impedances=None,
-                  ignore_errors=True,
-                  ignore_virtual_walls=False,
+                  use_impedance=True,
                   skill_desc='',
-                  skill_type=SkillType.ImpedanceControlSkill):
-        '''Commands Arm to the given pose via linear interpolation
+                  stop_on_contact_forces=None,
+                  stop_on_contact_torques=None,
+                  cartesian_impedances=None,
+                  joint_impedances=None,
+                  ignore_errors=True,
+                  ignore_virtual_walls=False):
+        '''Commands Arm to the given pose via min jerk interpolation
 
         Args:
             tool_pose (RigidTransform) : End-effector pose in tool frame
             duration (float) : How much time this robot motion should take
-            stop_on_contact_forces (list): List of 6 floats corresponding to
-                force limits on translation (xyz) and rotation about (xyz) axes.
-                Default is None. If None then will not stop on contact.
-            ignore_errors : function ignores errors by default. If False, errors
-                and some exceptions can be thrown
+            use_impedance (boolean) : Function uses our impedance controller 
+                by default. If False, uses the Franka cartesian controller.
             skill_desc (string) : Skill description to use for logging on
                 control-pc.
-        '''
-        return self._goto_pose(tool_pose,
-                               duration=duration,
-                               stop_on_contact_forces=stop_on_contact_forces,
-                               cartesian_impedances=cartesian_impedances,
-                               ignore_errors=ignore_errors,
-                               ignore_virtual_walls=ignore_virtual_walls,
-                               skill_desc=skill_desc,
-                               skill_type=skill_type)
-
-    def goto_pose_with_cartesian_control(self,
-                                         tool_pose,
-                                         duration=3.,
-                                         stop_on_contact_forces=None,
-                                         cartesian_impedances=None,
-                                         ignore_errors=True,
-                                         ignore_virtual_walls=False,
-                                         skill_desc=''):
-        '''Commands Arm to the given pose via min-jerk interpolation.
-
-        Use Franka's internal Cartesian Controller to execute this skill.
-
-        Args:
-            tool_pose (RigidTransform) : End-effector pose in tool frame
-            duration (float) : How much time this robot motion should take
             stop_on_contact_forces (list): List of 6 floats corresponding to
                 force limits on translation (xyz) and rotation about (xyz) axes.
                 Default is None. If None then will not stop on contact.
-            ignore_errors : function ignores errors by default. If False, errors
-                and some exceptions can be thrown
-            skill_desc (string) : Skill description to use for logging on
-                control-pc.
+            stop_on_contact_torques (list): List of 7 floats corresponding to
+                torque limits on each joint. Default is None. If None then will
+                not stop on contact.
+            cartesian impedances (list): List of 6 floats corresponding to
+                impedances on translation (xyz) and rotation about (xyz) axes.
+                Default is None. If None then will use default impedances.
+            joint impedances (list): List of 7 floats corresponding to
+                impedances on each joint. This is used when use_impedance is 
+                False. Default is None. If None then will use default impedances.
+            ignore_errors (boolean) : Function ignores errors by default. 
+                If False, errors and some exceptions can be thrown.
+            ignore_virtual_walls (boolean): Function checks for collisions with 
+                virtual walls by default. If False, the robot no longer checks,
+                which may be dangerous.
+
         '''
-        return self._goto_pose(tool_pose,
-                               duration=duration,
-                               stop_on_contact_forces=stop_on_contact_forces,
-                               cartesian_impedances=cartesian_impedances,
-                               ignore_errors=ignore_errors,
-                               ignore_virtual_walls=False,
-                               skill_desc=skill_desc,
-                               skill_type=SkillType.CartesianPoseSkill)
 
-    def goto_pose_with_impedance_control(self,
-                                         tool_pose,
-                                         duration=3.,
-                                         stop_on_contact_forces=None,
-                                         cartesian_impedances=None,
-                                         ignore_errors=True,
-                                         ignore_virtual_walls=False,
-                                         skill_desc=''):
-        '''Commands Arm to the given pose via min-jerk interpolation.
-
-        Use our own impedance controller (use jacobian to convert cartesian
-            poses to joints.)
-
-        Args:
-            tool_pose (RigidTransform) : End-effector pose in tool frame
-            duration (float) : How much time this robot motion should take
-            stop_on_contact_forces (list): List of 6 floats corresponding to
-                force limits on translation (xyz) and rotation about (xyz) axes.
-                Default is None. If None then will not stop on contact.
-            ignore_errors : function ignores errors by default. If False, errors
-                and some exceptions can be thrown
-            skill_desc (string) : Skill description to use for logging on
-                control-pc.
-        '''
-        return self._goto_pose(tool_pose,
-                               duration=duration,
-                               stop_on_contact_forces=stop_on_contact_forces,
-                               cartesian_impedances=cartesian_impedances,
-                               ignore_errors=ignore_errors,
-                               ignore_virtual_walls=ignore_virtual_walls,
-                               skill_desc=skill_desc,
-                               skill_type=SkillType.ImpedanceControlSkill)
-
-    def _goto_pose(self,
-                   tool_pose,
-                   duration=3,
-                   stop_on_contact_forces=None,
-                   cartesian_impedances=None,
-                   ignore_errors=True,
-                   ignore_virtual_walls=False,
-                   skill_desc='',
-                   skill_type=None):
-        '''Commands Arm to the given pose via linear interpolation
-
-        Args:
-            tool_pose (RigidTransform) : End-effector pose in tool frame
-            duration (float) : How much time this robot motion should take
-            stop_on_contact_forces (list): List of 6 floats corresponding to
-                force limits on translation (xyz) and rotation about (xyz) axes.
-                Default is None. If None then will not stop on contact.
-        '''
+        if use_impedance:
+            skill_type=SkillType.ImpedanceControlSkill
+        else:
+            skill_type=SkillType.CartesianPoseSkill
+        
         if tool_pose.from_frame != 'franka_tool' or tool_pose.to_frame != 'world':
             raise ValueError('pose has invalid frame names! Make sure pose has \
                               from_frame=franka_tool and to_frame=world')
@@ -327,20 +258,31 @@ class FrankaArm:
 
         skill.add_initial_sensor_values(FC.EMPTY_SENSOR_VALUES)
 
-        if cartesian_impedances is not None:
-            skill.add_cartesian_impedances(cartesian_impedances)
+        if use_impedance:
+            if cartesian_impedances is not None:
+                skill.add_cartesian_impedances(cartesian_impedances)
+            else:
+                skill.add_cartesian_impedances(FC.DEFAULT_TRANSLATIONAL_STIFFNESSES + FC.DEFAULT_ROTATIONAL_STIFFNESSES)
         else:
-            skill.add_feedback_controller_params(FC.DEFAULT_TORQUE_CONTROLLER_PARAMS)
+            if joint_impedances is not None:
+                skill.add_internal_impedances([], joint_impedances)
+            elif cartesian_impedances is not None:
+                skill.add_internal_impedances(cartesian_impedances, [])
+            else:
+                skill.add_internal_impedances([], FC.DEFAULT_JOINT_IMPEDANCES)
 
-        if stop_on_contact_forces is not None:
+        if stop_on_contact_forces is not None or stop_on_contact_torques is not None:
+            if stop_on_contact_forces is None:
+                stop_on_contact_forces = []
+            if stop_on_contact_torques is None:
+                stop_on_contact_torques = []
             skill.add_contact_termination_params(FC.DEFAULT_TERM_BUFFER_TIME,
                                                  stop_on_contact_forces,
-                                                 stop_on_contact_forces)
+                                                 stop_on_contact_torques)
         else:
-            skill.add_termination_params([FC.DEFAULT_TERM_BUFFER_TIME])
+            skill.add_pose_threshold_params(FC.DEFAULT_TERM_BUFFER_TIME, FC.DEFAULT_POSE_THRESHOLDS)
 
-        skill.add_goal_pose_with_matrix(duration,
-                                        tool_base_pose.matrix.T.flatten().tolist())
+        skill.add_goal_pose(duration, tool_base_pose)
         goal = skill.create_goal()
 
         self._send_goal(goal,
@@ -350,107 +292,43 @@ class FrankaArm:
     def goto_pose_delta(self,
                         delta_tool_pose,
                         duration=3,
-                        stop_on_contact_forces=None,
-                        cartesian_impedances=None,
-                        ignore_errors=True,
-                        ignore_virtual_walls=False,
+                        use_impedance=True,
                         skill_desc='',
-                        skill_type=SkillType.ImpedanceControlSkill):
-        '''Commands Arm to the given delta pose via linear interpolation and
-        uses impedance control.
+                        stop_on_contact_forces=None,
+                        stop_on_contact_torques=None,
+                        cartesian_impedances=None,
+                        joint_impedances=None,
+                        ignore_errors=True,
+                        ignore_virtual_walls=False):
+        '''Commands Arm to the given delta pose via min jerk interpolation
 
         Args:
             delta_tool_pose (RigidTransform) : Delta pose in tool frame
             duration (float) : How much time this robot motion should take
-            stop_on_contact_forces (list): List of 6 floats corresponding to
-                force limits on translation (xyz) and rotation about (xyz) axes.
-                Default is None. If None then will not stop on contact.
-            ignore_errors : function ignores errors by default. If False, errors
-                and some exceptions can be thrown
+            use_impedance (boolean) : Function uses our impedance controller 
+                by default. If False, uses the Franka cartesian controller.
             skill_desc (string) : Skill description to use for logging on
                 control-pc.
-        '''
-        return self._goto_pose_delta(
-                delta_tool_pose,
-                duration=duration,
-                stop_on_contact_forces=stop_on_contact_forces,
-                cartesian_impedances=cartesian_impedances,
-                ignore_errors=ignore_errors,
-                ignore_virtual_walls=ignore_virtual_walls,
-                skill_desc=skill_desc,
-                skill_type=skill_type)
-
-    def goto_pose_delta_with_impedance_control(self,
-                                               delta_tool_pose,
-                                               duration=3,
-                                               stop_on_contact_forces=None,
-                                               cartesian_impedances=None,
-                                               ignore_errors=True,
-                                               ignore_virtual_walls=False,
-                                               skill_desc=''):
-        return self._goto_pose_delta(
-                delta_tool_pose,
-                duration=duration,
-                stop_on_contact_forces=stop_on_contact_forces,
-                cartesian_impedances=cartesian_impedances,
-                ignore_errors=ignore_errors,
-                ignore_virtual_walls=ignore_virtual_walls,
-                skill_desc=skill_desc,
-                skill_type=SkillType.ImpedanceControlSkill)
-
-    def goto_pose_delta_with_cartesian_control(self,
-                                               delta_tool_pose,
-                                               duration=3,
-                                               stop_on_contact_forces=None,
-                                               cartesian_impedances=None,
-                                               ignore_errors=True,
-                                               ignore_virtual_walls=False,
-                                               skill_desc=''):
-        '''Commands Arm to the given delta pose via linear interpolation using
-        franka's internal cartesian control.
-
-        Args:
-            delta_tool_pose (RigidTransform) : Delta pose in tool frame
-            duration (float) : How much time this robot motion should take
             stop_on_contact_forces (list): List of 6 floats corresponding to
                 force limits on translation (xyz) and rotation about (xyz) axes.
                 Default is None. If None then will not stop on contact.
-            cartesian_impedance (list): List of 6 floats. Used to set the cartesian
-                impedance of Franka's internal cartesian controller. 
-                List of (x, y, z, roll, pitch, yaw)
-            ignore_errors : function ignores errors by default. If False, errors
-                and some exceptions can be thrown
-            skill_desc (string) : Skill description to use for logging on
-                control-pc.
-        '''
-        return self._goto_pose_delta(
-                delta_tool_pose,
-                duration=duration,
-                stop_on_contact_forces=stop_on_contact_forces,
-                cartesian_impedances=cartesian_impedances,
-                ignore_errors=ignore_errors,
-                ignore_virtual_walls=ignore_virtual_walls,
-                skill_desc=skill_desc,
-                skill_type=SkillType.CartesianPoseSkill)
+            stop_on_contact_torques (list): List of 7 floats corresponding to
+                torque limits on each joint. Default is None. If None then will
+                not stop on contact.
+            cartesian impedances (list): List of 6 floats corresponding to
+                impedances on translation (xyz) and rotation about (xyz) axes.
+                Default is None. If None then will use default impedances.
+            joint impedances (list): List of 7 floats corresponding to
+                impedances on each joint. This is used when use_impedance is 
+                False. Default is None. If None then will use default impedances.
+            ignore_errors (boolean) : Function ignores errors by default. 
+                If False, errors and some exceptions can be thrown.
+            ignore_virtual_walls (boolean): Function checks for collisions with 
+                virtual walls by default. If False, the robot no longer checks,
+                which may be dangerous.
 
-    def _goto_pose_delta(self,
-                        delta_tool_pose,
-                        duration=3,
-                        stop_on_contact_forces=None,
-                        cartesian_impedances=None,
-                        ignore_errors=True,
-                        ignore_virtual_walls=False,
-                        skill_desc='',
-                        skill_type=SkillType.ImpedanceControlSkill):
-        '''Commands Arm to the given delta pose via linear interpolation
-
-        Args:
-            delta_tool_pose (RigidTransform) : Delta pose in tool frame
-            duration (float) : How much time this robot motion should take
-            stop_on_contact_forces (list): List of 6 floats corresponding to
-                force limits on translation (xyz) and rotation about (xyz) axes.
-                Default is None. If None then will not stop on contact.
         '''
+        
         if delta_tool_pose.from_frame != 'franka_tool' \
                 or delta_tool_pose.to_frame != 'franka_tool':
             raise ValueError('delta_pose has invalid frame names! ' \
@@ -471,21 +349,32 @@ class FrankaArm:
 
         skill.add_initial_sensor_values(FC.EMPTY_SENSOR_VALUES)
 
-        if cartesian_impedances is not None:
-            skill.add_cartesian_impedances(cartesian_impedances)
+        if use_impedance:
+            if cartesian_impedances is not None:
+                skill.add_cartesian_impedances(cartesian_impedances)
+            else:
+                skill.add_cartesian_impedances(FC.DEFAULT_TRANSLATIONAL_STIFFNESSES + FC.DEFAULT_ROTATIONAL_STIFFNESSES)
         else:
-            skill.add_feedback_controller_params(FC.DEFAULT_TORQUE_CONTROLLER_PARAMS)
+            if joint_impedances is not None:
+                skill.add_internal_impedances([], joint_impedances)
+            elif cartesian_impedances is not None:
+                skill.add_internal_impedances(cartesian_impedances, [])
+            else:
+                skill.add_internal_impedances([], FC.DEFAULT_JOINT_IMPEDANCES)
         
-        if stop_on_contact_forces is not None:
+        if stop_on_contact_forces is not None or stop_on_contact_torques is not None:
+            if stop_on_contact_forces is None:
+                stop_on_contact_forces = []
+            if stop_on_contact_torques is None:
+                stop_on_contact_torques = []
             skill.add_contact_termination_params(FC.DEFAULT_TERM_BUFFER_TIME,
                                                  stop_on_contact_forces,
-                                                 stop_on_contact_forces)
+                                                 stop_on_contact_torques)
         else:
-            skill.add_termination_params([FC.DEFAULT_TERM_BUFFER_TIME])
+            skill.add_pose_threshold_params(FC.DEFAULT_TERM_BUFFER_TIME, FC.DEFAULT_POSE_THRESHOLDS)
 
-        skill.add_relative_motion_with_quaternion(duration,
-                                                  delta_tool_base_pose.translation.tolist(),
-                                                  delta_tool_base_pose.quaternion.tolist())
+        skill.add_goal_pose(duration, delta_tool_base_pose)
+
         goal = skill.create_goal()
 
         self._send_goal(goal,
@@ -495,133 +384,59 @@ class FrankaArm:
     def goto_joints(self,
                     joints,
                     duration=5,
+                    use_impedance=False,
+                    skill_desc='',
                     stop_on_contact_forces=None,
+                    stop_on_contact_torques=None,
+                    cartesian_impedances=None,
                     joint_impedances=None,
                     k_gains=None,
                     d_gains=None,
                     ignore_errors=True,
-                    ignore_virtual_walls=False,
-                    skill_desc='',
-                    skill_type=SkillType.JointPositionSkill):
+                    ignore_virtual_walls=False):
         '''Commands Arm to the given joint configuration
 
         Args:
             joints (list): A list of 7 numbers that correspond to joint angles
                            in radians
             duration (float): How much time this robot motion should take
-            joint_impedances (list): A list of 7 numbers that represent the desired
-                                     joint impedances for the internal robot joint
-                                     controller
+            use_impedance (boolean) : Function uses the Franka joint impedance  
+                controller by default. If True, uses our joint impedance controller.
+            skill_desc (string) : Skill description to use for logging on
+                control-pc.
+            stop_on_contact_forces (list): List of 6 floats corresponding to
+                force limits on translation (xyz) and rotation about (xyz) axes.
+                Default is None. If None then will not stop on contact.
+            stop_on_contact_torques (list): List of 7 floats corresponding to
+                torque limits on each joint. Default is None. If None then will
+                not stop on contact.
+            cartesian impedances (list): List of 6 floats corresponding to
+                impedances on translation (xyz) and rotation about (xyz) axes.
+                Default is None. If None then will use default impedances.
+            joint impedances (list): List of 7 floats corresponding to
+                impedances on each joint. This is used when use_impedance is 
+                False. Default is None. If None then will use default impedances.
+            k_gains (list): List of 7 floats corresponding to the k_gains on each joint
+                for our impedance controller. This is used when use_impedance is 
+                True. Default is None. If None then will use default k_gains.
+            d_gains (list): List of 7 floats corresponding to the d_gains on each joint
+                for our impedance controller. This is used when use_impedance is 
+                True. Default is None. If None then will use default d_gains.
+            ignore_errors (boolean) : Function ignores errors by default. 
+                If False, errors and some exceptions can be thrown.
+            ignore_virtual_walls (boolean): Function checks for collisions with 
+                virtual walls by default. If False, the robot no longer checks,
+                which may be dangerous.
 
         Raises:
             ValueError: If is_joints_reachable(joints) returns False
         '''
 
-        return self._goto_joints(
-                joints,
-                duration=duration,
-                stop_on_contact_forces=stop_on_contact_forces,
-                joint_impedances=joint_impedances,
-                k_gains=k_gains,
-                d_gains=d_gains,
-                ignore_errors=ignore_errors,
-                ignore_virtual_walls=ignore_virtual_walls,
-                skill_desc=skill_desc,
-                skill_type=skill_type)
+        if use_impedance:
+            skill_type=SkillType.ImpedanceControlSkill
+        else:
+            skill_type=SkillType.JointPositionSkill
 
-    def goto_joints_with_joint_control(self,
-                                       joints,
-                                       duration=5,
-                                       stop_on_contact_forces=None,
-                                       joint_impedances=None,
-                                       ignore_errors=True,
-                                       ignore_virtual_walls=False,
-                                       skill_desc=''):
-        '''Commands Arm to the given joint configuration
-
-        Args:
-            joints (list): A list of 7 numbers that correspond to joint angles
-                           in radians
-            duration (float): How much time this robot motion should take
-            joint_impedances (list): A list of 7 numbers that represent the desired
-                                     joint impedances for the internal robot joint
-                                     controller
-
-        Raises:
-            ValueError: If is_joints_reachable(joints) returns False
-        '''
-
-        return self._goto_joints(
-                joints,
-                duration=duration,
-                stop_on_contact_forces=stop_on_contact_forces,
-                joint_impedances=joint_impedances,
-                k_gains=None,
-                d_gains=None,
-                ignore_errors=ignore_errors,
-                ignore_virtual_walls=ignore_virtual_walls,
-                skill_desc=skill_desc,
-                skill_type=SkillType.JointPositionSkill)
-
-    def goto_joints_with_impedance_control(self,
-                                           joints,
-                                           duration=5,
-                                           stop_on_contact_forces=None,
-                                           k_gains=None,
-                                           d_gains=None,
-                                           ignore_errors=True,
-                                           ignore_virtual_walls=False,
-                                           skill_desc=''):
-        '''Commands Arm to the given joint configuration
-
-        Args:
-            joints (list): A list of 7 numbers that correspond to joint angles
-                           in radians
-            duration (float): How much time this robot motion should take
-            joint_impedances (list): A list of 7 numbers that represent the desired
-                                     joint impedances for the internal robot joint
-                                     controller
-
-        Raises:
-            ValueError: If is_joints_reachable(joints) returns False
-        '''
-
-        return self._goto_joints(
-                joints,
-                duration=duration,
-                stop_on_contact_forces=stop_on_contact_forces,
-                joint_impedances=None,
-                k_gains=k_gains,
-                d_gains=d_gains,
-                ignore_errors=ignore_errors,
-                ignore_virtual_walls=ignore_virtual_walls,
-                skill_desc=skill_desc,
-                skill_type=SkillType.ImpedanceControlSkill)
-
-    def _goto_joints(self,
-                     joints,
-                     duration=5,
-                     stop_on_contact_forces=None,
-                     joint_impedances=None,
-                     k_gains=None,
-                     d_gains=None,
-                     ignore_errors=True,
-                     ignore_virtual_walls=False,
-                     skill_desc='',
-                     skill_type=SkillType.JointPositionSkill):
-        '''Commands Arm to the given joint configuration
-
-        Args:
-            joints (list): A list of 7 numbers that correspond to joint angles
-                           in radians
-            duration (float): How much time this robot motion should take
-            joint_impedances (list): A list of 7 numbers that represent the desired
-                                     joint impedances for the internal robot joint
-                                     controller
-
-        Raises:
-            ValueError: If is_joints_reachable(joints) returns False
-        '''
         if not self.is_joints_reachable(joints):
             raise ValueError('Joints not reachable!')
         if not ignore_virtual_walls and self.is_joints_in_collision_with_boxes(joints):
@@ -631,22 +446,29 @@ class FrankaArm:
 
         skill.add_initial_sensor_values(FC.EMPTY_SENSOR_VALUES)
 
-        if joint_impedances is not None:
-            skill.add_joint_impedances(joint_impedances)
-        elif k_gains is not None and d_gains is not None:
-            skill.add_joint_gains(k_gains, d_gains)
-        else:
-            if(skill_type == SkillType.ImpedanceControlSkill):
-                skill.add_joint_gains(FC.DEFAULT_K_GAINS, FC.DEFAULT_D_GAINS)
+        if use_impedance:
+            if k_gains is not None and d_gains is not None:
+                skill.add_joint_gains(k_gains, d_gains)
             else:
-                skill.add_feedback_controller_params([])
+                skill.add_joint_gains(FC.DEFAULT_K_GAINS, FC.DEFAULT_D_GAINS)
+        else:
+            if joint_impedances is not None:
+                skill.add_internal_impedances([], joint_impedances)
+            elif cartesian_impedances is not None:
+                skill.add_internal_impedances(cartesian_impedances, [])
+            else:
+                skill.add_internal_impedances([], FC.DEFAULT_JOINT_IMPEDANCES)
 
-        if stop_on_contact_forces is not None:
+        if stop_on_contact_forces is not None or stop_on_contact_torques is not None:
+            if stop_on_contact_forces is None:
+                stop_on_contact_forces = []
+            if stop_on_contact_torques is None:
+                stop_on_contact_torques = []
             skill.add_contact_termination_params(FC.DEFAULT_TERM_BUFFER_TIME,
                                                  stop_on_contact_forces,
-                                                 stop_on_contact_forces)
+                                                 stop_on_contact_torques)
         else:
-            skill.add_termination_params([FC.DEFAULT_TERM_BUFFER_TIME])
+            skill.add_joint_threshold_params(FC.DEFAULT_TERM_BUFFER_TIME, FC.DEFAULT_JOINT_THRESHOLDS)
 
         skill.add_goal_joints(duration, joints)
         goal = skill.create_goal()
@@ -866,15 +688,18 @@ class FrankaArm:
                         cb=lambda x: skill.feedback_callback(x),
                         ignore_errors=ignore_errors)
 
-    def goto_gripper(self, width, speed=0.04, force=None, ignore_errors=True):
+    def goto_gripper(self, width, grasp=False, speed=0.04, force=0.0, ignore_errors=True):
         '''Commands gripper to goto a certain width, applying up to the given
             (default is max) force if needed
 
         Args:
             width (float): A float in the unit of meters
+            grasp (boolean): Flag that signals whether to grasp
             speed (float): Gripper operation speed in meters per sec
             force (float): Max gripper force to apply in N. Default to None,
                 which gives acceptable force
+            ignore_errors (boolean) : Function ignores errors by default. 
+                If False, errors and some exceptions can be thrown.
         Raises:
             ValueError: If width is less than 0 or greater than TODO(jacky)
                 the maximum gripper opening
@@ -882,10 +707,7 @@ class FrankaArm:
         skill = GripperSkill()
         skill.add_initial_sensor_values(FC.EMPTY_SENSOR_VALUES)
 
-        if force is not None:
-            skill.add_trajectory_params([width, speed, force])
-        else:
-            skill.add_trajectory_params([width, speed])
+        skill.add_gripper_params(grasp, width, speed, force)
 
         goal = skill.create_goal()
 
@@ -1153,7 +975,7 @@ class FrankaArm:
     def close_gripper(self, grasp=True):
         '''Closes the gripper as much as possible
         '''
-        self.goto_gripper(FC.GRIPPER_WIDTH_MIN,
+        self.goto_gripper(FC.GRIPPER_WIDTH_MIN, grasp=grasp,
                           force=FC.GRIPPER_MAX_FORCE if grasp else None)
 
     def run_guide_mode(self, duration=100):

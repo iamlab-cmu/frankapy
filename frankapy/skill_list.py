@@ -5,8 +5,10 @@ roslib.load_manifest('franka_action_lib_msgs')
 import rospy
 import actionlib
 import numpy as np
+from autolab_core import RigidTransform
 from .iam_robolib_common_definitions import *
 from .franka_constants import FrankaConstants as FC
+from .proto_utils import *
 
 from franka_action_lib_msgs.msg import ExecuteSkillAction, ExecuteSkillGoal
 
@@ -19,7 +21,7 @@ class BaseSkill(object):
                  sensor_topics,
                  trajectory_generator_type,
                  feedback_controller_type,
-                 termination_type,
+                 termination_handler_type,
                  timer_type):
         self._skill_type = skill_type
         self._skill_desc = skill_desc
@@ -28,23 +30,23 @@ class BaseSkill(object):
         self._sensor_topics = sensor_topics
         self._trajectory_generator_type = trajectory_generator_type
         self._feedback_controller_type = feedback_controller_type
-        self._termination_type = termination_type
+        self._termination_handler_type = termination_handler_type
         self._timer_type = timer_type
 
         self._sensor_value_sizes = 0
         self._initial_sensor_values = []
 
         # Add trajectory params
-        self._trajectory_generator_params = []
-        self._num_trajectory_generator_params = 0
+        self._trajectory_generator_param_data = []
+        self._trajectory_generator_param_data_size = 0
 
         # Add feedback controller params
-        self._feedback_controller_params = []
-        self._num_feedback_controller_params = 0
+        self._feedback_controller_param_data = []
+        self._feedback_controller_param_data_size = 0
 
         # Add termination params
-        self._termination_params = []
-        self._num_termination_params = 0
+        self._termination_handler_param_data = []
+        self._termination_handler_param_data_size = 0
 
         # Add timer params
         self._timer_params = []
@@ -61,96 +63,55 @@ class BaseSkill(object):
         self._sensor_value_sizes = [len(values)]
 
     def add_trajectory_params(self, params):
-        assert type(params) is list, \
-                "Invalid type of params provided {}".format(params)
-        self._trajectory_generator_params = params
-        self._num_trajectory_generator_params = len(params)
+        self._trajectory_generator_param_data = params
+        self._trajectory_generator_param_data_size = len(params)
 
     def add_feedback_controller_params(self, params):
-        self._feedback_controller_params = params
-        self._num_feedback_controller_params = len(params)
+        self._feedback_controller_param_data = params
+        self._feedback_controller_param_data_size = len(params)
 
     def add_termination_params(self, params):
-        self._termination_params = params
-        self._num_termination_params = len(params)
+        self._termination_handler_param_data = params
+        self._termination_handler_param_data_size = len(params)
 
     def add_timer_params(self, params):
         self._timer_params = params
         self._num_timer_params = len(params)
 
-    def add_goal_pose_with_matrix(self, time, matrix):
-        assert type(time) is float or type(time) is int, \
-                "Incorrect time type. Should be int or float."
-        assert time >= 0, "Incorrect time. Should be non negative."
-        assert type(matrix) is list, "Incorrect matrix type. Should be list."
-        assert len(matrix) == 16, "Incorrect matrix len. Should be 16."
-        self.add_trajectory_params([time] + matrix)
+    
 
-    def add_goal_pose_with_quaternion(self, time, position, quaternion):
-        assert type(time) is float or type(time) is int, \
-                "Incorrect time type. Should be int or float."
-        assert time >= 0, "Incorrect time. Should be non negative."
-        assert type(position) is list, "Incorrect position type. Should be list."
-        assert type(quaternion) is list, "Incorrect quaternion type. Should be list."
-        assert len(position) == 3, "Incorrect position length. Should be 3."
-        assert len(quaternion) == 4, "Incorrect quaternion length. Should be 4."
-        self.add_trajectory_params([time] + position + quaternion)
-
-    def add_relative_motion_with_matrix(self, time, matrix):
-        assert type(time) is float or type(time) is int, \
-                "Incorrect time type. Should be int or float."
-        assert time >= 0, "Incorrect time. Should be non negative."
-        assert type(matrix) is list, "Incorrect matrix type. Should be list."
-        assert len(matrix) == 16, "Incorrect matrix len. Should be 16."
-        self.add_trajectory_params([time] + matrix)
-
-    def add_relative_motion_with_quaternion(self, time, position, quaternion):
-        assert type(time) is float or type(time) is int, \
-                "Incorrect time type. Should be int or float."
-        assert time >= 0, "Incorrect time. Should be non negative."
-        assert type(position) is list, "Incorrect position type. Should be list."
-        assert type(quaternion) is list, "Incorrect quaternion type. Should be list."
-        assert len(position) == 3, "Incorrect position length. Should be 3."
-        assert len(quaternion) == 4, "Incorrect quaternion length. Should be 4."
-        self.add_trajectory_params([time] + position + quaternion)
-
-    def add_goal_joints(self, time, joints):
-        assert type(time) is float or type(time) is int,\
-                "Incorrect time type. Should be int or float."
-        assert time >= 0, "Incorrect time. Should be non negative."
-        assert type(joints) is list, "Incorrect joints type. Should be list."
-        assert len(joints) == 7, "Incorrect joints len. Should be 7."
-        self.add_trajectory_params([time] + joints)
-
-    def add_run_time(self, time):
-        assert type(time) is float or type(time) is int, \
-                "Incorrect time type. Should be int or float."
-        assert time >= 0, "Incorrect time. Should be non negative."
-        self.add_trajectory_params([time])
+    ## Feedback Controllers
 
     def add_cartesian_impedances(self, cartesian_impedances):
         assert type(cartesian_impedances) is list, \
                 "Incorrect cartesian impedances type. Should be list."
         assert len(cartesian_impedances) == 6, \
                 "Incorrect cartesian impedances len. Should be 6."
-        if(self._skill_type == SkillType.CartesianPoseSkill):
-            self._feedback_controller_type = \
-                    FeedbackControllerType.SetInternalImpedanceFeedbackController
+        assert self._skill_type == SkillType.ImpedanceControlSkill, \
+                "Incorrect skill type. Should be ImpedanceControlSkill."
+        
+        cartesian_impedance_feedback_controller_msg_proto = \
+            make_cartesian_impedance_feedback_controller_msg_proto(cartesian_impedances[:3], 
+                                                                   cartesian_impedances[3:])
 
-        self.add_feedback_controller_params(cartesian_impedances)
+        self.add_feedback_controller_params(cartesian_impedance_feedback_controller_msg_proto.SerializeToString())
 
-    def add_joint_impedances(self, joint_impedances):
+    def add_internal_impedances(self, cartesian_impedances, joint_impedances):
+        assert type(cartesian_impedances) is list, \
+                "Incorrect joint impedances type. Should be list."
         assert type(joint_impedances) is list, \
                 "Incorrect joint impedances type. Should be list."
-        assert len(joint_impedances) == 7, \
-                "Incorrect joint impedances len. Should be 7."
-        assert self._skill_type == SkillType.JointPositionSkill, \
-                "Incorrect skill type. Should be JointPositionSkill"
+        assert len(cartesian_impedances) == 0 or len(cartesian_impedances) == 6, \
+                "Incorrect cartesian impedances len. Should be 0 or 6."
+        assert len(joint_impedances) == 0 or len(joint_impedances) == 7, \
+                "Incorrect joint impedances len. Should be 0 or 7."
+        assert self._skill_type == SkillType.CartesianPoseSkill or self._skill_type == SkillType.JointPositionSkill, \
+                "Incorrect skill type. Should be CartesianPoseSkill or JointPositionSkill."
 
-        self._feedback_controller_type = \
-                FeedbackControllerType.SetInternalImpedanceFeedbackController
+        internal_feedback_controller_msg_proto = \
+            make_internal_feedback_controller_msg_proto(cartesian_impedances, joint_impedances)
 
-        self.add_feedback_controller_params(joint_impedances)
+        self.add_feedback_controller_params(internal_feedback_controller_msg_proto.SerializeToString())
 
     def add_joint_gains(self, k_gains, d_gains):
         assert type(k_gains) is list, "Incorrect k_gains type. Should be list."
@@ -160,36 +121,118 @@ class BaseSkill(object):
         assert self._skill_type == SkillType.ImpedanceControlSkill, \
                 "Incorrect skill type. Should be ImpedanceControlSkill"
 
-        self.add_feedback_controller_params(k_gains + d_gains)
+        joint_feedback_controller_msg_proto = \
+            make_joint_feedback_controller_msg_proto(k_gains, d_gains)
+
+        self.add_feedback_controller_params(joint_feedback_controller_msg_proto.SerializeToString())
+
+    ## Termination Handlers
 
     def add_contact_termination_params(self, buffer_time,
-                                       lower_force_thresholds_accel,
-                                       lower_force_thresholds_nominal):
+                                       force_thresholds,
+                                       torque_thresholds):
         assert type(buffer_time) is float or type(buffer_time) is int, \
                 "Incorrect buffer time type. Should be int or float."
         assert buffer_time >= 0, "Incorrect buffer time. Should be non negative."
-        assert type(lower_force_thresholds_accel) is list, \
-                "Incorrect lower force thresholds accel type. Should be list."
-        assert type(lower_force_thresholds_nominal) is list, \
-                "Incorrect lower force thresholds nominal type. Should be list."
-        assert len(lower_force_thresholds_accel) == 6, \
-                "Incorrect lower force thresholds accel length. Should be 6."
-        assert len(lower_force_thresholds_nominal) == 6, \
-                "Incorrect lowern force thresholds nominal length. Should be 6."
+        assert type(force_thresholds) is list, \
+                "Incorrect force thresholds type. Should be list."
+        assert type(torque_thresholds) is list, \
+                "Incorrect torque thresholds type. Should be list."
+        assert len(force_thresholds) == 0 or len(force_thresholds) == 6, \
+                "Incorrect force thresholds length. Should be 0 or 6."
+        assert len(torque_thresholds) == 0 or len(torque_thresholds) == 7, \
+                "Incorrect torque thresholds length. Should be 0 or 7."
 
-        self._termination_type = TerminationHandlerType.ContactTerminationHandler
+        self._termination_handler_type = TerminationHandlerType.ContactTerminationHandler
 
-        params = [buffer_time] \
-                + FC.DEFAULT_LOWER_TORQUE_THRESHOLDS_ACCEL \
-                + FC.DEFAULT_UPPER_TORQUE_THRESHOLDS_ACCEL \
-                + FC.DEFAULT_LOWER_TORQUE_THRESHOLDS_NOMINAL \
-                + FC.DEFAULT_UPPER_TORQUE_THRESHOLDS_NOMINAL \
-                + lower_force_thresholds_accel \
-                + FC.DEFAULT_UPPER_FORCE_THRESHOLDS_ACCEL \
-                + lower_force_thresholds_nominal \
-                + FC.DEFAULT_UPPER_FORCE_THRESHOLDS_NOMINAL
+        contact_termination_handler_msg_proto = \
+            make_contact_termination_handler_msg_proto(buffer_time, force_thresholds,
+                                                       torque_thresholds)
 
-        self.add_termination_params(params)
+        self.add_termination_params(contact_termination_handler_msg_proto.SerializeToString())
+
+    def add_joint_threshold_params(self, buffer_time, joint_thresholds):
+        assert type(buffer_time) is float or type(buffer_time) is int, \
+                "Incorrect buffer time type. Should be int or float."
+        assert buffer_time >= 0, "Incorrect buffer time. Should be non negative."
+        assert type(joint_thresholds) is list, \
+                "Incorrect joint thresholds type. Should be list."
+        assert len(joint_thresholds) == 0 or len(joint_thresholds) == 7, \
+                "Incorrect joint thresholds length. Should be 0 or 7."
+
+        joint_threshold_msg_proto = make_joint_threshold_msg_proto(buffer_time, joint_thresholds)
+
+        self.add_termination_params(joint_threshold_msg_proto.SerializeToString())
+
+    def add_pose_threshold_params(self, buffer_time, pose_thresholds):
+        assert type(buffer_time) is float or type(buffer_time) is int, \
+                "Incorrect buffer time type. Should be int or float."
+        assert buffer_time >= 0, "Incorrect buffer time. Should be non negative."
+        assert type(pose_thresholds) is list, \
+                "Incorrect pose thresholds type. Should be list."
+        assert len(pose_thresholds) == 0 or len(pose_thresholds) == 6, \
+                "Incorrect pose thresholds length. Should be 0 or 6."
+
+        pose_threshold_msg_proto = make_pose_threshold_msg_proto(buffer_time, pose_thresholds)
+
+        self.add_termination_params(pose_threshold_msg_proto.SerializeToString())
+
+    def add_time_termination_params(self, buffer_time):
+        assert type(buffer_time) is float or type(buffer_time) is int, \
+                "Incorrect buffer time type. Should be int or float."
+        assert buffer_time >= 0, "Incorrect buffer time. Should be non negative."
+
+        time_termination_handler_msg_proto = make_time_termination_handler_msg_proto(buffer_time)
+
+        self.add_termination_params(time_termination_handler_msg_proto.SerializeToString())
+
+    ## Trajectory Generators
+
+    def add_gripper_params(self, grasp, width, speed, force):
+        assert type(grasp) is bool, \
+                "Incorrect grasp type. Should be bool."
+        assert type(width) is float or type(width) is int, \
+                "Incorrect width type. Should be int or float."
+        assert type(speed) is float or type(speed) is int, \
+                "Incorrect speed type. Should be int or float."
+        assert type(force) is float or type(force) is int, \
+                "Incorrect force type. Should be int or float."
+        assert width >= 0, "Incorrect width. Should be non negative."
+        assert speed >= 0, "Incorrect speed. Should be non negative."
+        assert force >= 0, "Incorrect force. Should be non negative."
+
+        gripper_trajectory_generator_msg_proto = make_gripper_trajectory_generator_msg_proto(grasp, width, speed, force)
+
+        self.add_trajectory_params(gripper_trajectory_generator_msg_proto.SerializeToString())
+
+    def add_goal_pose(self, time, goal_pose):
+        assert type(time) is float or type(time) is int, \
+                "Incorrect time type. Should be int or float."
+        assert time >= 0, "Incorrect time. Should be non negative."
+        assert type(goal_pose) is RigidTransform, "Incorrect goal_pose type. Should be RigidTransform."
+
+        pose_trajectory_generator_msg_proto = make_pose_trajectory_generator_msg_proto(time, goal_pose)
+
+        self.add_trajectory_params(pose_trajectory_generator_msg_proto.SerializeToString())
+
+    def add_goal_joints(self, time, joints):
+        assert type(time) is float or type(time) is int,\
+                "Incorrect time type. Should be int or float."
+        assert time >= 0, "Incorrect time. Should be non negative."
+        assert type(joints) is list, "Incorrect joints type. Should be list."
+        assert len(joints) == 7, "Incorrect joints len. Should be 7."
+
+        joint_trajectory_generator_msg_proto = make_joint_trajectory_generator_msg_proto(time, joints)
+
+        self.add_trajectory_params(joint_trajectory_generator_msg_proto.SerializeToString())
+
+    def add_run_time(self, time):
+        assert type(time) is float or type(time) is int, \
+                "Incorrect time type. Should be int or float."
+        assert time >= 0, "Incorrect time. Should be non negative."
+
+        run_time_msg_proto = make_run_time_msg_proto(time)
+        self.add_trajectory_params(run_time_msg_proto.SerializeToString())
 
     # Add checks for these
     def create_goal(self):
@@ -201,16 +244,16 @@ class BaseSkill(object):
         goal.sensor_topics = self._sensor_topics
         goal.initial_sensor_values = self._initial_sensor_values
         goal.sensor_value_sizes = self._sensor_value_sizes
-        goal.traj_gen_type = self._trajectory_generator_type
-        goal.traj_gen_params = self._trajectory_generator_params
-        goal.num_traj_gen_params = self._num_trajectory_generator_params
+        goal.trajectory_generator_type = self._trajectory_generator_type
+        goal.trajectory_generator_param_data = self._trajectory_generator_param_data
+        goal.trajectory_generator_param_data_size = self._trajectory_generator_param_data_size
         goal.feedback_controller_type = self._feedback_controller_type
-        goal.feedback_controller_params = self._feedback_controller_params
-        goal.num_feedback_controller_params = \
-                self._num_feedback_controller_params
-        goal.termination_type = self._termination_type
-        goal.termination_params = self._termination_params
-        goal.num_termination_params = self._num_termination_params
+        goal.feedback_controller_param_data = self._feedback_controller_param_data
+        goal.feedback_controller_param_data_size = \
+                self._feedback_controller_param_data_size
+        goal.termination_handler_type = self._termination_handler_type
+        goal.termination_handler_param_data = self._termination_handler_param_data
+        goal.termination_handler_param_data_size = self._termination_handler_param_data_size
         goal.timer_type = self._timer_type
         goal.timer_params = self._timer_params
         goal.num_timer_params = self._num_timer_params
@@ -250,7 +293,7 @@ class JointDMPSkill(BaseSkill):
                   0,
                   ['/franka_robot/camera'],
                   TrajectoryGeneratorType.JointDmpTrajectoryGenerator,
-                  FeedbackControllerType.NoopFeedbackController,
+                  FeedbackControllerType.SetInternalImpedanceFeedbackController,
                   TerminationHandlerType.TimeTerminationHandler,
                   1)
         elif skill_type == SkillType.ImpedanceControlSkill:
@@ -272,7 +315,7 @@ class JointDMPSkill(BaseSkill):
                   0,
                   ['/franka_robot/camera'],
                   TrajectoryGeneratorType.JointDmpTrajectoryGenerator,
-                  FeedbackControllerType.NoopFeedbackController,
+                  FeedbackControllerType.SetInternalImpedanceFeedbackController,
                   TerminationHandlerType.TimeTerminationHandler,
                   1)
 
@@ -290,7 +333,7 @@ class PoseDMPSkill(BaseSkill):
                   0,
                   ['/franka_robot/camera'],
                   TrajectoryGeneratorType.PoseDmpTrajectoryGenerator,
-                  FeedbackControllerType.NoopFeedbackController,
+                  FeedbackControllerType.SetInternalImpedanceFeedbackController,
                   TerminationHandlerType.TimeTerminationHandler,
                   1)
         elif skill_type == SkillType.ImpedanceControlSkill:
@@ -312,7 +355,7 @@ class PoseDMPSkill(BaseSkill):
                   0,
                   ['/franka_robot/camera'],
                   TrajectoryGeneratorType.PoseDmpTrajectoryGenerator,
-                  FeedbackControllerType.NoopFeedbackController,
+                  FeedbackControllerType.SetInternalImpedanceFeedbackController,
                   TerminationHandlerType.TimeTerminationHandler,
                   1)
 
@@ -330,7 +373,7 @@ class GoalPoseDMPSkill(BaseSkill):
                   0,
                   ['/franka_robot/camera'],
                   TrajectoryGeneratorType.GoalPoseDmpTrajectoryGenerator,
-                  FeedbackControllerType.NoopFeedbackController,
+                  FeedbackControllerType.SetInternalImpedanceFeedbackController,
                   TerminationHandlerType.TimeTerminationHandler,
                   1)
         elif skill_type == SkillType.ImpedanceControlSkill:
@@ -352,7 +395,7 @@ class GoalPoseDMPSkill(BaseSkill):
                   0,
                   ['/franka_robot/camera'],
                   TrajectoryGeneratorType.GoalPoseDmpTrajectoryGenerator,
-                  FeedbackControllerType.NoopFeedbackController,
+                  FeedbackControllerType.SetInternalImpedanceFeedbackController,
                   TerminationHandlerType.TimeTerminationHandler,
                   1)
     
@@ -370,7 +413,7 @@ class GoToJointsSkill(BaseSkill):
                   0,
                   ['/franka_robot/camera'],
                   TrajectoryGeneratorType.MinJerkJointTrajectoryGenerator,
-                  FeedbackControllerType.NoopFeedbackController,
+                  FeedbackControllerType.SetInternalImpedanceFeedbackController,
                   TerminationHandlerType.FinalJointTerminationHandler,
                   1)
         elif skill_type == SkillType.ImpedanceControlSkill:
@@ -392,7 +435,7 @@ class GoToJointsSkill(BaseSkill):
                   0,
                   ['/franka_robot/camera'],
                   TrajectoryGeneratorType.MinJerkJointTrajectoryGenerator,
-                  FeedbackControllerType.NoopFeedbackController,
+                  FeedbackControllerType.SetInternalImpedanceFeedbackController,
                   TerminationHandlerType.FinalJointTerminationHandler,
                   1)
     
@@ -492,7 +535,7 @@ class GoToPoseSkill(BaseSkill):
                   0,
                   ['/franka_robot/camera'],
                   TrajectoryGeneratorType.MinJerkPoseTrajectoryGenerator,
-                  FeedbackControllerType.NoopFeedbackController,
+                  FeedbackControllerType.SetInternalImpedanceFeedbackController,
                   TerminationHandlerType.FinalPoseTerminationHandler,
                   1)
         else:
@@ -532,7 +575,7 @@ class GoToPoseDeltaSkill(BaseSkill):
                   0,
                   ['/franka_robot/camera'],
                   TrajectoryGeneratorType.RelativeMinJerkPoseTrajectoryGenerator,
-                  FeedbackControllerType.NoopFeedbackController,
+                  FeedbackControllerType.SetInternalImpedanceFeedbackController,
                   TerminationHandlerType.FinalPoseTerminationHandler,
                   1)
         else:
@@ -595,7 +638,7 @@ class StayInInitialPoseSkill(BaseSkill):
                   0,
                   ['/franka_robot/camera'],
                   TrajectoryGeneratorType.StayInInitialPoseTrajectoryGenerator,
-                  FeedbackControllerType.NoopFeedbackController,
+                  FeedbackControllerType.SetInternalImpedanceFeedbackController,
                   TerminationHandlerType.TimeTerminationHandler,
                   1)
         elif skill_type == SkillType.JointPositionSkill:
@@ -606,7 +649,7 @@ class StayInInitialPoseSkill(BaseSkill):
                   0,
                   ['/franka_robot/camera'],
                   TrajectoryGeneratorType.StayInInitialJointsTrajectoryGenerator,
-                  FeedbackControllerType.NoopFeedbackController,
+                  FeedbackControllerType.SetInternalImpedanceFeedbackController,
                   TerminationHandlerType.TimeTerminationHandler,
                   1)
         else:

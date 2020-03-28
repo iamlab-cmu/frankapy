@@ -1,0 +1,85 @@
+syntax = "proto2";
+
+message GripperTrajectoryGeneratorMessage {
+  required bool grasp = 1;
+  required double width = 2;
+  required double speed = 3;
+  required double force = 4;
+}
+
+message ImpulseTrajectoryGeneratorMessage {
+  required double run_time = 1;
+  required double acc_time = 2;
+  required double max_trans = 3;
+  required double max_rot = 4;
+
+  repeated double forces = 5;
+  repeated double torques = 6;
+}
+
+message JointTrajectoryGeneratorMessage {
+  required double run_time = 1;
+
+  repeated double joints = 2;
+}
+
+message PoseTrajectoryGeneratorMessage {
+  required double run_time = 1;
+
+  repeated double position = 2;
+  repeated double quaternion = 3;
+  repeated double pose = 4;
+}
+
+message JointDMPTrajectoryGeneratorMessage {
+  required double run_time = 1;
+  required double tau = 2;
+  required double alpha = 3;
+  required double beta = 4;
+  required double num_basis = 5;
+  required double num_sensor_values = 6;
+
+  repeated double basis_mean = 7;
+  repeated double basis_std = 8;
+  repeated double y0 = 9;
+  repeated double weights = 10;
+  repeated double initial_sensor_values = 11;
+}
+
+message PoseDMPTrajectoryGeneratorMessage {
+  required bool orientation_only = 1;
+  required bool position_only = 2;
+  required double run_time = 3;
+  required double tau = 4;
+  required double alpha = 5;
+  required double beta = 6;
+  required double num_basis = 7;
+  required double num_sensor_values = 8;
+
+  repeated double basis_mean = 9;
+  repeated double basis_std = 10;
+  repeated double y0 = 11;
+  repeated double weights = 12;
+  repeated double initial_sensor_values = 13;
+}
+
+message GoalPoseDMPTrajectoryGeneratorMessage {
+  required bool orientation_only = 1;
+  required bool position_only = 2;
+  required double run_time = 3;
+  required double tau = 4;
+  required double alpha = 5;
+  required double beta = 6;
+  required double num_basis = 7;
+  required double num_sensor_values = 8;
+
+  repeated double basis_mean = 9;
+  repeated double basis_std = 10;
+  repeated double y0 = 11;
+  repeated double weights = 12;
+  repeated double initial_sensor_values = 13;
+}
+
+message RunTimeMessage {
+  required double run_time = 1;
+}

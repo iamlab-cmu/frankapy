@@ -1,0 +1,25 @@
+syntax = "proto2";
+
+message ContactTerminationHandlerMessage {
+  required double buffer_time = 1;
+
+  repeated double force_thresholds = 2;
+  repeated double torque_thresholds = 3;
+}
+
+message JointThresholdMessage {
+  required double buffer_time = 1;
+
+  repeated double joint_thresholds = 2;
+}
+
+message PoseThresholdMessage {
+  required double buffer_time = 1;
+
+  repeated double position_thresholds = 2;
+  repeated double orientation_thresholds = 3;
+}
+
+message TimeTerminationHandlerMessage {
+  required double buffer_time = 1;
+}
