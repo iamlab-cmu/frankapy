@@ -7,7 +7,8 @@ requirements = [
     'autolab_core',
     'numpy-quaternion',
     'numba',
-    'rospkg'
+    'rospkg',
+    'catkin-tools'
 ]
 
 setup(name='frankapy',
