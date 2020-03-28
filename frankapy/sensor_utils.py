@@ -1,4 +1,4 @@
-from franka_action_lib_msgs.msg import SensorData
+from franka_msgs.msg import SensorData
 from frankapy.proto import sensor_msg_pb2
 
 

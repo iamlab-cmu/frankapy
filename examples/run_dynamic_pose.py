@@ -5,7 +5,7 @@ from autolab_core import RigidTransform
 from frankapy import FrankaArm, SensorDataMessageType
 from frankapy import FrankaConstants as FC
 from frankapy.sensor_utils import make_pose_position_velocity_proto, sensor_proto2ros_msg
-from franka_action_lib_msgs.msg import SensorData
+from franka_msgs.msg import SensorData
 from frankapy.utils import min_jerk, min_jerk_delta, min_jerk_weight
 
 import rospy

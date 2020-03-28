@@ -1,14 +1,14 @@
 #!/usr/bin/env python
 
 import roslib
-roslib.load_manifest('franka_action_lib_msgs')
+roslib.load_manifest('franka_msgs')
 import rospy
 import actionlib
 import numpy as np
 from .iam_robolib_common_definitions import *
 from .franka_constants import FrankaConstants as FC
 
-from franka_action_lib_msgs.msg import ExecuteSkillAction, ExecuteSkillGoal
+from franka_msgs.msg import ExecuteSkillAction, ExecuteSkillGoal
 
 class BaseSkill(object):
     def __init__(self, 
