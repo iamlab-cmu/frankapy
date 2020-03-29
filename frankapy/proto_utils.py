@@ -102,7 +102,7 @@ def make_pose_trajectory_generator_msg_proto(run_time, pose_rigid_transform):
     return pose_trajectory_generator_msg_proto
 
 def make_joint_dmp_trajectory_generator_msg_proto(run_time, tau, alpha, beta, num_basis, num_sensor_values, 
-                                                  basis_mean, basis_std, y0, weights, initial_sensor_values):
+                                                  basis_mean, basis_std, weights, initial_sensor_values):
     joint_dmp_trajectory_generator_msg_proto = trajectory_generator_params_msg_pb2.JointDMPTrajectoryGeneratorMessage()
     joint_dmp_trajectory_generator_msg_proto.run_time = run_time
     joint_dmp_trajectory_generator_msg_proto.tau = tau
@@ -112,7 +112,6 @@ def make_joint_dmp_trajectory_generator_msg_proto(run_time, tau, alpha, beta, nu
     joint_dmp_trajectory_generator_msg_proto.num_sensor_values = num_sensor_values
     joint_dmp_trajectory_generator_msg_proto.basis_mean.extend(basis_mean)
     joint_dmp_trajectory_generator_msg_proto.basis_std.extend(basis_std)
-    joint_dmp_trajectory_generator_msg_proto.y0.extend(y0)
     joint_dmp_trajectory_generator_msg_proto.weights.extend(weights)
     joint_dmp_trajectory_generator_msg_proto.initial_sensor_values.extend(initial_sensor_values)
 
@@ -137,26 +136,6 @@ def make_pose_dmp_trajectory_generator_msg_proto(orientation_only, position_only
     pose_dmp_trajectory_generator_msg_proto.initial_sensor_values.extend(initial_sensor_values)
 
     return pose_dmp_trajectory_generator_msg_proto
-
-def make_goal_pose_dmp_trajectory_generator_msg_proto(orientation_only, position_only,
-                                                      run_time, tau, alpha, beta, num_basis, num_sensor_values, 
-                                                      basis_mean, basis_std, y0, weights, initial_sensor_values):
-    goal_pose_dmp_trajectory_generator_msg_proto = trajectory_generator_params_msg_pb2.GoalPoseDMPTrajectoryGeneratorMessage()
-    goal_pose_dmp_trajectory_generator_msg_proto.orientation_only = orientation_only
-    goal_pose_dmp_trajectory_generator_msg_proto.position_only = position_only
-    goal_pose_dmp_trajectory_generator_msg_proto.run_time = run_time
-    goal_pose_dmp_trajectory_generator_msg_proto.tau = tau
-    goal_pose_dmp_trajectory_generator_msg_proto.alpha = alpha
-    goal_pose_dmp_trajectory_generator_msg_proto.beta = beta
-    goal_pose_dmp_trajectory_generator_msg_proto.num_basis = num_basis
-    goal_pose_dmp_trajectory_generator_msg_proto.num_sensor_values = num_sensor_values
-    goal_pose_dmp_trajectory_generator_msg_proto.basis_mean.extend(basis_mean)
-    goal_pose_dmp_trajectory_generator_msg_proto.basis_std.extend(basis_std)
-    goal_pose_dmp_trajectory_generator_msg_proto.y0.extend(y0)
-    goal_pose_dmp_trajectory_generator_msg_proto.weights.extend(weights)
-    goal_pose_dmp_trajectory_generator_msg_proto.initial_sensor_values.extend(initial_sensor_values)
-
-    return goal_pose_dmp_trajectory_generator_msg_proto
 
 def make_run_time_msg_proto(run_time):
     run_time_msg_proto = trajectory_generator_params_msg_pb2.RunTimeMessage()

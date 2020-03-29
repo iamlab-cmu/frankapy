@@ -12,25 +12,25 @@ from .proto_utils import *
 
 from franka_interface_msgs.msg import ExecuteSkillAction, ExecuteSkillGoal
 
-class BaseSkill(object):
+class Skill:
     def __init__(self, 
                  skill_type,
-                 skill_desc,
-                 meta_skill_type,
-                 meta_skill_id,
-                 sensor_topics,
                  trajectory_generator_type,
-                 feedback_controller_type,
-                 termination_handler_type,
-                 timer_type):
+                 feedback_controller_type = FeedbackControllerType.NoopFeedbackController,
+                 termination_handler_type = TerminationHandlerType.NoopTerminationHandler,
+                 meta_skill_type = MetaSkillType.BaseMetaSkill,
+                 meta_skill_id = 0,
+                 sensor_topics = None,
+                 timer_type = 1,
+                 skill_desc = ''):
         self._skill_type = skill_type
         self._skill_desc = skill_desc
         self._meta_skill_type = meta_skill_type
         self._meta_skill_id = meta_skill_id
-        self._sensor_topics = sensor_topics
+        self._sensor_topics = sensor_topics if sensor_topics not None else ['']
         self._trajectory_generator_type = trajectory_generator_type
-        self._feedback_controller_type = feedback_controller_type
-        self._termination_handler_type = termination_handler_type
+        self._feedback_controller_type = 
+        self._termination_handler_type = TerminationHandlerType.NoopTerminationHandler
         self._timer_type = timer_type
 
         self._sensor_value_sizes = 0
@@ -78,8 +78,6 @@ class BaseSkill(object):
         self._timer_params = params
         self._num_timer_params = len(params)
 
-    
-
     ## Feedback Controllers
 
     def add_cartesian_impedances(self, cartesian_impedances):
@@ -89,7 +87,7 @@ class BaseSkill(object):
                 "Incorrect cartesian impedances len. Should be 6."
         assert self._skill_type == SkillType.ImpedanceControlSkill, \
                 "Incorrect skill type. Should be ImpedanceControlSkill."
-        
+
         cartesian_impedance_feedback_controller_msg_proto = \
             make_cartesian_impedance_feedback_controller_msg_proto(cartesian_impedances[:3], 
                                                                    cartesian_impedances[3:])
@@ -159,6 +157,8 @@ class BaseSkill(object):
                 "Incorrect joint thresholds type. Should be list."
         assert len(joint_thresholds) == 0 or len(joint_thresholds) == 7, \
                 "Incorrect joint thresholds length. Should be 0 or 7."
+        assert self._termination_handler_type == TerminationHandlerType.FinalJointTerminationHandler, \
+                "Incorrect termination handler type. Should be FinalJointTerminationHandler"
 
         joint_threshold_msg_proto = make_joint_threshold_msg_proto(buffer_time, joint_thresholds)
 
@@ -172,6 +172,8 @@ class BaseSkill(object):
                 "Incorrect pose thresholds type. Should be list."
         assert len(pose_thresholds) == 0 or len(pose_thresholds) == 6, \
                 "Incorrect pose thresholds length. Should be 0 or 6."
+        assert self._termination_handler_type == TerminationHandlerType.FinalPoseTerminationHandler, \
+                "Incorrect termination handler type. Should be FinalPoseTerminationHandler"
 
         pose_threshold_msg_proto = make_pose_threshold_msg_proto(buffer_time, pose_thresholds)
 
@@ -181,6 +183,8 @@ class BaseSkill(object):
         assert type(buffer_time) is float or type(buffer_time) is int, \
                 "Incorrect buffer time type. Should be int or float."
         assert buffer_time >= 0, "Incorrect buffer time. Should be non negative."
+        assert self._termination_handler_type == TerminationHandlerType.TimeTerminationHandler, \
+                "Incorrect termination handler type. Should be TimeTerminationHandler"
 
         time_termination_handler_msg_proto = make_time_termination_handler_msg_proto(buffer_time)
 
@@ -200,6 +204,10 @@ class BaseSkill(object):
         assert width >= 0, "Incorrect width. Should be non negative."
         assert speed >= 0, "Incorrect speed. Should be non negative."
         assert force >= 0, "Incorrect force. Should be non negative."
+        assert self._skill_type == SkillType.GripperSkill, \
+                "Incorrect skill type. Should be GripperSkill"
+        assert self._trajectory_generator_type == TrajectoryGeneratorType.GripperTrajectoryGenerator, \
+                "Incorrect trajectory generator type. Should be GripperTrajectoryGenerator"
 
         gripper_trajectory_generator_msg_proto = make_gripper_trajectory_generator_msg_proto(grasp, width, speed, force)
 
@@ -225,6 +233,128 @@ class BaseSkill(object):
         joint_trajectory_generator_msg_proto = make_joint_trajectory_generator_msg_proto(time, joints)
 
         self.add_trajectory_params(joint_trajectory_generator_msg_proto.SerializeToString())
+
+    def add_joint_dmp_params(self, time, joint_dmp_info, initial_sensor_values):
+        assert type(time) is float or type(time) is int,\
+                "Incorrect time type. Should be int or float."
+        assert time >= 0, "Incorrect time. Should be non negative."
+
+        assert type(joint_dmp_info['tau']) is float or type(joint_dmp_info['tau']) is int,\
+                "Incorrect tau type. Should be int or float."
+        assert joint_dmp_info['tau'] >= 0, "Incorrect tau. Should be non negative."
+
+        assert type(joint_dmp_info['alpha']) is float or type(joint_dmp_info['alpha']) is int,\
+                "Incorrect alpha type. Should be int or float."
+        assert joint_dmp_info['alpha'] >= 0, "Incorrect alpha. Should be non negative."
+
+        assert type(joint_dmp_info['beta']) is float or type(joint_dmp_info['beta']) is int,\
+                "Incorrect beta type. Should be int or float."
+        assert joint_dmp_info['beta'] >= 0, "Incorrect beta. Should be non negative."
+
+        assert type(joint_dmp_info['num_basis']) is float or type(joint_dmp_info['num_basis']) is int,\
+                "Incorrect num basis type. Should be int or float."
+        assert joint_dmp_info['num_basis'] >= 0, "Incorrect num basis. Should be non negative."
+
+        assert type(joint_dmp_info['num_sensors']) is float or type(joint_dmp_info['num_sensors']) is int,\
+                "Incorrect num sensors type. Should be int or float."
+        assert joint_dmp_info['num_sensors'] >= 0, "Incorrect num sensors. Should be non negative."
+
+        assert type(joint_dmp_info['mu']) is list, "Incorrect basis mean type. Should be list."
+        assert len(joint_dmp_info['mu']) == joint_dmp_info['num_basis'], \
+                "Incorrect basis mean len. Should be equal to num basis."
+
+        assert type(joint_dmp_info['h']) is list, "Incorrect basis std dev type. Should be list."
+        assert len(joint_dmp_info['h']) == joint_dmp_info['num_basis'], \
+                "Incorrect basis std dev len. Should be equal to num basis."
+
+        assert type(initial_sensor_values) is list, "Incorrect initial sensor values type. Should be list."
+        assert len(initial_sensor_values) == joint_dmp_info['num_sensors'], \
+                "Incorrect initial sensor values len. Should be equal to num sensors."
+
+        weights = np.array(joint_dmp_info['weights']).reshape(-1).tolist()
+        num_weights = 7 * int(joint_dmp_info['num_basis']) * int(joint_dmp_info['num_sensors'])
+
+        assert len(weights) == num_weights, \
+                "Incorrect weights len. Should be equal to 7 * num basis * num sensors."
+
+        assert self._skill_type == SkillType.ImpedanceControlSkill or \
+               self._skill_type == SkillType.JointPositionSkill, \
+                "Incorrect skill type. Should be ImpedanceControlSkill or JointPositionSkill."
+        assert self._trajectory_generator_type == TrajectoryGeneratorType.JointDmpTrajectoryGenerator, \
+                "Incorrect trajectory generator type. Should be JointDmpTrajectoryGenerator"
+
+        joint_dmp_trajectory_generator_msg_proto = make_joint_dmp_trajectory_generator_msg_proto(run_time, 
+                                                   joint_dmp_info['tau'], joint_dmp_info['alpha'], joint_dmp_info['beta'], 
+                                                   joint_dmp_info['num_basis'], joint_dmp_info['num_sensors'], 
+                                                   joint_dmp_info['mu'], joint_dmp_info['h'], 
+                                                   np.array(joint_dmp_info['weights']).reshape(-1).tolist(), 
+                                                   initial_sensor_values)
+
+        self.add_trajectory_params(joint_dmp_trajectory_generator_msg_proto.SerializeToString())
+
+    def add_pose_dmp_params(self, orientation_only, position_only, time, pose_dmp_info, initial_sensor_values):
+        assert type(time) is float or type(time) is int,\
+                "Incorrect time type. Should be int or float."
+        assert time >= 0, "Incorrect time. Should be non negative."
+
+        assert type(pose_dmp_info['tau']) is float or type(pose_dmp_info['tau']) is int,\
+                "Incorrect tau type. Should be int or float."
+        assert pose_dmp_info['tau'] >= 0, "Incorrect tau. Should be non negative."
+
+        assert type(pose_dmp_info['alpha']) is float or type(pose_dmp_info['alpha']) is int,\
+                "Incorrect alpha type. Should be int or float."
+        assert pose_dmp_info['alpha'] >= 0, "Incorrect alpha. Should be non negative."
+
+        assert type(pose_dmp_info['beta']) is float or type(pose_dmp_info['beta']) is int,\
+                "Incorrect beta type. Should be int or float."
+        assert pose_dmp_info['beta'] >= 0, "Incorrect beta. Should be non negative."
+
+        assert type(pose_dmp_info['num_basis']) is float or type(pose_dmp_info['num_basis']) is int,\
+                "Incorrect num basis type. Should be int or float."
+        assert pose_dmp_info['num_basis'] >= 0, "Incorrect num basis. Should be non negative."
+
+        assert type(pose_dmp_info['num_sensors']) is float or type(pose_dmp_info['num_sensors']) is int,\
+                "Incorrect num sensors type. Should be int or float."
+        assert pose_dmp_info['num_sensors'] >= 0, "Incorrect num sensors. Should be non negative."
+
+        assert type(pose_dmp_info['mu']) is list, "Incorrect basis mean type. Should be list."
+        assert len(pose_dmp_info['mu']) == pose_dmp_info['num_basis'], \
+                "Incorrect basis mean len. Should be equal to num basis."
+
+        assert type(pose_dmp_info['h']) is list, "Incorrect basis std dev type. Should be list."
+        assert len(pose_dmp_info['h']) == pose_dmp_info['num_basis'], \
+                "Incorrect basis std dev len. Should be equal to num basis."
+
+        assert type(initial_sensor_values) is list, "Incorrect initial sensor values type. Should be list."
+        assert len(initial_sensor_values) == pose_dmp_info['num_sensors'], \
+                "Incorrect initial sensor values len. Should be equal to num sensors."
+
+        weights = np.array(pose_dmp_info['weights']).reshape(-1).tolist()
+
+        if orientation_only or position_only:
+            num_weights = 3 * int(pose_dmp_info['num_basis']) * int(pose_dmp_info['num_sensors'])
+            assert len(weights) == num_weights, \
+                    "Incorrect weights len. Should be equal to 3 * num basis * num sensors."
+        else:
+            num_weights = 6 * int(pose_dmp_info['num_basis']) * int(pose_dmp_info['num_sensors'])
+            assert len(weights) == num_weights, \
+                    "Incorrect weights len. Should be equal to 6 * num basis * num sensors."
+
+        assert self._skill_type == SkillType.CartesianPoseSkill or \
+               self._skill_type == SkillType.ImpedanceControlSkill, \
+                "Incorrect skill type. Should be CartesianPoseSkill or ImpedanceControlSkill."
+        assert self._trajectory_generator_type == TrajectoryGeneratorType.PoseDmpTrajectoryGenerator, \
+                "Incorrect trajectory generator type. Should be PoseDmpTrajectoryGenerator"
+
+        pose_dmp_trajectory_generator_msg_proto = make_pose_dmp_trajectory_generator_msg_proto(orientation_only,
+                                                   position_only, run_time, 
+                                                   pose_dmp_info['tau'], pose_dmp_info['alpha'], pose_dmp_info['beta'], 
+                                                   pose_dmp_info['num_basis'], pose_dmp_info['num_sensors'], 
+                                                   pose_dmp_info['mu'], pose_dmp_info['h'], 
+                                                   np.array(pose_dmp_info['weights']).reshape(-1).tolist(), 
+                                                   initial_sensor_values)
+
+        self.add_trajectory_params(pose_dmp_trajectory_generator_msg_proto.SerializeToString())
 
     def add_run_time(self, time):
         assert type(time) is float or type(time) is int, \
@@ -262,184 +392,8 @@ class BaseSkill(object):
     def feedback_callback(self, feedback):
         pass
 
-# Define an instance of a gripper skill
-class GripperSkill(BaseSkill):
-    def __init__(self, skill_desc=''):
-        if len(skill_desc) == 0:
-            skill_desc = GripperSkill.__name__
-
-        super(GripperSkill, self).__init__(
-              SkillType.GripperSkill,
-              skill_desc,
-              MetaSkillType.BaseMetaSkill,
-              0,
-              ['/franka_robot/camera'],
-              TrajectoryGeneratorType.GripperTrajectoryGenerator,
-              FeedbackControllerType.NoopFeedbackController,
-              TerminationHandlerType.NoopTerminationHandler,
-              1)
-
-# Define an instance of a DMP skill using joint position control
-class JointDMPSkill(BaseSkill):
-    def __init__(self, skill_desc='', skill_type=SkillType.JointPositionSkill):
-        if len(skill_desc) == 0:
-            skill_desc = JointDMPSkill.__name__
-
-        if skill_type == SkillType.JointPositionSkill:
-            super(JointDMPSkill, self).__init__(
-                  SkillType.JointPositionSkill,
-                  skill_desc,
-                  MetaSkillType.BaseMetaSkill,
-                  0,
-                  ['/franka_robot/camera'],
-                  TrajectoryGeneratorType.JointDmpTrajectoryGenerator,
-                  FeedbackControllerType.SetInternalImpedanceFeedbackController,
-                  TerminationHandlerType.TimeTerminationHandler,
-                  1)
-        elif skill_type == SkillType.ImpedanceControlSkill:
-            super(JointDMPSkill, self).__init__(
-                  SkillType.ImpedanceControlSkill,
-                  skill_desc,
-                  MetaSkillType.BaseMetaSkill,
-                  0,
-                  ['/franka_robot/camera'],
-                  TrajectoryGeneratorType.JointDmpTrajectoryGenerator,
-                  FeedbackControllerType.JointImpedanceFeedbackController,
-                  TerminationHandlerType.TimeTerminationHandler,
-                  1)
-        else:
-            super(JointDMPSkill, self).__init__(
-                  SkillType.JointPositionSkill,
-                  skill_desc,
-                  MetaSkillType.BaseMetaSkill,
-                  0,
-                  ['/franka_robot/camera'],
-                  TrajectoryGeneratorType.JointDmpTrajectoryGenerator,
-                  FeedbackControllerType.SetInternalImpedanceFeedbackController,
-                  TerminationHandlerType.TimeTerminationHandler,
-                  1)
-
-# Define an instance of a DMP skill using cartesian control
-class PoseDMPSkill(BaseSkill):
-    def __init__(self, skill_desc='', skill_type=SkillType.CartesianPoseSkill):
-        if len(skill_desc) == 0:
-            skill_desc = PoseDMPSkill.__name__
-
-        if skill_type == SkillType.CartesianPoseSkill:
-            super(PoseDMPSkill, self).__init__(
-                  SkillType.CartesianPoseSkill,
-                  skill_desc,
-                  MetaSkillType.BaseMetaSkill,
-                  0,
-                  ['/franka_robot/camera'],
-                  TrajectoryGeneratorType.PoseDmpTrajectoryGenerator,
-                  FeedbackControllerType.SetInternalImpedanceFeedbackController,
-                  TerminationHandlerType.TimeTerminationHandler,
-                  1)
-        elif skill_type == SkillType.ImpedanceControlSkill:
-            super(PoseDMPSkill, self).__init__(
-                  SkillType.ImpedanceControlSkill,
-                  skill_desc,
-                  MetaSkillType.BaseMetaSkill,
-                  0,
-                  ['/franka_robot/camera'],
-                  TrajectoryGeneratorType.PoseDmpTrajectoryGenerator,
-                  FeedbackControllerType.CartesianImpedanceFeedbackController,
-                  TerminationHandlerType.TimeTerminationHandler,
-                  1)
-        else:
-            super(PoseDMPSkill, self).__init__(
-                  SkillType.CartesianPoseSkill,
-                  skill_desc,
-                  MetaSkillType.BaseMetaSkill,
-                  0,
-                  ['/franka_robot/camera'],
-                  TrajectoryGeneratorType.PoseDmpTrajectoryGenerator,
-                  FeedbackControllerType.SetInternalImpedanceFeedbackController,
-                  TerminationHandlerType.TimeTerminationHandler,
-                  1)
-
-# Define an instance of a DMP skill (used for Sony Project, ask Kevin Zhang)
-class GoalPoseDMPSkill(BaseSkill):
-    def __init__(self, skill_desc='', skill_type=SkillType.CartesianPoseSkill):
-        if len(skill_desc) == 0:
-            skill_desc = GoalPoseDMPSkill.__name__
-
-        if skill_type == SkillType.CartesianPoseSkill:
-            super(GoalPoseDMPSkill, self).__init__(
-                  SkillType.CartesianPoseSkill,
-                  skill_desc,
-                  MetaSkillType.BaseMetaSkill,
-                  0,
-                  ['/franka_robot/camera'],
-                  TrajectoryGeneratorType.GoalPoseDmpTrajectoryGenerator,
-                  FeedbackControllerType.SetInternalImpedanceFeedbackController,
-                  TerminationHandlerType.TimeTerminationHandler,
-                  1)
-        elif skill_type == SkillType.ImpedanceControlSkill:
-            super(GoalPoseDMPSkill, self).__init__(
-                  SkillType.ImpedanceControlSkill,
-                  skill_desc,
-                  MetaSkillType.BaseMetaSkill,
-                  0,
-                  ['/franka_robot/camera'],
-                  TrajectoryGeneratorType.GoalPoseDmpTrajectoryGenerator,
-                  FeedbackControllerType.CartesianImpedanceFeedbackController,
-                  TerminationHandlerType.TimeTerminationHandler,
-                  1)
-        else:
-            super(GoalPoseDMPSkill, self).__init__(
-                  SkillType.CartesianPoseSkill,
-                  skill_desc,
-                  MetaSkillType.BaseMetaSkill,
-                  0,
-                  ['/franka_robot/camera'],
-                  TrajectoryGeneratorType.GoalPoseDmpTrajectoryGenerator,
-                  FeedbackControllerType.SetInternalImpedanceFeedbackController,
-                  TerminationHandlerType.TimeTerminationHandler,
-                  1)
     
-# Define skill that uses joint position control relative to base
-class GoToJointsSkill(BaseSkill):
-    def __init__(self, skill_desc='', skill_type=SkillType.JointPositionSkill):
-        if len(skill_desc) == 0:
-            skill_desc = GoToJointsSkill.__name__
-
-        if skill_type == SkillType.JointPositionSkill:
-            super(GoToJointsSkill, self).__init__(
-                  SkillType.JointPositionSkill,
-                  skill_desc,
-                  MetaSkillType.BaseMetaSkill,
-                  0,
-                  ['/franka_robot/camera'],
-                  TrajectoryGeneratorType.MinJerkJointTrajectoryGenerator,
-                  FeedbackControllerType.SetInternalImpedanceFeedbackController,
-                  TerminationHandlerType.FinalJointTerminationHandler,
-                  1)
-        elif skill_type == SkillType.ImpedanceControlSkill:
-            super(GoToJointsSkill, self).__init__(
-                  SkillType.ImpedanceControlSkill,
-                  skill_desc,
-                  MetaSkillType.BaseMetaSkill,
-                  0,
-                  ['/franka_robot/camera'],
-                  TrajectoryGeneratorType.MinJerkJointTrajectoryGenerator,
-                  FeedbackControllerType.JointImpedanceFeedbackController,
-                  TerminationHandlerType.FinalJointTerminationHandler,
-                  1)
-        else:
-            super(GoToJointsSkill, self).__init__(
-                  SkillType.JointPositionSkill,
-                  skill_desc,
-                  MetaSkillType.BaseMetaSkill,
-                  0,
-                  ['/franka_robot/camera'],
-                  TrajectoryGeneratorType.MinJerkJointTrajectoryGenerator,
-                  FeedbackControllerType.SetInternalImpedanceFeedbackController,
-                  TerminationHandlerType.FinalJointTerminationHandler,
-                  1)
-    
-class GoToJointsDynamicsInterpolationSkill(BaseSkill):
+class GoToJointsDynamicsInterpolationSkill(Skill):
 
     def __init__(self, skill_desc='', skill_type=SkillType.JointPositionSkill):
         if len(skill_desc) == 0:
@@ -480,7 +434,7 @@ class GoToJointsDynamicsInterpolationSkill(BaseSkill):
                 1)
 
     
-class GoToPoseDynamicsInterpolationSkill(BaseSkill):
+class GoToPoseDynamicsInterpolationSkill(Skill):
 
     def __init__(self, skill_desc='', skill_type=SkillType.ImpedanceControlSkill):
         if len(skill_desc) == 0:
@@ -510,88 +464,8 @@ class GoToPoseDynamicsInterpolationSkill(BaseSkill):
                 1)
 
 
-# Define skill that uses cartesian impedance control relative to base
-class GoToPoseSkill(BaseSkill):
-    def __init__(self, skill_desc='', skill_type=SkillType.ImpedanceControlSkill):
-        if len(skill_desc) == 0:
-            skill_desc = GoToPoseSkill.__name__
-
-        if skill_type == SkillType.ImpedanceControlSkill:
-            super(GoToPoseSkill, self).__init__(
-                  SkillType.ImpedanceControlSkill,
-                  skill_desc,
-                  MetaSkillType.BaseMetaSkill,
-                  0,
-                  ['/franka_robot/camera'],
-                  TrajectoryGeneratorType.MinJerkPoseTrajectoryGenerator,
-                  FeedbackControllerType.CartesianImpedanceFeedbackController,
-                  TerminationHandlerType.FinalPoseTerminationHandler,
-                  1)
-        elif skill_type == SkillType.CartesianPoseSkill:
-            super(GoToPoseSkill, self).__init__(
-                  SkillType.CartesianPoseSkill,
-                  skill_desc,
-                  MetaSkillType.BaseMetaSkill,
-                  0,
-                  ['/franka_robot/camera'],
-                  TrajectoryGeneratorType.MinJerkPoseTrajectoryGenerator,
-                  FeedbackControllerType.SetInternalImpedanceFeedbackController,
-                  TerminationHandlerType.FinalPoseTerminationHandler,
-                  1)
-        else:
-            super(GoToPoseSkill, self).__init__(
-                  SkillType.ImpedanceControlSkill,
-                  skill_desc,
-                  MetaSkillType.BaseMetaSkill,
-                  0,
-                  ['/franka_robot/camera'],
-                  TrajectoryGeneratorType.MinJerkPoseTrajectoryGenerator,
-                  FeedbackControllerType.CartesianImpedanceFeedbackController,
-                  TerminationHandlerType.FinalPoseTerminationHandler,
-                  1)
-
-# Define skill that uses cartesian impedance to go position relative to current position
-class GoToPoseDeltaSkill(BaseSkill):
-    def __init__(self, skill_desc='', skill_type=SkillType.ImpedanceControlSkill):
-        if len(skill_desc) == 0:
-            skill_desc = GoToPoseDeltaSkill.__name__
-
-        if skill_type == SkillType.ImpedanceControlSkill:
-            super(GoToPoseDeltaSkill, self).__init__(
-                  SkillType.ImpedanceControlSkill,
-                  skill_desc,
-                  MetaSkillType.BaseMetaSkill,
-                  0,
-                  ['/franka_robot/camera'],
-                  TrajectoryGeneratorType.RelativeMinJerkPoseTrajectoryGenerator,
-                  FeedbackControllerType.CartesianImpedanceFeedbackController,
-                  TerminationHandlerType.FinalPoseTerminationHandler,
-                  1)
-        elif skill_type == SkillType.CartesianPoseSkill:
-            super(GoToPoseDeltaSkill, self).__init__(
-                  SkillType.CartesianPoseSkill,
-                  skill_desc,
-                  MetaSkillType.BaseMetaSkill,
-                  0,
-                  ['/franka_robot/camera'],
-                  TrajectoryGeneratorType.RelativeMinJerkPoseTrajectoryGenerator,
-                  FeedbackControllerType.SetInternalImpedanceFeedbackController,
-                  TerminationHandlerType.FinalPoseTerminationHandler,
-                  1)
-        else:
-            super(GoToPoseDeltaSkill, self).__init__(
-                  SkillType.ImpedanceControlSkill,
-                  skill_desc,
-                  MetaSkillType.BaseMetaSkill,
-                  0,
-                  ['/franka_robot/camera'],
-                  TrajectoryGeneratorType.RelativeMinJerkPoseTrajectoryGenerator,
-                  FeedbackControllerType.CartesianImpedanceFeedbackController,
-                  TerminationHandlerType.FinalPoseTerminationHandler,
-                  1)
-
 # Define skill that stays in pose
-class StayInInitialPoseSkill(BaseSkill):
+class StayInInitialPoseSkill(Skill):
     def __init__(self, skill_desc='', skill_type=SkillType.ImpedanceControlSkill,
                  feedback_controller_type=FeedbackControllerType.CartesianImpedanceFeedbackController):
         if len(skill_desc) == 0:
@@ -665,7 +539,7 @@ class StayInInitialPoseSkill(BaseSkill):
                   1)
 
 # Define skill that uses force control
-class ForceTorqueSkill(BaseSkill):
+class ForceTorqueSkill(Skill):
     def __init__(self, skill_desc=''):
         if len(skill_desc) == 0:
             skill_desc = ForceTorqueSkill.__name__
@@ -681,7 +555,7 @@ class ForceTorqueSkill(BaseSkill):
               1)
 
 # Define skill that uses force control along a specific axis
-class ForceAlongAxisSkill(BaseSkill):
+class ForceAlongAxisSkill(Skill):
     def __init__(self, skill_desc=''):
         if len(skill_desc) == 0:
             skill_desc = ForceTorqueSkill.__name__
