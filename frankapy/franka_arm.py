@@ -178,8 +178,10 @@ class FrankaArm:
                   tool_pose,
                   duration=3,
                   use_impedance=True,
-                  stop_on_contact_forces=None,
-                  stop_on_contact_torques=None,
+                  dynamic=False,
+                  buffer_time=FC.DEFAULT_TERM_BUFFER_TIME,
+                  force_thresholds=None,
+                  torque_thresholds=None,
                   cartesian_impedances=None,
                   joint_impedances=None,
                   block=True,
@@ -193,10 +195,14 @@ class FrankaArm:
             duration (float) : How much time this robot motion should take
             use_impedance (boolean) : Function uses our impedance controller 
                 by default. If False, uses the Franka cartesian controller.
-            stop_on_contact_forces (list): List of 6 floats corresponding to
+            dynamic (boolean) : Flag that states whether the skill is dynamic.  
+                If True, it will use our joint impedance controller and sensor values.
+            buffer_time (float): How much extra time the termination handler will wait
+                before stopping the skill after duration has passed.
+            force_thresholds (list): List of 6 floats corresponding to
                 force limits on translation (xyz) and rotation about (xyz) axes.
                 Default is None. If None then will not stop on contact.
-            stop_on_contact_torques (list): List of 7 floats corresponding to
+            torque_thresholds (list): List of 7 floats corresponding to
                 torque limits on each joint. Default is None. If None then will
                 not stop on contact.
             cartesian impedances (list): List of 6 floats corresponding to
@@ -215,19 +221,26 @@ class FrankaArm:
             skill_desc (string) : Skill description to use for logging on
                 control-pc.
         '''
-
-        if use_impedance:
+        if dynamic:
             skill = Skill(SkillType.ImpedanceControlSkill, 
-                          TrajectoryGeneratorType.MinJerkPoseTrajectoryGenerator,
+                          TrajectoryGeneratorType.CubicHermiteSplinePoseTrajectoryGenerator,
                           feedback_controller_type=FeedbackControllerType.CartesianImpedanceFeedbackController,
-                          termination_handler_type=TerminationHandlerType.FinalPoseTerminationHandler, 
+                          termination_handler_type=TerminationHandlerType.TimeTerminationHandler, 
                           skill_desc=skill_desc)
+            block = False
         else:
-            skill = Skill(SkillType.CartesianPoseSkill, 
-                          TrajectoryGeneratorType.MinJerkPoseTrajectoryGenerator,
-                          feedback_controller_type=FeedbackControllerType.SetInternalImpedanceFeedbackController,
-                          termination_handler_type=TerminationHandlerType.FinalPoseTerminationHandler, 
-                          skill_desc=skill_desc)
+            if use_impedance:
+                skill = Skill(SkillType.ImpedanceControlSkill, 
+                              TrajectoryGeneratorType.MinJerkPoseTrajectoryGenerator,
+                              feedback_controller_type=FeedbackControllerType.CartesianImpedanceFeedbackController,
+                              termination_handler_type=TerminationHandlerType.FinalPoseTerminationHandler, 
+                              skill_desc=skill_desc)
+            else:
+                skill = Skill(SkillType.CartesianPoseSkill, 
+                              TrajectoryGeneratorType.MinJerkPoseTrajectoryGenerator,
+                              feedback_controller_type=FeedbackControllerType.SetInternalImpedanceFeedbackController,
+                              termination_handler_type=TerminationHandlerType.FinalPoseTerminationHandler, 
+                              skill_desc=skill_desc)
         
         if tool_pose.from_frame != 'franka_tool' or tool_pose.to_frame != 'world':
             raise ValueError('pose has invalid frame names! Make sure pose has \
@@ -242,29 +255,13 @@ class FrankaArm:
 
         skill.add_initial_sensor_values(FC.EMPTY_SENSOR_VALUES)
 
-        if use_impedance:
-            if cartesian_impedances is not None:
-                skill.add_cartesian_impedances(cartesian_impedances)
-            else:
-                skill.add_cartesian_impedances(FC.DEFAULT_TRANSLATIONAL_STIFFNESSES + FC.DEFAULT_ROTATIONAL_STIFFNESSES)
-        else:
-            if joint_impedances is not None:
-                skill.add_internal_impedances([], joint_impedances)
-            elif cartesian_impedances is not None:
-                skill.add_internal_impedances(cartesian_impedances, [])
-            else:
-                skill.add_internal_impedances([], FC.DEFAULT_JOINT_IMPEDANCES)
+        skill.set_cartesian_impedances(use_impedance, cartesian_impedances, joint_impedances)
 
-        if stop_on_contact_forces is not None or stop_on_contact_torques is not None:
-            if stop_on_contact_forces is None:
-                stop_on_contact_forces = []
-            if stop_on_contact_torques is None:
-                stop_on_contact_torques = []
-            skill.add_contact_termination_params(FC.DEFAULT_TERM_BUFFER_TIME,
-                                                 stop_on_contact_forces,
-                                                 stop_on_contact_torques)
-        else:
-            skill.add_pose_threshold_params(FC.DEFAULT_TERM_BUFFER_TIME, FC.DEFAULT_POSE_THRESHOLDS)
+        if not skill.check_for_contact_params(buffer_time, force_thresholds, torque_thresholds):
+            if dynamic:
+                skill.add_time_termination_params(buffer_time)
+            else:
+                skill.add_pose_threshold_params(buffer_time, FC.DEFAULT_POSE_THRESHOLDS)
 
         skill.add_goal_pose(duration, tool_base_pose)
         goal = skill.create_goal()
@@ -278,8 +275,9 @@ class FrankaArm:
                         delta_tool_pose,
                         duration=3,
                         use_impedance=True,
-                        stop_on_contact_forces=None,
-                        stop_on_contact_torques=None,
+                        buffer_time=FC.DEFAULT_TERM_BUFFER_TIME,
+                        force_thresholds=None,
+                        torque_thresholds=None,
                         cartesian_impedances=None,
                         joint_impedances=None,
                         block=True,
@@ -293,10 +291,12 @@ class FrankaArm:
             duration (float) : How much time this robot motion should take
             use_impedance (boolean) : Function uses our impedance controller 
                 by default. If False, uses the Franka cartesian controller.
-            stop_on_contact_forces (list): List of 6 floats corresponding to
+            buffer_time (float): How much extra time the termination handler will wait
+                before stopping the skill after duration has passed.
+            force_thresholds (list): List of 6 floats corresponding to
                 force limits on translation (xyz) and rotation about (xyz) axes.
                 Default is None. If None then will not stop on contact.
-            stop_on_contact_torques (list): List of 7 floats corresponding to
+            torque_thresholds (list): List of 7 floats corresponding to
                 torque limits on each joint. Default is None. If None then will
                 not stop on contact.
             cartesian impedances (list): List of 6 floats corresponding to
@@ -346,29 +346,10 @@ class FrankaArm:
 
         skill.add_initial_sensor_values(FC.EMPTY_SENSOR_VALUES)
 
-        if use_impedance:
-            if cartesian_impedances is not None:
-                skill.add_cartesian_impedances(cartesian_impedances)
-            else:
-                skill.add_cartesian_impedances(FC.DEFAULT_TRANSLATIONAL_STIFFNESSES + FC.DEFAULT_ROTATIONAL_STIFFNESSES)
-        else:
-            if joint_impedances is not None:
-                skill.add_internal_impedances([], joint_impedances)
-            elif cartesian_impedances is not None:
-                skill.add_internal_impedances(cartesian_impedances, [])
-            else:
-                skill.add_internal_impedances([], FC.DEFAULT_JOINT_IMPEDANCES)
+        skill.set_cartesian_impedances(use_impedance, cartesian_impedances, joint_impedances)
         
-        if stop_on_contact_forces is not None or stop_on_contact_torques is not None:
-            if stop_on_contact_forces is None:
-                stop_on_contact_forces = []
-            if stop_on_contact_torques is None:
-                stop_on_contact_torques = []
-            skill.add_contact_termination_params(FC.DEFAULT_TERM_BUFFER_TIME,
-                                                 stop_on_contact_forces,
-                                                 stop_on_contact_torques)
-        else:
-            skill.add_pose_threshold_params(FC.DEFAULT_TERM_BUFFER_TIME, FC.DEFAULT_POSE_THRESHOLDS)
+        if not skill.check_for_contact_params(buffer_time, force_thresholds, torque_thresholds):
+            skill.add_pose_threshold_params(buffer_time, FC.DEFAULT_POSE_THRESHOLDS)
 
         skill.add_goal_pose(duration, delta_tool_base_pose)
 
@@ -383,8 +364,10 @@ class FrankaArm:
                     joints,
                     duration=5,
                     use_impedance=False,
-                    stop_on_contact_forces=None,
-                    stop_on_contact_torques=None,
+                    dynamic=False,
+                    buffer_time=FC.DEFAULT_TERM_BUFFER_TIME,
+                    force_thresholds=None,
+                    torque_thresholds=None,
                     cartesian_impedances=None,
                     joint_impedances=None,
                     k_gains=None,
@@ -401,10 +384,14 @@ class FrankaArm:
             duration (float): How much time this robot motion should take
             use_impedance (boolean) : Function uses the Franka joint impedance  
                 controller by default. If True, uses our joint impedance controller.
-            stop_on_contact_forces (list): List of 6 floats corresponding to
+            dynamic (boolean) : Flag that states whether the skill is dynamic.  
+                If True, it will use our joint impedance controller and sensor values.
+            buffer_time (float): How much extra time the termination handler will wait
+                before stopping the skill after duration has passed.
+            force_thresholds (list): List of 6 floats corresponding to
                 force limits on translation (xyz) and rotation about (xyz) axes.
                 Default is None. If None then will not stop on contact.
-            stop_on_contact_torques (list): List of 7 floats corresponding to
+            torque_thresholds (list): List of 7 floats corresponding to
                 torque limits on each joint. Default is None. If None then will
                 not stop on contact.
             cartesian impedances (list): List of 6 floats corresponding to
@@ -432,18 +419,26 @@ class FrankaArm:
         Raises:
             ValueError: If is_joints_reachable(joints) returns False
         '''
-        if use_impedance:
+        if dynamic:
             skill = Skill(SkillType.ImpedanceControlSkill, 
-                          TrajectoryGeneratorType.MinJerkJointTrajectoryGenerator,
+                          TrajectoryGeneratorType.CubicHermiteSplineJointTrajectoryGenerator,
                           feedback_controller_type=FeedbackControllerType.JointImpedanceFeedbackController,
-                          termination_handler_type=TerminationHandlerType.FinalJointTerminationHandler, 
+                          termination_handler_type=TerminationHandlerType.TimeTerminationHandler, 
                           skill_desc=skill_desc)
+            block = False
         else:
-            skill = Skill(SkillType.JointPositionSkill, 
-                          TrajectoryGeneratorType.MinJerkJointTrajectoryGenerator,
-                          feedback_controller_type=FeedbackControllerType.SetInternalImpedanceFeedbackController,
-                          termination_handler_type=TerminationHandlerType.FinalJointTerminationHandler, 
-                          skill_desc=skill_desc)
+            if use_impedance:
+                skill = Skill(SkillType.ImpedanceControlSkill, 
+                              TrajectoryGeneratorType.MinJerkJointTrajectoryGenerator,
+                              feedback_controller_type=FeedbackControllerType.JointImpedanceFeedbackController,
+                              termination_handler_type=TerminationHandlerType.FinalJointTerminationHandler, 
+                              skill_desc=skill_desc)
+            else:
+                skill = Skill(SkillType.JointPositionSkill, 
+                              TrajectoryGeneratorType.MinJerkJointTrajectoryGenerator,
+                              feedback_controller_type=FeedbackControllerType.SetInternalImpedanceFeedbackController,
+                              termination_handler_type=TerminationHandlerType.FinalJointTerminationHandler, 
+                              skill_desc=skill_desc)
 
 
         if not self.is_joints_reachable(joints):
@@ -453,29 +448,13 @@ class FrankaArm:
 
         skill.add_initial_sensor_values(FC.EMPTY_SENSOR_VALUES)
 
-        if use_impedance:
-            if k_gains is not None and d_gains is not None:
-                skill.add_joint_gains(k_gains, d_gains)
-            else:
-                skill.add_joint_gains(FC.DEFAULT_K_GAINS, FC.DEFAULT_D_GAINS)
-        else:
-            if joint_impedances is not None:
-                skill.add_internal_impedances([], joint_impedances)
-            elif cartesian_impedances is not None:
-                skill.add_internal_impedances(cartesian_impedances, [])
-            else:
-                skill.add_internal_impedances([], FC.DEFAULT_JOINT_IMPEDANCES)
+        skill.set_joint_impedances(use_impedance, cartesian_impedances, joint_impedances, k_gains, d_gains)
 
-        if stop_on_contact_forces is not None or stop_on_contact_torques is not None:
-            if stop_on_contact_forces is None:
-                stop_on_contact_forces = []
-            if stop_on_contact_torques is None:
-                stop_on_contact_torques = []
-            skill.add_contact_termination_params(FC.DEFAULT_TERM_BUFFER_TIME,
-                                                 stop_on_contact_forces,
-                                                 stop_on_contact_torques)
-        else:
-            skill.add_joint_threshold_params(FC.DEFAULT_TERM_BUFFER_TIME, FC.DEFAULT_JOINT_THRESHOLDS)
+        if not skill.check_for_contact_params(buffer_time, force_thresholds, torque_thresholds):
+            if dynamic:
+                skill.add_time_termination_params(buffer_time)
+            else:
+                skill.add_joint_threshold_params(buffer_time, FC.DEFAULT_JOINT_THRESHOLDS)
 
         skill.add_goal_joints(duration, joints)
         goal = skill.create_goal()
@@ -501,8 +480,9 @@ class FrankaArm:
                           duration, 
                           initial_sensor_values=None,
                           use_impedance=False, 
-                          stop_on_contact_forces=None,
-                          stop_on_contact_torques=None,
+                          buffer_time=FC.DEFAULT_TERM_BUFFER_TIME,
+                          force_thresholds=None,
+                          torque_thresholds=None,
                           cartesian_impedances=None,
                           joint_impedances=None, 
                           k_gains=None, 
@@ -520,10 +500,12 @@ class FrankaArm:
                 If None it will default to ones.
             use_impedance (boolean) : Function uses the Franka joint impedance  
                 controller by default. If True, uses our joint impedance controller.
-            stop_on_contact_forces (list): List of 6 floats corresponding to
+            buffer_time (float): How much extra time the termination handler will wait
+                before stopping the skill after duration has passed.
+            force_thresholds (list): List of 6 floats corresponding to
                 force limits on translation (xyz) and rotation about (xyz) axes.
                 Default is None. If None then will not stop on contact.
-            stop_on_contact_torques (list): List of 7 floats corresponding to
+            torque_thresholds (list): List of 7 floats corresponding to
                 torque limits on each joint. Default is None. If None then will
                 not stop on contact.
             cartesian impedances (list): List of 6 floats corresponding to
@@ -566,29 +548,10 @@ class FrankaArm:
         
         skill.add_joint_dmp_params(duration, joint_dmp_info, initial_sensor_values)
         
-        if use_impedance:
-            if k_gains is not None and d_gains is not None:
-                skill.add_joint_gains(k_gains, d_gains)
-            else:
-                skill.add_joint_gains(FC.DEFAULT_K_GAINS, FC.DEFAULT_D_GAINS)
-        else:
-            if joint_impedances is not None:
-                skill.add_internal_impedances([], joint_impedances)
-            elif cartesian_impedances is not None:
-                skill.add_internal_impedances(cartesian_impedances, [])
-            else:
-                skill.add_internal_impedances([], FC.DEFAULT_JOINT_IMPEDANCES)
+        skill.set_joint_impedances(use_impedance, cartesian_impedances, joint_impedances, k_gains, d_gains)
 
-        if stop_on_contact_forces is not None or stop_on_contact_torques is not None:
-            if stop_on_contact_forces is None:
-                stop_on_contact_forces = []
-            if stop_on_contact_torques is None:
-                stop_on_contact_torques = []
-            skill.add_contact_termination_params(FC.DEFAULT_TERM_BUFFER_TIME,
-                                                 stop_on_contact_forces,
-                                                 stop_on_contact_torques)
-        else:
-            skill.add_time_termination_params(FC.DEFAULT_TERM_BUFFER_TIME)
+        if not skill.check_for_contact_params(buffer_time, force_thresholds, torque_thresholds):
+            skill.add_time_termination_params(buffer_time)
 
         goal = skill.create_goal()
 
@@ -605,8 +568,9 @@ class FrankaArm:
                          orientation_only = False,
                          position_only = False,
                          use_impedance=True, 
-                         stop_on_contact_forces=None,
-                         stop_on_contact_torques=None,
+                         buffer_time=FC.DEFAULT_TERM_BUFFER_TIME,
+                         force_thresholds=None,
+                         torque_thresholds=None,
                          cartesian_impedances=None,
                          joint_impedances=None, 
                          block=True, 
@@ -628,10 +592,12 @@ class FrankaArm:
                 are to generate a dmp only for position.
             use_impedance (boolean) : Function uses our impedance controller 
                 by default. If False, uses the Franka cartesian controller.
-            stop_on_contact_forces (list): List of 6 floats corresponding to
+            buffer_time (float): How much extra time the termination handler will wait
+                before stopping the skill after duration has passed.
+            force_thresholds (list): List of 6 floats corresponding to
                 force limits on translation (xyz) and rotation about (xyz) axes.
                 Default is None. If None then will not stop on contact.
-            stop_on_contact_torques (list): List of 7 floats corresponding to
+            torque_thresholds (list): List of 7 floats corresponding to
                 torque limits on each joint. Default is None. If None then will
                 not stop on contact.
             cartesian impedances (list): List of 6 floats corresponding to
@@ -682,16 +648,10 @@ class FrankaArm:
 
         skill.add_pose_dmp_params(orientation_only, position_only, duration, pose_dmp_info, initial_sensor_values):
 
-        if stop_on_contact_forces is not None or stop_on_contact_torques is not None:
-            if stop_on_contact_forces is None:
-                stop_on_contact_forces = []
-            if stop_on_contact_torques is None:
-                stop_on_contact_torques = []
-            skill.add_contact_termination_params(FC.DEFAULT_TERM_BUFFER_TIME,
-                                                 stop_on_contact_forces,
-                                                 stop_on_contact_torques)
-        else:
-            skill.add_time_termination_params(FC.DEFAULT_TERM_BUFFER_TIME)
+        skill.set_cartesian_impedances(use_impedance, cartesian_impedances, joint_impedances)
+
+        if not skill.check_for_contact_params(buffer_time, force_thresholds, torque_thresholds):
+            skill.add_time_termination_params(buffer_time)
 
         goal = skill.create_goal()
 
@@ -707,6 +667,9 @@ class FrankaArm:
                                       max_rotation,
                                       forces=None,
                                       torques=None,
+                                      buffer_time=FC.DEFAULT_TERM_BUFFER_TIME,
+                                      force_thresholds=None,
+                                      torque_thresholds=None,
                                       block=True,
                                       ignore_errors=True,
                                       skill_desc=''):
@@ -716,12 +679,30 @@ class FrankaArm:
             run_duration (float): A float in the unit of seconds
             acc_duration (float): A float in the unit of seconds. How long to
                 acc/de-acc to achieve desired force.
+            max_translation (float): A float in the unit of meters. Max translation 
+                before the robot deaccelerates.
+            max_rotation (float): A float in the unit of rad. Max rotation 
+                before the robot deaccelerates.
             forces (list): Optional (defaults to None).
                 A list of 3 numbers that correspond to end-effector forces in
                     3 directions
             torques (list): Optional (defaults to None).
                 A list of 3 numbers that correspond to end-effector torques in
                     3 axes
+            buffer_time (float): How much extra time the termination handler will wait
+                before stopping the skill after duration has passed.
+            force_thresholds (list): List of 6 floats corresponding to
+                force limits on translation (xyz) and rotation about (xyz) axes.
+                Default is None. If None then will not stop on contact.
+            torque_thresholds (list): List of 7 floats corresponding to
+                torque limits on each joint. Default is None. If None then will
+                not stop on contact.
+            block (boolean) : Function blocks by default. If False, the function becomes
+                asynchronous and can be preempted.
+            ignore_errors (boolean) : Function ignores errors by default. 
+                If False, errors and some exceptions can be thrown.
+            skill_desc (string) : Skill description to use for logging on
+                control-pc.
 
         Raises:
             ValueError if acc_duration > 0.5*run_duration, or if forces are
@@ -741,13 +722,19 @@ class FrankaArm:
             raise ValueError('Angular momentum magnitude exceeds safety '
                     'threshold of {}'.format(FC.MAX_ANG_MOMENTUM))
 
-        skill = ForceTorqueSkill(skill_desc=skill_desc)
-        skill.add_initial_sensor_values(FC.EMPTY_SENSOR_VALUES)
-        skill.add_termination_params([0.1])
+        skill = Skill(SkillType.ForceTorqueSkill, 
+                      TrajectoryGeneratorType.ImpulseTrajectoryGenerator,
+                      feedback_controller_type=FeedbackControllerType.PassThroughFeedbackController,
+                      termination_handler_type=TerminationHandlerType.TimeTerminationHandler, 
+                      skill_desc=skill_desc)
 
-        skill.add_trajectory_params(
-                [run_duration, acc_duration, max_translation, max_rotation]
-                + forces + torques)
+        skill.add_initial_sensor_values(FC.EMPTY_SENSOR_VALUES)
+        
+        skill.add_impulse_params(run_duration, acc_duration, max_translation, max_rotation, forces, torques)
+
+        if not skill.check_for_contact_params(buffer_time, force_thresholds, torque_thresholds):
+            skill.add_time_termination_params(buffer_time)
+
         goal = skill.create_goal()
 
         self._send_goal(goal,
@@ -760,6 +747,9 @@ class FrankaArm:
                                          acc_duration,
                                          max_translation,
                                          forces,
+                                         buffer_time=FC.DEFAULT_TERM_BUFFER_TIME,
+                                         force_thresholds=None,
+                                         torque_thresholds=None,
                                          block=True,
                                          ignore_errors=True,
                                          skill_desc=''):
@@ -769,11 +759,26 @@ class FrankaArm:
             run_duration (float): A float in the unit of seconds
             acc_duration (float): A float in the unit of seconds.
                 How long to acc/de-acc to achieve desired force.
-            max_translation (float): Max translation before the robot
-                deaccelerates.
+            max_translation (float): A float in the unit of meters. Max 
+                translation before the robot deaccelerates.
             forces (list): Optional (defaults to None).
                 A list of 3 numbers that correspond to end-effector forces in
                     3 directions
+            buffer_time (float): How much extra time the termination handler will wait
+                before stopping the skill after duration has passed.
+            force_thresholds (list): List of 6 floats corresponding to
+                force limits on translation (xyz) and rotation about (xyz) axes.
+                Default is None. If None then will not stop on contact.
+            torque_thresholds (list): List of 7 floats corresponding to
+                torque limits on each joint. Default is None. If None then will
+                not stop on contact.
+            block (boolean) : Function blocks by default. If False, the function becomes
+                asynchronous and can be preempted.
+            ignore_errors (boolean) : Function ignores errors by default. 
+                If False, errors and some exceptions can be thrown.
+            skill_desc (string) : Skill description to use for logging on
+                control-pc.
+                    
         Raises:
             ValueError if acc_duration > 0.5*run_duration, or if forces are
                 too large
@@ -788,14 +793,23 @@ class FrankaArm:
         forces = np.array(forces)
         force_axis = forces / np.linalg.norm(forces)
 
-        skill = ForceAlongAxisSkill(skill_desc=skill_desc)
-        skill.add_initial_sensor_values(FC.EMPTY_SENSOR_VALUES)
-        skill.add_termination_params([0.1])
-        skill.add_feedback_controller_params(
-                FC.DEFAULT_FORCE_AXIS_CONTROLLER_PARAMS + force_axis.tolist())
+        skill = Skill(SkillType.ForceTorqueSkill, 
+                      TrajectoryGeneratorType.ImpulseTrajectoryGenerator,
+                      feedback_controller_type=FeedbackControllerType.ForceAxisImpedenceFeedbackController,
+                      termination_handler_type=TerminationHandlerType.TimeTerminationHandler, 
+                      skill_desc=skill_desc)
 
-        init_params = [run_duration, acc_duration, max_translation, 0]
-        skill.add_trajectory_params(init_params + forces.tolist() + [0, 0, 0])
+        skill.add_initial_sensor_values(FC.EMPTY_SENSOR_VALUES)
+        
+        skill.add_impulse_params(run_duration, acc_duration, max_translation, 0, forces.tolist(), [0, 0, 0])
+
+        skill.add_force_axis_params(FC.DEFAULT_FORCE_AXIS_TRANSLATIONAL_STIFFNESS,
+                                    FC.DEFAULT_FORCE_AXIS_ROTATIONAL_STIFFNESS,
+                                    force_axis.tolist())
+
+        if not skill.check_for_contact_params(buffer_time, force_thresholds, torque_thresholds):
+            skill.add_time_termination_params(buffer_time)
+
         goal = skill.create_goal()
 
         self._send_goal(goal,
@@ -849,259 +863,105 @@ class FrankaArm:
         # small lag
         sleep(FC.GRIPPER_CMD_SLEEP_TIME)
 
-    def stay_in_position(self, duration=3, translational_stiffness=600,
-                         rotational_stiffness=50, k_gains=None, d_gains=None,
-                         cartesian_impedances=None, joint_impedances=None, 
-                         block=True, ignore_errors=True, skill_desc='', 
-                         skill_type=SkillType.ImpedanceControlSkill,
-                         feedback_controller_type=FeedbackControllerType.CartesianImpedanceFeedbackController):
-        '''Commands the Arm to stay in its current position with provided
-        translation and rotation stiffnesses
+    def selective_guidance_mode(self, 
+                                duration=5,
+                                use_joints=False, 
+                                use_impedance=False,
+                                buffer_time=FC.DEFAULT_TERM_BUFFER_TIME,
+                                force_thresholds=None,
+                                torque_thresholds=None,
+                                cartesian_impedances=None,
+                                joint_impedances=None,
+                                k_gains=None,
+                                d_gains=None,
+                                block=True,
+                                ignore_errors=True,
+                                ignore_virtual_walls=False,
+                                skill_desc=''):
+        '''Commands the Arm to stay in its current position with selective impedances
+        that allow guidance in either certain joints or in cartesian pose.
 
         Args:
-            duration (float) : How much time the robot should stay in place in
-                seconds.
-            translational_stiffness (float): Translational stiffness factor used
-                in the torque controller.
-                Default is 600. A value of 0 will allow free translational
-                movement.
-            rotational_stiffness (float): Rotational stiffness factor used in
-                the torque controller.
-                Default is 50. A value of 0 will allow free rotational movement.
-        '''
-        skill = StayInInitialPoseSkill(skill_desc, skill_type, feedback_controller_type)
-
-        skill.add_initial_sensor_values(FC.EMPTY_SENSOR_VALUES)
-
-        if skill_type == SkillType.ImpedanceControlSkill:
-            if feedback_controller_type == FeedbackControllerType.CartesianImpedanceFeedbackController:
-                if cartesian_impedances is not None:
-                    skill.add_cartesian_impedances(cartesian_impedances)
-                else:
-                    skill.add_feedback_controller_params([translational_stiffness] + [rotational_stiffness]) 
-            elif feedback_controller_type == FeedbackControllerType.JointImpedanceFeedbackController:
-                if k_gains is not None and d_gains is not None:
-                    skill.add_joint_gains(k_gains, d_gains)
-                else:
-                    skill.add_feedback_controller_params([])
-            else:
-                skill.add_feedback_controller_params([translational_stiffness] + [rotational_stiffness])
-        elif skill_type == SkillType.CartesianPoseSkill:
-            if cartesian_impedances is not None:
-                skill.add_cartesian_impedances(cartesian_impedances)
-            else:
-                skill.add_feedback_controller_params([])
-        elif skill_type == SkillType.JointPositionSkill:
-            if joint_impedances is not None:
-                skill.add_joint_impedances(joint_impedances)
-            else:
-                skill.add_feedback_controller_params([])
-        else:
-            skill.add_feedback_controller_params([translational_stiffness] + [rotational_stiffness]) 
-        
-        skill.add_run_time(duration)
-        goal = skill.create_goal()
-
-        self._send_goal(goal,
-                        cb=lambda x: skill.feedback_callback(x),
-                        block=block,
-                        ignore_errors=ignore_errors)
-
-    def run_guide_mode_with_selective_joint_compliance(
-            self,
-            duration=3, joint_impedances=None, k_gains=FC.DEFAULT_K_GAINS,
-            d_gains=FC.DEFAULT_D_GAINS, block=True,
-            ignore_errors=True, skill_desc='', skill_type=SkillType.ImpedanceControlSkill):
-        '''Run guide mode with selective joint compliance given k and d gains
-            for each joint
-
-        Args:
-            duration (float) : How much time the robot should be in selective
-                               joint guide mode in seconds.
-            k_gains (list): list of 7 k gains, one for each joint
-                            Default is 600., 600., 600., 600., 250., 150., 50..
-            d_gains (list): list of 7 d gains, one for each joint
-                            Default is 50.0, 50.0, 50.0, 50.0, 30.0, 25.0, 15.0.
-        '''
-        skill = StayInInitialPoseSkill(skill_desc, skill_type, FeedbackControllerType.JointImpedanceFeedbackController)
-
-        skill.add_initial_sensor_values(FC.EMPTY_SENSOR_VALUES)
-
-        if skill_type == SkillType.ImpedanceControlSkill:
-            if k_gains is not None and d_gains is not None:
-                skill.add_joint_gains(k_gains, d_gains)
-        elif skill_type == SkillType.JointPositionSkill:
-            if joint_impedances is not None:
-                skill.add_joint_impedances(joint_impedances)
-            else:
-                skill.add_feedback_controller_params([])
-        
-        skill.add_run_time(duration)
-        goal = skill.create_goal()
-
-        self._send_goal(goal,
-                        cb=lambda x: skill.feedback_callback(x),
-                        block=block,
-                        ignore_errors=ignore_errors)
-
-    def run_guide_mode_with_selective_pose_compliance(
-            self, duration=3,
-            translational_stiffnesses=FC.DEFAULT_TRANSLATIONAL_STIFFNESSES,
-            rotational_stiffnesses=FC.DEFAULT_ROTATIONAL_STIFFNESSES,
-            cartesian_impedances=None, block=True,
-            ignore_errors=True, skill_desc='', skill_type=SkillType.ImpedanceControlSkill):
-        '''Run guide mode with selective pose compliance given translational
-        and rotational stiffnesses
-
-        Args:
-            duration (float) : How much time the robot should be in selective
-                pose guide mode in seconds.
-            translational_stiffnesses (list): list of 3 translational stiffnesses,
-                one for each axis (x,y,z) Default is 600.0, 600.0, 600.0
-            rotational_stiffnesses (list): list of 3 rotational stiffnesses,
-                one for axis (roll, pitch, yaw) Default is 50.0, 50.0, 50.0
-        '''
-        skill = StayInInitialPoseSkill(skill_desc, skill_type, FeedbackControllerType.CartesianImpedanceFeedbackController)
-
-        skill.add_initial_sensor_values(FC.EMPTY_SENSOR_VALUES)
-
-        if skill_type == SkillType.ImpedanceControlSkill:
-            if cartesian_impedances is not None:
-                skill.add_cartesian_impedances(cartesian_impedances)
-            else:
-                skill.add_feedback_controller_params([translational_stiffnesses] + [rotational_stiffnesses]) 
-        elif skill_type == SkillType.CartesianPoseSkill:
-            if cartesian_impedances is not None:
-                skill.add_cartesian_impedances(cartesian_impedances)
-            else:
-                skill.add_feedback_controller_params([])
-
-        skill.add_feedback_controller_params(
-                translational_stiffnesses + rotational_stiffnesses)
-
-        skill.add_run_time(duration)
-        goal = skill.create_goal()
-
-        self._send_goal(
-                goal,
-                cb=lambda x: skill.feedback_callback(x),
-                block=block,
-                ignore_errors=ignore_errors)
-
-    def run_dynamic_joint_position_interpolation(self,
-         joints,
-         duration=5,
-         stop_on_contact_forces=None,
-         joint_impedances=None,
-         k_gains=None,
-         d_gains=None,
-         buffer_time=FC.DEFAULT_TERM_BUFFER_TIME,
-         ignore_errors=True,
-         skill_desc='',
-         skill_type=SkillType.ImpedanceControlSkill):
-        '''Commands Arm to the given joint configuration
-
-        Args:
-            joints (list): A list of 7 numbers that correspond to joint angles
-                           in radians
-            duration (float): How much time this robot motion should take
-            joint_impedances (list): A list of 7 numbers that represent the desired
-                                     joint impedances for the internal robot joint
-                                     controller
-
-        Raises:
-            ValueError: If is_joints_reachable(joints) returns False
-        '''
-        if isinstance(joints, np.ndarray):
-            joints = joints.tolist()
-
-        if not self.is_joints_reachable(joints):
-            raise ValueError('Joints not reachable!')
-
-        skill = GoToJointsDynamicsInterpolationSkill(skill_desc, skill_type)
-
-        skill.add_initial_sensor_values(FC.EMPTY_SENSOR_VALUES)
-
-        if joint_impedances is not None:
-            skill.add_joint_impedances(joint_impedances)
-        elif k_gains is not None and d_gains is not None:
-            skill.add_joint_gains(k_gains, d_gains)
-        else:
-            if skill_type == SkillType.ImpedanceControlSkill:
-                skill.add_joint_gains(FC.DEFAULT_K_GAINS, FC.DEFAULT_D_GAINS)
-            else:
-                skill.add_feedback_controller_params([])
-
-        if stop_on_contact_forces is not None:
-            skill.add_contact_termination_params(buffer_time,
-                                                 stop_on_contact_forces,
-                                                 stop_on_contact_forces)
-        else:
-            skill.add_termination_params([buffer_time])
-
-        skill.add_goal_joints(duration, joints)
-        goal = skill.create_goal()
-
-        self._send_goal(goal,
-                        cb=lambda x: skill.feedback_callback(x),
-                        block=False,
-                        ignore_errors=ignore_errors)
-
-    def run_dynamic_pose_interpolation(self,
-                   tool_pose,
-                   duration=3,
-                   stop_on_contact_forces=None,
-                   cartesian_impedances=None,
-                   buffer_time=FC.DEFAULT_TERM_BUFFER_TIME,
-                   ignore_errors=True,
-                   ignore_virtual_walls=False,
-                   skill_desc='',
-                   skill_type=None):
-        '''Commands Arm to the given pose via linear interpolation
-
-        Args:
-            tool_pose (RigidTransform) : End-effector pose in tool frame
-            duration (float) : How much time this robot motion should take
-            stop_on_contact_forces (list): List of 6 floats corresponding to
+            duration (float): How much time this guidance should take
+            use_joints (boolean) : Function uses cartesian impedance  
+                controller by default. If True, it uses joint impedance.
+            use_impedance (boolean) : Function uses the Franka joint impedance  
+                controller by default. If True, uses our joint impedance controller.
+            buffer_time (float): How much extra time the termination handler will wait
+                before stopping the skill after duration has passed.
+            force_thresholds (list): List of 6 floats corresponding to
                 force limits on translation (xyz) and rotation about (xyz) axes.
                 Default is None. If None then will not stop on contact.
+            torque_thresholds (list): List of 7 floats corresponding to
+                torque limits on each joint. Default is None. If None then will
+                not stop on contact.
+            cartesian impedances (list): List of 6 floats corresponding to
+                impedances on translation (xyz) and rotation about (xyz) axes.
+                Default is None. If None then will use default impedances.
+            joint impedances (list): List of 7 floats corresponding to
+                impedances on each joint. This is used when use_impedance is 
+                False. Default is None. If None then will use default impedances.
+            k_gains (list): List of 7 floats corresponding to the k_gains on each joint
+                for our impedance controller. This is used when use_impedance is 
+                True. Default is None. If None then will use default k_gains.
+            d_gains (list): List of 7 floats corresponding to the d_gains on each joint
+                for our impedance controller. This is used when use_impedance is 
+                True. Default is None. If None then will use default d_gains.
+            block (boolean) : Function blocks by default. If False, the function becomes
+                asynchronous and can be preempted.
+            ignore_errors (boolean) : Function ignores errors by default. 
+                If False, errors and some exceptions can be thrown.
+            ignore_virtual_walls (boolean): Function checks for collisions with 
+                virtual walls by default. If False, the robot no longer checks,
+                which may be dangerous.
+            skill_desc (string) : Skill description to use for logging on
+                control-pc.
         '''
-        if tool_pose.from_frame != 'franka_tool' or tool_pose.to_frame != 'world':
-            raise ValueError('pose has invalid frame names! Make sure pose has \
-                              from_frame=franka_tool and to_frame=world')
-
-        tool_base_pose = tool_pose * self._tool_delta_pose.inverse()
-
-        if not ignore_virtual_walls and np.any([
-            tool_base_pose.translation <= FC.WORKSPACE_WALLS[:, :3].min(axis=0),
-            tool_base_pose.translation >= FC.WORKSPACE_WALLS[:, :3].max(axis=0)]):
-            raise ValueError('Target pose is outside of workspace virtual walls!')
-
-        skill = GoToPoseDynamicsInterpolationSkill(skill_desc, skill_type)
+        if use_joints:
+            if use_impedance:
+                skill = Skill(SkillType.ImpedanceControlSkill, 
+                              TrajectoryGeneratorType.StayInInitialJointsTrajectoryGenerator,
+                              feedback_controller_type=FeedbackControllerType.JointImpedanceFeedbackController,
+                              termination_handler_type=TerminationHandlerType.FinalJointTerminationHandler, 
+                              skill_desc=skill_desc)
+            else:
+                skill = Skill(SkillType.JointPositionSkill, 
+                              TrajectoryGeneratorType.StayInInitialJointsTrajectoryGenerator,
+                              feedback_controller_type=FeedbackControllerType.SetInternalImpedanceFeedbackController,
+                              termination_handler_type=TerminationHandlerType.FinalJointTerminationHandler, 
+                              skill_desc=skill_desc)
+        else:
+            if use_impedance:
+                skill = Skill(SkillType.ImpedanceControlSkill, 
+                              TrajectoryGeneratorType.StayInInitialPoseTrajectoryGenerator,
+                              feedback_controller_type=FeedbackControllerType.CartesianImpedanceFeedbackController,
+                              termination_handler_type=TerminationHandlerType.TimeTerminationHandler, 
+                              skill_desc=skill_desc)
+            else:
+                skill = Skill(SkillType.CartesianPoseSkill, 
+                              TrajectoryGeneratorType.StayInInitialPoseTrajectoryGenerator,
+                              feedback_controller_type=FeedbackControllerType.SetInternalImpedanceFeedbackController,
+                              termination_handler_type=TerminationHandlerType.TimeTerminationHandler, 
+                              skill_desc=skill_desc)
 
         skill.add_initial_sensor_values(FC.EMPTY_SENSOR_VALUES)
+        
+        skill.add_run_time(duration)
 
-        if cartesian_impedances is not None:
-            skill.add_cartesian_impedances(cartesian_impedances)
+        if use_joints:
+            skill.set_joint_impedances(use_impedance, cartesian_impedances, joint_impedances, k_gains, d_gains)
         else:
-            skill.add_feedback_controller_params(FC.DEFAULT_TORQUE_CONTROLLER_PARAMS)
+            skill.set_cartesian_impedances(use_impedance, cartesian_impedances, joint_impedances)
 
-        if stop_on_contact_forces is not None:
-            skill.add_contact_termination_params(buffer_time,
-                                                 stop_on_contact_forces,
-                                                 stop_on_contact_forces)
-        else:
-            skill.add_termination_params([buffer_time])
+        if not skill.check_for_contact_params(buffer_time, force_thresholds, torque_thresholds):
+            skill.add_time_termination_params(buffer_time)
 
-        skill.add_goal_pose_with_matrix(duration,
-                                        tool_base_pose.matrix.T.flatten().tolist())
         goal = skill.create_goal()
 
         self._send_goal(goal,
                         cb=lambda x: skill.feedback_callback(x),
-                        block=False,
+                        block=block,
                         ignore_errors=ignore_errors)
-
 
     def open_gripper(self, block=True):
         '''Opens gripper to maximum width

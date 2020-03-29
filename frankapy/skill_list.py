@@ -80,6 +80,36 @@ class Skill:
 
     ## Feedback Controllers
 
+    def set_cartesian_impedances(self, use_impedance, cartesian_impedances, joint_impedances):
+
+        if use_impedance:
+              if cartesian_impedances is not None:
+                  self.add_cartesian_impedances(cartesian_impedances)
+              else:
+                  self.add_cartesian_impedances(FC.DEFAULT_TRANSLATIONAL_STIFFNESSES + FC.DEFAULT_ROTATIONAL_STIFFNESSES)
+        else:
+            if joint_impedances is not None:
+                self.add_internal_impedances([], joint_impedances)
+            elif cartesian_impedances is not None:
+                self.add_internal_impedances(cartesian_impedances, [])
+            else:
+                self.add_internal_impedances([], FC.DEFAULT_JOINT_IMPEDANCES)
+
+    def set_joint_impedances(self, use_impedance, cartesian_impedances, joint_impedances, k_gains, d_gains):
+
+        if use_impedance:
+            if k_gains is not None and d_gains is not None:
+                self.add_joint_gains(k_gains, d_gains)
+            else:
+                self.add_joint_gains(FC.DEFAULT_K_GAINS, FC.DEFAULT_D_GAINS)
+        else:
+            if joint_impedances is not None:
+                self.add_internal_impedances([], joint_impedances)
+            elif cartesian_impedances is not None:
+                self.add_internal_impedances(cartesian_impedances, [])
+            else:
+                self.add_internal_impedances([], FC.DEFAULT_JOINT_IMPEDANCES)
+
     def add_cartesian_impedances(self, cartesian_impedances):
         assert type(cartesian_impedances) is list, \
                 "Incorrect cartesian impedances type. Should be list."
@@ -93,6 +123,21 @@ class Skill:
                                                                    cartesian_impedances[3:])
 
         self.add_feedback_controller_params(cartesian_impedance_feedback_controller_msg_proto.SerializeToString())
+
+    def add_force_axis_params(self, translational_stiffness, rotational_stiffness, axis):
+        assert type(translational_stiffness) is float or type(translational_stiffness) is int, \
+                "Incorrect translational stiffness type. Should be int or float."
+        assert type(rotational_stiffness) is float or type(rotational_stiffness) is int, \
+                "Incorrect rotational stiffness type. Should be int or float."
+        assert type(axis) is list, \
+                "Incorrect axis type. Should be list."
+        assert len(axis) == 3, \
+                "Incorrect axis len. Should be 3."
+
+        force_axis_feedback_controller_msg_proto = make_force_axis_feedback_controller_msg_proto(translational_stiffness,
+                                                                                                 rotational_stiffness, axis)
+
+        self.add_feedback_controller_params(force_axis_feedback_controller_msg_proto.SerializeToString())
 
     def add_internal_impedances(self, cartesian_impedances, joint_impedances):
         assert type(cartesian_impedances) is list, \
@@ -126,6 +171,21 @@ class Skill:
 
     ## Termination Handlers
 
+    def check_for_contact_params(self, buffer_time, force_thresholds, torque_thresholds):
+        if force_thresholds is not None or torque_thresholds is not None:
+            self._termination_handler_type = TerminationHandlerType.ContactTerminationHandler
+
+            if force_thresholds is None:
+                force_thresholds = []
+            if torque_thresholds is None:
+                torque_thresholds = []
+            self.add_contact_termination_params(buffer_time,
+                                                force_thresholds,
+                                                torque_thresholds)
+            return True
+        else:
+            return False
+
     def add_contact_termination_params(self, buffer_time,
                                        force_thresholds,
                                        torque_thresholds):
@@ -140,8 +200,8 @@ class Skill:
                 "Incorrect force thresholds length. Should be 0 or 6."
         assert len(torque_thresholds) == 0 or len(torque_thresholds) == 7, \
                 "Incorrect torque thresholds length. Should be 0 or 7."
-
-        self._termination_handler_type = TerminationHandlerType.ContactTerminationHandler
+        assert self._termination_handler_type == TerminationHandlerType.ContactTerminationHandler, \
+                "Incorrect termination handler type. Should be ContactTerminationHandler"
 
         contact_termination_handler_msg_proto = \
             make_contact_termination_handler_msg_proto(buffer_time, force_thresholds,
@@ -212,6 +272,28 @@ class Skill:
         gripper_trajectory_generator_msg_proto = make_gripper_trajectory_generator_msg_proto(grasp, width, speed, force)
 
         self.add_trajectory_params(gripper_trajectory_generator_msg_proto.SerializeToString())
+
+    def add_impulse_params(self, time, acc_time, max_trans, max_rot, forces, torques):
+        assert type(time) is float or type(time) is int, \
+                "Incorrect time type. Should be int or float."
+        assert time >= 0, "Incorrect time. Should be non negative."
+        assert type(acc_time) is float or type(acc_time) is int, \
+                "Incorrect acc time type. Should be int or float."
+        assert acc_time >= 0, "Incorrect acc time. Should be non negative."
+        assert type(max_trans) is float or type(max_trans) is int, \
+                "Incorrect max trans type. Should be int or float."
+        assert max_trans >= 0, "Incorrect max trans. Should be non negative."
+        assert type(max_rot) is float or type(max_rot) is int, \
+                "Incorrect max rot type. Should be int or float."
+        assert max_rot >= 0, "Incorrect max rot. Should be non negative."
+        assert type(forces) is list, "Incorrect forces type. Should be list."
+        assert len(forces) == 3, "Incorrect forces len. Should be 3."
+        assert type(torques) is list, "Incorrect torques type. Should be list."
+        assert len(torques) == 3, "Incorrect torques len. Should be 3."
+
+        impulse_trajectory_generator_msg_proto = make_impulse_trajectory_generator_msg_proto(time, acc_time, max_trans, max_rot, forces, torques)
+
+        self.add_trajectory_params(impulse_trajectory_generator_msg_proto.SerializeToString())
 
     def add_goal_pose(self, time, goal_pose):
         assert type(time) is float or type(time) is int, \
@@ -391,181 +473,3 @@ class Skill:
 
     def feedback_callback(self, feedback):
         pass
-
-    
-class GoToJointsDynamicsInterpolationSkill(Skill):
-
-    def __init__(self, skill_desc='', skill_type=SkillType.JointPositionSkill):
-        if len(skill_desc) == 0:
-            skill_desc = GoToJointsDynamicsInterpolationSkill.__name__
-
-        if skill_type == SkillType.JointPositionSkill:
-            super(GoToJointsDynamicsInterpolationSkill, self).__init__(
-                SkillType.JointPositionSkill,
-                skill_desc,
-                MetaSkillType.BaseMetaSkill,
-                0,
-                ['/franka_robot/camera'],
-                TrajectoryGeneratorType.CubicHermiteSplineJointTrajectoryGenerator,
-                FeedbackControllerType.JointImpedanceFeedbackController,
-                TerminationHandlerType.TimeTerminationHandler,
-                1)
-        elif skill_type == SkillType.ImpedanceControlSkill:
-            super(GoToJointsDynamicsInterpolationSkill, self).__init__(
-                SkillType.ImpedanceControlSkill,
-                skill_desc,
-                MetaSkillType.BaseMetaSkill,
-                0,
-                ['/franka_robot/camera'],
-                TrajectoryGeneratorType.CubicHermiteSplineJointTrajectoryGenerator,
-                FeedbackControllerType.JointImpedanceFeedbackController,
-                TerminationHandlerType.TimeTerminationHandler,
-                1)
-        else:
-            super(GoToJointsDynamicsInterpolationSkill, self).__init__(
-                SkillType.ImpedanceControlSkill,
-                skill_desc,
-                MetaSkillType.BaseMetaSkill,
-                0,
-                ['/franka_robot/camera'],
-                TrajectoryGeneratorType.CubicHermiteSplineJointTrajectoryGenerator,
-                FeedbackControllerType.JointImpedanceFeedbackController,
-                TerminationHandlerType.TimeTerminationHandler,
-                1)
-
-    
-class GoToPoseDynamicsInterpolationSkill(Skill):
-
-    def __init__(self, skill_desc='', skill_type=SkillType.ImpedanceControlSkill):
-        if len(skill_desc) == 0:
-            skill_desc = GoToPoseDynamicsInterpolationSkill.__name__
-
-        if skill_type == SkillType.ImpedanceControlSkill:
-            super(GoToPoseDynamicsInterpolationSkill, self).__init__(
-                SkillType.ImpedanceControlSkill,
-                skill_desc,
-                MetaSkillType.BaseMetaSkill,
-                0,
-                ['/franka_robot/camera'],
-                TrajectoryGeneratorType.CubicHermiteSplinePoseTrajectoryGenerator,
-                FeedbackControllerType.CartesianImpedanceFeedbackController,
-                TerminationHandlerType.TimeTerminationHandler,
-                1)
-        else:
-            super(GoToPoseDynamicsInterpolationSkill, self).__init__(
-                SkillType.ImpedanceControlSkill,
-                skill_desc,
-                MetaSkillType.BaseMetaSkill,
-                0,
-                ['/franka_robot/camera'],
-                TrajectoryGeneratorType.CubicHermiteSplinePoseTrajectoryGenerator,
-                FeedbackControllerType.CartesianImpedanceFeedbackController,
-                TerminationHandlerType.TimeTerminationHandler,
-                1)
-
-
-# Define skill that stays in pose
-class StayInInitialPoseSkill(Skill):
-    def __init__(self, skill_desc='', skill_type=SkillType.ImpedanceControlSkill,
-                 feedback_controller_type=FeedbackControllerType.CartesianImpedanceFeedbackController):
-        if len(skill_desc) == 0:
-            skill_desc = StayInInitialPoseSkill.__name__
-        if skill_type == SkillType.ImpedanceControlSkill:
-            if feedback_controller_type == FeedbackControllerType.CartesianImpedanceFeedbackController:
-                super(StayInInitialPoseSkill, self).__init__(
-                      SkillType.ImpedanceControlSkill,
-                      skill_desc,
-                      MetaSkillType.BaseMetaSkill,
-                      0,
-                      ['/franka_robot/camera'],
-                      TrajectoryGeneratorType.StayInInitialPoseTrajectoryGenerator,
-                      FeedbackControllerType.CartesianImpedanceFeedbackController,
-                      TerminationHandlerType.TimeTerminationHandler,
-                      1)
-            elif feedback_controller_type == FeedbackControllerType.JointImpedanceFeedbackController:
-                super(StayInInitialPoseSkill, self).__init__(
-                      SkillType.ImpedanceControlSkill,
-                      skill_desc,
-                      MetaSkillType.BaseMetaSkill,
-                      0,
-                      ['/franka_robot/camera'],
-                      TrajectoryGeneratorType.StayInInitialJointsTrajectoryGenerator,
-                      FeedbackControllerType.JointImpedanceFeedbackController,
-                      TerminationHandlerType.TimeTerminationHandler,
-                      1)
-            else:
-                super(StayInInitialPoseSkill, self).__init__(
-                      SkillType.ImpedanceControlSkill,
-                      skill_desc,
-                      MetaSkillType.BaseMetaSkill,
-                      0,
-                      ['/franka_robot/camera'],
-                      TrajectoryGeneratorType.StayInInitialPoseTrajectoryGenerator,
-                      FeedbackControllerType.CartesianImpedanceFeedbackController,
-                      TerminationHandlerType.TimeTerminationHandler,
-                      1)
-        elif skill_type == SkillType.CartesianPoseSkill:
-            super(StayInInitialPoseSkill, self).__init__(
-                  SkillType.CartesianPoseSkill,
-                  skill_desc,
-                  MetaSkillType.BaseMetaSkill,
-                  0,
-                  ['/franka_robot/camera'],
-                  TrajectoryGeneratorType.StayInInitialPoseTrajectoryGenerator,
-                  FeedbackControllerType.SetInternalImpedanceFeedbackController,
-                  TerminationHandlerType.TimeTerminationHandler,
-                  1)
-        elif skill_type == SkillType.JointPositionSkill:
-            super(StayInInitialPoseSkill, self).__init__(
-                  SkillType.JointPositionSkill,
-                  skill_desc,
-                  MetaSkillType.BaseMetaSkill,
-                  0,
-                  ['/franka_robot/camera'],
-                  TrajectoryGeneratorType.StayInInitialJointsTrajectoryGenerator,
-                  FeedbackControllerType.SetInternalImpedanceFeedbackController,
-                  TerminationHandlerType.TimeTerminationHandler,
-                  1)
-        else:
-            super(StayInInitialPoseSkill, self).__init__(
-                  SkillType.ImpedanceControlSkill,
-                  skill_desc,
-                  MetaSkillType.BaseMetaSkill,
-                  0,
-                  ['/franka_robot/camera'],
-                  TrajectoryGeneratorType.StayInInitialPoseTrajectoryGenerator,
-                  FeedbackControllerType.CartesianImpedanceFeedbackController,
-                  TerminationHandlerType.TimeTerminationHandler,
-                  1)
-
-# Define skill that uses force control
-class ForceTorqueSkill(Skill):
-    def __init__(self, skill_desc=''):
-        if len(skill_desc) == 0:
-            skill_desc = ForceTorqueSkill.__name__
-        super(ForceTorqueSkill, self).__init__(
-              SkillType.ForceTorqueSkill,
-              skill_desc,
-              MetaSkillType.BaseMetaSkill,
-              0,
-              ['/franka_robot/camera'],
-              TrajectoryGeneratorType.ImpulseTrajectoryGenerator,
-              FeedbackControllerType.PassThroughFeedbackController,
-              TerminationHandlerType.TimeTerminationHandler,
-              1)
-
-# Define skill that uses force control along a specific axis
-class ForceAlongAxisSkill(Skill):
-    def __init__(self, skill_desc=''):
-        if len(skill_desc) == 0:
-            skill_desc = ForceTorqueSkill.__name__
-        super(ForceAlongAxisSkill, self).__init__(
-              SkillType.ForceTorqueSkill,
-              skill_desc,
-              MetaSkillType.BaseMetaSkill,
-              0,
-              ['/franka_robot/camera'],
-              TrajectoryGeneratorType.ImpulseTrajectoryGenerator,
-              FeedbackControllerType.ForceAxisImpedenceFeedbackController,
-              TerminationHandlerType.TimeTerminationHandler,
-              1)
