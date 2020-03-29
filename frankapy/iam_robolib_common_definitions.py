@@ -1,61 +1,83 @@
 #######################################################################
 #                                                                     #
 #   Important: Any Changes here should also be reflected in changes   #
-#   in the frankapy iam_robolib_common_definitions.py file as well.    #
+#   in the frankapy iam_robolib_common_definitions.py file as well.   #
+#                                                                     #
+#   The order of the enums matter!!                                   #
 #                                                                     #
 ####################################################################### 
+from enum import Enum
 
-class SkillType:
-    CartesianPoseSkill = 0
-    ForceTorqueSkill = 1
-    GripperSkill = 2
-    ImpedanceControlSkill = 3
-    JointPositionSkill = 4
+# From https://stackoverflow.com/questions/36932/how-can-i-represent-an-enum-in-python
+def enum_auto(*sequential, **named):
+    enums = dict(zip(sequential, range(len(sequential))), **named)
+    return type('Enum', (), enums)
 
-class MetaSkillType:
-    BaseMetaSkill = 0
-    JointPositionContinuousSkill = 1
 
-class TrajectoryGeneratorType:
-    CubicHermiteSplinePoseTrajectoryGenerator = 0
-    CubicHermiteSplineJointTrajectoryGenerator = 1
-    GoalPoseDmpTrajectoryGenerator = 2
-    GripperTrajectoryGenerator = 3
-    ImpulseTrajectoryGenerator = 4
-    JointDmpTrajectoryGenerator = 5
-    LinearPoseTrajectoryGenerator = 6
-    LinearJointTrajectoryGenerator = 7
-    MinJerkJointTrajectoryGenerator = 8
-    MinJerkPoseTrajectoryGenerator = 9
-    PoseDmpTrajectoryGenerator = 10
-    RelativeLinearPoseTrajectoryGenerator = 11
-    RelativeMinJerkPoseTrajectoryGenerator = 12
-    SineJointTrajectoryGenerator = 13
-    SinePoseTrajectoryGenerator = 14
-    StayInInitialJointsTrajectoryGenerator = 15
-    StayInInitialPoseTrajectoryGenerator = 16
+SkillType = enum_auto(
+    'CartesianPoseSkill',
+    'ForceTorqueSkill',
+    'GripperSkill',
+    'ImpedanceControlSkill',
+    'JointPositionSkill'
+)
 
-class FeedbackControllerType:
-    CartesianImpedanceFeedbackController = 0
-    ForceAxisImpedenceFeedbackController = 1
-    JointImpedanceFeedbackController = 2
-    NoopFeedbackController = 3
-    PassThroughFeedbackController = 4
-    SetInternalImpedanceFeedbackController = 5
 
-class TerminationHandlerType:
-    ContactTerminationHandler = 0
-    FinalJointTerminationHandler = 1
-    FinalPoseTerminationHandler = 2
-    NoopTerminationHandler = 3
-    TimeTerminationHandler = 4
+MetaSkillType = enum_auto(
+    'BaseMetaSkill',
+    'JointPositionContinuousSkill'
+)
 
-class SkillStatus: 
-    TO_START = 0
-    RUNNING = 1
-    FINISHED = 2 
 
-class SensorDataMessageType:
-    JOINT_POSITION_VELOCITY = 0
-    POSE_POSITION_VELOCITY = 1
-    BOUNDING_BOX = 2
+TrajectoryGeneratorType = enum_auto(
+    'CubicHermiteSplineJointTrajectoryGenerator',
+    'CubicHermiteSplinePoseTrajectoryGenerator',
+    'GoalPoseDmpTrajectoryGenerator',
+    'GripperTrajectoryGenerator',
+    'ImpulseTrajectoryGenerator',
+    'JointDmpTrajectoryGenerator',
+    'LinearJointTrajectoryGenerator',
+    'LinearPoseTrajectoryGenerator',
+    'MinJerkJointTrajectoryGenerator',
+    'MinJerkPoseTrajectoryGenerator',
+    'PoseDmpTrajectoryGenerator',
+    'RelativeLinearPoseTrajectoryGenerator',
+    'RelativeMinJerkPoseTrajectoryGenerator',
+    'SineJointTrajectoryGenerator',
+    'SinePoseTrajectoryGenerator',
+    'StayInInitialJointsTrajectoryGenerator',
+    'StayInInitialPoseTrajectoryGenerator'
+)
+
+
+FeedbackControllerType = enum_auto(
+    'CartesianImpedanceFeedbackController',
+    'ForceAxisImpedenceFeedbackController',
+    'JointImpedanceFeedbackController',
+    'NoopFeedbackController',
+    'PassThroughFeedbackController',
+    'SetInternalImpedanceFeedbackController'
+)
+
+
+TerminationHandlerType = enum_auto(
+    'ContactTerminationHandler',
+    'FinalJointTerminationHandler',
+    'FinalPoseTerminationHandler',
+    'NoopTerminationHandler',
+    'TimeTerminationHandler'
+)
+
+
+SkillStatus = enum_auto(
+    'TO_START',
+    'RUNNING',
+    'FINISHED',
+    'VIRT_COLL_ERR'
+)
+
+SensorDataMessageType = enum_auto(
+    'JOINT_POSITION_VELOCITY',
+    'POSE_POSITION_VELOCITY',
+    'BOUNDING_BOX'
+)
