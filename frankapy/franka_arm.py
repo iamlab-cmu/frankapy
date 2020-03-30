@@ -227,6 +227,7 @@ class FrankaArm:
                           feedback_controller_type=FeedbackControllerType.CartesianImpedanceFeedbackController,
                           termination_handler_type=TerminationHandlerType.TimeTerminationHandler, 
                           skill_desc=skill_desc)
+            use_impedance=True
             block = False
         else:
             if use_impedance:
@@ -428,6 +429,7 @@ class FrankaArm:
                           feedback_controller_type=FeedbackControllerType.JointImpedanceFeedbackController,
                           termination_handler_type=TerminationHandlerType.TimeTerminationHandler, 
                           skill_desc=skill_desc)
+            use_impedance=True
             block = False
         else:
             if use_impedance:
