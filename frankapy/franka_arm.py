@@ -646,7 +646,7 @@ class FrankaArm:
 
         skill.add_initial_sensor_values(initial_sensor_values)  # sensor values
 
-        skill.add_pose_dmp_params(orientation_only, position_only, duration, pose_dmp_info, initial_sensor_values):
+        skill.add_pose_dmp_params(orientation_only, position_only, duration, pose_dmp_info, initial_sensor_values)
 
         skill.set_cartesian_impedances(use_impedance, cartesian_impedances, joint_impedances)
 

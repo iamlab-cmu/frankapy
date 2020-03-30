@@ -27,10 +27,10 @@ class Skill:
         self._skill_desc = skill_desc
         self._meta_skill_type = meta_skill_type
         self._meta_skill_id = meta_skill_id
-        self._sensor_topics = sensor_topics if sensor_topics not None else ['']
+        self._sensor_topics = sensor_topics if sensor_topics is not None else ['']
         self._trajectory_generator_type = trajectory_generator_type
-        self._feedback_controller_type = 
-        self._termination_handler_type = TerminationHandlerType.NoopTerminationHandler
+        self._feedback_controller_type = feedback_controller_type
+        self._termination_handler_type = termination_handler_type
         self._timer_type = timer_type
 
         self._sensor_value_sizes = 0
