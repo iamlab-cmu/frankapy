@@ -52,8 +52,8 @@ def make_joint_threshold_msg_proto(buffer_time, joint_thresholds):
 def make_pose_threshold_msg_proto(buffer_time, pose_thresholds):
     pose_threshold_msg_proto = termination_handler_params_msg_pb2.PoseThresholdMessage()
     pose_threshold_msg_proto.buffer_time = buffer_time
-    pose_threshold_msg_proto.position_thresholds.extend(position_thresholds)
-    pose_threshold_msg_proto.orientation_thresholds.extend(orientation_thresholds)
+    pose_threshold_msg_proto.position_thresholds.extend(pose_thresholds[:3])
+    pose_threshold_msg_proto.orientation_thresholds.extend(pose_thresholds[3:])
 
     return pose_threshold_msg_proto
 
@@ -96,7 +96,7 @@ def make_pose_trajectory_generator_msg_proto(run_time, pose_rigid_transform):
     pose_trajectory_generator_msg_proto = trajectory_generator_params_msg_pb2.PoseTrajectoryGeneratorMessage()
     pose_trajectory_generator_msg_proto.run_time = run_time
     pose_trajectory_generator_msg_proto.position.extend(pose_rigid_transform.translation)
-    pose_trajectory_generator_msg_proto.rotation.extend(pose_rigid_transform.quaternion)
+    pose_trajectory_generator_msg_proto.quaternion.extend(pose_rigid_transform.quaternion)
     pose_trajectory_generator_msg_proto.pose.extend(pose_rigid_transform.matrix.T.flatten().tolist())
 
     return pose_trajectory_generator_msg_proto

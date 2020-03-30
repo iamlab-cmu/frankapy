@@ -419,6 +419,9 @@ class FrankaArm:
         Raises:
             ValueError: If is_joints_reachable(joints) returns False
         '''
+
+        joints = np.array(joints).tolist() 
+
         if dynamic:
             skill = Skill(SkillType.ImpedanceControlSkill, 
                           TrajectoryGeneratorType.CubicHermiteSplineJointTrajectoryGenerator,
