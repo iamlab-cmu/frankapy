@@ -12,18 +12,18 @@ where:
     -i IP address for the control PC.
     -u Username on control PC. (default iam-lab)
     -p Control PC password
-    -d Path to franka_interface on control PC (default ~/Documents/robot-interface)
+    -d Path to franka_interface on control PC (default ~/Documents/franka-interface)
     -r Robot number (default 1)
     -s Start franka-interface on control PC (0 / 1 (default))
     
     ./start_control_pc.sh -i iam-space
-    ./start_control_pc.sh -i iam-space -u iam-lab -p 12345678 -d ~/Documents/robot-interface -r 1 -s 0
+    ./start_control_pc.sh -i iam-space -u iam-lab -p 12345678 -d ~/Documents/franka-interface -r 1 -s 0
     "
 
 control_pc_uname="iam-lab"
 control_pc_use_password=0
 control_pc_password=""
-control_pc_franka_interface_path="~/Documents/robot-interface"
+control_pc_franka_interface_path="~/Documents/franka-interface"
 start_franka_interface=1
 robot_number=1
 
