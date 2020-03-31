@@ -45,7 +45,7 @@ if __name__ == "__main__":
     init_time = rospy.Time.now().to_time()
     for i in range(2, len(ts)):
         proto_msg = make_pose_position_velocity_proto(i, rospy.Time.now().to_time() - init_time, 
-                                                      dt, pose_traj[2], pose_velocities_traj[2])
+                                                      dt, pose_traj[i], pose_velocities_traj[i])
         ros_msg = sensor_proto2ros_msg(proto_msg, SensorDataMessageType.POSE_POSITION_VELOCITY)
         
         rospy.loginfo('Publishing: ID {}'.format(proto_msg.id))

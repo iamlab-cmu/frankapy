@@ -12,9 +12,9 @@ where:
     -i IP address for the control PC.
     -u Username on control PC. (default iam-lab)
     -p Control PC password
-    -d Path to robolib on control PC (default ~/Documents/robot-interface)
+    -d Path to franka_interface on control PC (default ~/Documents/robot-interface)
     -r Robot number (default 1)
-    -s Start iam-robolib on control PC (0 / 1 (default))
+    -s Start franka-interface on control PC (0 / 1 (default))
     
     ./start_control_pc.sh -i iam-space
     ./start_control_pc.sh -i iam-space -u iam-lab -p 12345678 -d ~/Documents/robot-interface -r 1 -s 0
@@ -23,8 +23,8 @@ where:
 control_pc_uname="iam-lab"
 control_pc_use_password=0
 control_pc_password=""
-control_pc_robolib_path="~/Documents/robot-interface"
-start_iam_robolib=1
+control_pc_franka_interface_path="~/Documents/robot-interface"
+start_franka_interface=1
 robot_number=1
 
 while getopts ':h:i:u:p:d:r:s:' option; do
@@ -39,11 +39,11 @@ while getopts ':h:i:u:p:d:r:s:' option; do
     p) control_pc_password=$OPTARG
        control_pc_use_password=1
        ;;
-    d) control_pc_robolib_path=$OPTARG
+    d) control_pc_franka_interface_path=$OPTARG
        ;;
     r) robot_number=$OPTARG
        ;;
-    s) start_iam_robolib=$OPTARG
+    s) start_franka_interface=$OPTARG
        ;;
     :) printf "missing argument for -%s\n" "$OPTARG" >&2
        echo "$usage" >&2
@@ -82,20 +82,20 @@ else
     echo "Roscore is already running"
 fi
 
-if [ "$start_iam_robolib" -eq 1 ]; then
-# ssh to the control pc and start iam_robolib in a new gnome-terminal
-start_iam_robolib_on_control_pc_path="$DIR/start_iam_robolib_on_control_pc.sh"
+if [ "$start_franka_interface" -eq 1 ]; then
+# ssh to the control pc and start franka_interface in a new gnome-terminal
+start_franka_interface_on_control_pc_path="$DIR/start_franka_interface_on_control_pc.sh"
 echo "Will ssh to control PC and start iam_roblib."
-gnome-terminal -e "bash $start_iam_robolib_on_control_pc_path $control_pc_uname $control_pc_ip_address $control_pc_robolib_path $control_pc_use_password $control_pc_password "
+gnome-terminal -e "bash $start_franka_interface_on_control_pc_path $control_pc_uname $control_pc_ip_address $control_pc_franka_interface_path $control_pc_use_password $control_pc_password "
 echo "Done"
 sleep 3
 else
-echo "Will not start iam_robolib on the control pc."
+echo "Will not start franka_interface on the control pc."
 fi
 
 # ssh to the control pc and start ROS action server in a new gnome-terminal
-start_ros_action_lib_on_control_pc_path="$DIR/start_ros_action_lib_on_control_pc.sh"
+start_franka_ros_interface_on_control_pc_path="$DIR/start_franka_ros_interface_on_control_pc.sh"
 echo "Will ssh to control PC and start ROS action server."
-gnome-terminal -e "bash $start_ros_action_lib_on_control_pc_path $control_pc_uname $control_pc_ip_address $workstation_ip_address $control_pc_robolib_path $robot_number $control_pc_use_password $control_pc_password"
+gnome-terminal -e "bash $start_franka_ros_interface_on_control_pc_path $control_pc_uname $control_pc_ip_address $workstation_ip_address $control_pc_franka_interface_path $robot_number $control_pc_use_password $control_pc_password"
 sleep 3
 echo "Done"

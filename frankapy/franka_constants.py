@@ -50,7 +50,7 @@ class FrankaConstants:
     MAX_ANG_MOMENTUM = 2
     MAX_LIN_MOMENTUM_CONSTRAINED = 100
 
-    DEFAULT_ROBOLIB_TIMEOUT = 10
+    DEFAULT_FRANKA_INTERFACE_TIMEOUT = 10
     ACTION_WAIT_LOOP_TIME = 0.001
 
     GRIPPER_CMD_SLEEP_TIME = 0.2
@@ -177,4 +177,4 @@ class FrankaConstants:
         [0.2, 0, -0.05, 0, 0, 0, 1.2, 1, 0.01]
     ])
 
-    DEFAULT_SENSOR_PUBLISHER_TOPIC = 'franka_action_lib/sensor'
+    DEFAULT_SENSOR_PUBLISHER_TOPIC = 'franka_ros_interface/sensor'

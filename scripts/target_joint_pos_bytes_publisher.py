@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 import rospy
 from std_msgs.msg import String
-from franka_action_lib.msg import SensorData
+from franka_ros_interface.msg import SensorData
 from frankapy.proto import sensor_msg_pb2
 import math
 

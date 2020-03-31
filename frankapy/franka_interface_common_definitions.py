@@ -1,7 +1,7 @@
 #######################################################################
 #                                                                     #
 #   Important: Any Changes here should also be reflected in changes   #
-#   in the frankapy iam_robolib_common_definitions.py file as well.   #
+#   in the frankapy franka_interface_common_definitions.py file as well.   #
 #                                                                     #
 #   The order of the enums matter!!                                   #
 #                                                                     #

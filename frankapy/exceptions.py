@@ -6,18 +6,18 @@ class FrankaArmCommException(Exception):
         self.message = message
     
     def __str__(self):
-        return "Communication w/ Robolib ran into a problem: {}. Robolib is probably not ready.".format(self.message)
+        return "Communication w/ FrankaInterface ran into a problem: {}. FrankaInterface is probably not ready.".format(self.message)
 
 
-class FrankaArmRobolibNotReadyException(Exception):
-    ''' Exception for when robolib is not ready
+class FrankaArmFrankaInterfaceNotReadyException(Exception):
+    ''' Exception for when franka_interface is not ready
     '''
 
     def __init__(self, *args, **kwargs):
         Exception.__init__(self, *args, **kwargs)
 
     def __str__(self):
-        return 'Robolib was not ready!'
+        return 'FrankaInterface was not ready!'
 
 
 class FrankaArmException(Exception):
@@ -29,4 +29,4 @@ class FrankaArmException(Exception):
         self.message = message
 
     def __str__(self):
-        return "Robolib ran into a problem: {}".format(self.message)
+        return "FrankaInterface ran into a problem: {}".format(self.message)

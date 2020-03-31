@@ -6,7 +6,7 @@ import rospy
 import actionlib
 import numpy as np
 from autolab_core import RigidTransform
-from .iam_robolib_common_definitions import *
+from .franka_interface_common_definitions import *
 from .franka_constants import FrankaConstants as FC
 from .proto_utils import *
 

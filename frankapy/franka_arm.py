@@ -10,14 +10,14 @@ roslib.load_manifest('franka_interface_msgs')
 import rospy
 import actionlib
 from sensor_msgs.msg import JointState
-from franka_interface_msgs.msg import ExecuteSkillAction, RobolibStatus
-from franka_interface_msgs.srv import GetCurrentRobolibStatusCmd
+from franka_interface_msgs.msg import ExecuteSkillAction, FrankaInterfaceStatus
+from franka_interface_msgs.srv import GetCurrentFrankaInterfaceStatusCmd
 
 from .skill_list import *
 from .exceptions import *
 from .franka_arm_state_client import FrankaArmStateClient
 from .franka_constants import FrankaConstants as FC
-from .iam_robolib_common_definitions import *
+from .franka_interface_common_definitions import *
 from .ros_utils import BoxesPublisher
 
 
@@ -33,8 +33,8 @@ class FrankaArm:
                 '/execute_skill_action_server_node_{}/execute_skill'.format(robot_num)
         self._robot_state_server_name = \
                 '/get_current_robot_state_server_node_{}/get_current_robot_state_server'.format(robot_num)
-        self._robolib_status_server_name = \
-                '/get_current_robolib_status_server_node_{}/get_current_robolib_status_server'.format(robot_num)
+        self._franka_interface_status_server_name = \
+                '/get_current_franka_interface_status_server_node_{}/get_current_franka_interface_status_server'.format(robot_num)
 
         self._connected = False
         self._in_skill = False
@@ -56,14 +56,14 @@ class FrankaArm:
             # set signal handler to handle ctrl+c and kill sigs
             signal.signal(signal.SIGINT, self._sigint_handler_gen())
             
-            rospy.wait_for_service(self._robolib_status_server_name)
-            self._get_current_robolib_status = rospy.ServiceProxy(
-                    self._robolib_status_server_name, GetCurrentRobolibStatusCmd)
+            rospy.wait_for_service(self._franka_interface_status_server_name)
+            self._get_current_franka_interface_status = rospy.ServiceProxy(
+                    self._franka_interface_status_server_name, GetCurrentFrankaInterfaceStatusCmd)
 
             self._client = actionlib.SimpleActionClient(
                     self._execute_skill_action_server_name, ExecuteSkillAction)
             self._client.wait_for_server()
-            self.wait_for_robolib()
+            self.wait_for_franka_interface()
 
             # done init ROS
             self._connected = True
@@ -89,18 +89,18 @@ class FrankaArm:
         self._box_vertices_offset = np.ones([8, 3])
         self._box_transform = np.eye(4)
 
-    def wait_for_robolib(self, timeout=None):
-        '''Blocks execution until robolib gives ready signal.
+    def wait_for_franka_interface(self, timeout=None):
+        '''Blocks execution until franka_interface gives ready signal.
         '''
-        timeout = FC.DEFAULT_ROBOLIB_TIMEOUT if timeout is None else timeout
+        timeout = FC.DEFAULT_FRANKA_INTERFACE_TIMEOUT if timeout is None else timeout
         t_start = time()
         while time() - t_start < timeout:
-            robolib_status = self._get_current_robolib_status().robolib_status
-            if robolib_status.is_ready:
+            franka_interface_status = self._get_current_franka_interface_status().franka_interface_status
+            if franka_interface_status.is_ready:
                 return
             sleep(1e-2)
-        raise FrankaArmCommException('Robolib status not ready for {}s'.format(
-            FC.DEFAULT_ROBOLIB_TIMEOUT))
+        raise FrankaArmCommException('FrankaInterface status not ready for {}s'.format(
+            FC.DEFAULT_FRANKA_INTERFACE_TIMEOUT))
 
     def wait_for_skill(self):
         while not self.is_skill_done():
@@ -110,19 +110,19 @@ class FrankaArm:
         if not self._in_skill:  
             return True 
 
-        robolib_status = self._get_current_robolib_status().robolib_status  
+        franka_interface_status = self._get_current_franka_interface_status().franka_interface_status  
 
         e = None  
         if rospy.is_shutdown(): 
             e = RuntimeError('rospy is down!')  
-        elif robolib_status.error_description:  
-            e = FrankaArmException(robolib_status.error_description)  
-        elif not robolib_status.is_ready: 
-            e = FrankaArmRobolibNotReadyException() 
+        elif franka_interface_status.error_description:  
+            e = FrankaArmException(franka_interface_status.error_description)  
+        elif not franka_interface_status.is_ready: 
+            e = FrankaArmFrankaInterfaceNotReadyException() 
 
         if e is not None: 
             if ignore_errors: 
-                self.wait_for_robolib() 
+                self.wait_for_franka_interface() 
             else: 
                 raise e 
 
@@ -151,8 +151,8 @@ class FrankaArm:
         '''
         Raises:
             FrankaArmCommException if a timeout is reached
-            FrankaArmException if robolib gives an error
-            FrankaArmRobolibNotReadyException if robolib is not ready
+            FrankaArmException if franka_interface gives an error
+            FrankaArmFrankaInterfaceNotReadyException if franka_interface is not ready
         '''
         if self._offline:
             logging.warn('In offline mode, FrankaArm will not execute real robot commands.')
