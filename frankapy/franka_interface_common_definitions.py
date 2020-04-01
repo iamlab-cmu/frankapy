@@ -6,78 +6,75 @@
 #   The order of the enums matter!!                                   #
 #                                                                     #
 ####################################################################### 
-from enum import Enum
-
-# From https://stackoverflow.com/questions/36932/how-can-i-represent-an-enum-in-python
-def enum_auto(*sequential, **named):
-    enums = dict(zip(sequential, range(len(sequential))), **named)
-    return type('Enum', (), enums)
 
 
-SkillType = enum_auto(
-    'CartesianPoseSkill',
-    'ForceTorqueSkill',
-    'GripperSkill',
-    'ImpedanceControlSkill',
-    'JointPositionSkill'
-)
+_ENUM_COUNTER = {}
+def _enum_auto(key):
+    if key not in _ENUM_COUNTER:
+        _ENUM_COUNTER[key] = 0
+    val = _ENUM_COUNTER[key]
+    _ENUM_COUNTER[key] += 1
+    return val
 
 
-MetaSkillType = enum_auto(
-    'BaseMetaSkill',
-    'JointPositionContinuousSkill'
-)
+class SkillType:
+    CartesianPoseSkill = _enum_auto('SkillType')
+    ForceTorqueSkill = _enum_auto('SkillType')
+    GripperSkill = _enum_auto('SkillType')
+    ImpedanceControlSkill = _enum_auto('SkillType')
+    JointPositionSkill = _enum_auto('SkillType')
 
 
-TrajectoryGeneratorType = enum_auto(
-    'CubicHermiteSplineJointTrajectoryGenerator',
-    'CubicHermiteSplinePoseTrajectoryGenerator',
-    'GoalPoseDmpTrajectoryGenerator',
-    'GripperTrajectoryGenerator',
-    'ImpulseTrajectoryGenerator',
-    'JointDmpTrajectoryGenerator',
-    'LinearJointTrajectoryGenerator',
-    'LinearPoseTrajectoryGenerator',
-    'MinJerkJointTrajectoryGenerator',
-    'MinJerkPoseTrajectoryGenerator',
-    'PoseDmpTrajectoryGenerator',
-    'RelativeLinearPoseTrajectoryGenerator',
-    'RelativeMinJerkPoseTrajectoryGenerator',
-    'SineJointTrajectoryGenerator',
-    'SinePoseTrajectoryGenerator',
-    'StayInInitialJointsTrajectoryGenerator',
-    'StayInInitialPoseTrajectoryGenerator'
-)
+class MetaSkillType:
+    BaseMetaSkill = _enum_auto('MetaSkillType')
+    JointPositionContinuousSkill = _enum_auto('MetaSkillType')
 
 
-FeedbackControllerType = enum_auto(
-    'CartesianImpedanceFeedbackController',
-    'ForceAxisImpedenceFeedbackController',
-    'JointImpedanceFeedbackController',
-    'NoopFeedbackController',
-    'PassThroughFeedbackController',
-    'SetInternalImpedanceFeedbackController'
-)
+class TrajectoryGeneratorType:
+    CubicHermiteSplineJointTrajectoryGenerator = _enum_auto('TrajectoryGeneratorType')
+    CubicHermiteSplinePoseTrajectoryGenerator = _enum_auto('TrajectoryGeneratorType')
+    GoalPoseDmpTrajectoryGenerator = _enum_auto('TrajectoryGeneratorType')
+    GripperTrajectoryGenerator = _enum_auto('TrajectoryGeneratorType')
+    ImpulseTrajectoryGenerator = _enum_auto('TrajectoryGeneratorType')
+    JointDmpTrajectoryGenerator = _enum_auto('TrajectoryGeneratorType')
+    LinearJointTrajectoryGenerator = _enum_auto('TrajectoryGeneratorType')
+    LinearPoseTrajectoryGenerator = _enum_auto('TrajectoryGeneratorType')
+    MinJerkJointTrajectoryGenerator = _enum_auto('TrajectoryGeneratorType')
+    MinJerkPoseTrajectoryGenerator = _enum_auto('TrajectoryGeneratorType')
+    PoseDmpTrajectoryGenerator = _enum_auto('TrajectoryGeneratorType')
+    RelativeLinearPoseTrajectoryGenerator = _enum_auto('TrajectoryGeneratorType')
+    RelativeMinJerkPoseTrajectoryGenerator = _enum_auto('TrajectoryGeneratorType')
+    SineJointTrajectoryGenerator = _enum_auto('TrajectoryGeneratorType')
+    SinePoseTrajectoryGenerator = _enum_auto('TrajectoryGeneratorType')
+    StayInInitialJointsTrajectoryGenerator = _enum_auto('TrajectoryGeneratorType')
+    StayInInitialPoseTrajectoryGenerator = _enum_auto('TrajectoryGeneratorType')
 
 
-TerminationHandlerType = enum_auto(
-    'ContactTerminationHandler',
-    'FinalJointTerminationHandler',
-    'FinalPoseTerminationHandler',
-    'NoopTerminationHandler',
-    'TimeTerminationHandler'
-)
+class FeedbackControllerType:
+    CartesianImpedanceFeedbackController = _enum_auto('FeedbackControllerType')
+    ForceAxisImpedenceFeedbackController = _enum_auto('FeedbackControllerType')
+    JointImpedanceFeedbackController = _enum_auto('FeedbackControllerType')
+    NoopFeedbackController = _enum_auto('FeedbackControllerType')
+    PassThroughFeedbackController = _enum_auto('FeedbackControllerType')
+    SetInternalImpedanceFeedbackController = _enum_auto('FeedbackControllerType')
 
 
-SkillStatus = enum_auto(
-    'TO_START',
-    'RUNNING',
-    'FINISHED',
-    'VIRT_COLL_ERR'
-)
+class TerminationHandlerType:
+    ContactTerminationHandler = _enum_auto('TerminationHandlerType')
+    FinalJointTerminationHandler = _enum_auto('TerminationHandlerType')
+    FinalPoseTerminationHandler = _enum_auto('TerminationHandlerType')
+    NoopTerminationHandler = _enum_auto('TerminationHandlerType')
+    TimeTerminationHandler = _enum_auto('TerminationHandlerType')
 
-SensorDataMessageType = enum_auto(
-    'JOINT_POSITION_VELOCITY',
-    'POSE_POSITION_VELOCITY',
-    'BOUNDING_BOX'
-)
+
+class SkillStatus:
+    TO_START = _enum_auto('SkillStatus')
+    RUNNING = _enum_auto('SkillStatus')
+    FINISHED = _enum_auto('SkillStatus')
+    VIRT_COLL_ERR = _enum_auto('SkillStatus')
+
+
+class SensorDataMessageType:
+    JOINT_POSITION_VELOCITY = _enum_auto('SensorDataMessageType')
+    POSE_POSITION_VELOCITY = _enum_auto('SensorDataMessageType')
+    BOUNDING_BOX = _enum_auto('SensorDataMessageType')
