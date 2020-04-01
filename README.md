@@ -8,7 +8,7 @@
 
 ## Install ProtoBuf
 
-** This is only needed if you plan to modify the proto messages. You don't need to install or compile protobuf for using frankapy **
+**This is only needed if you plan to modify the proto messages. You don't need to install or compile protobuf for using frankapy**
 
 1. Read installation instructions here https://github.com/protocolbuffers/protobuf/blob/master/src/README.md.
 
