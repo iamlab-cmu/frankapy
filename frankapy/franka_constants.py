@@ -178,3 +178,4 @@ class FrankaConstants:
     ])
 
     DEFAULT_SENSOR_PUBLISHER_TOPIC = 'franka_ros_interface/sensor'
+    DYNAMIC_SKILL_WAIT_TIME = 0.3

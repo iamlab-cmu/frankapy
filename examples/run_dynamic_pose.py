@@ -41,7 +41,7 @@ if __name__ == "__main__":
     rate = rospy.Rate(1 / dt)
 
     rospy.loginfo('Publishing pose trajectory...')
-    fa.goto_pose(pose_traj[1], duration=T, dynamic=True, buffer_time=4)
+    fa.goto_pose(pose_traj[1], duration=T, dynamic=True, buffer_time=5)
     init_time = rospy.Time.now().to_time()
     for i in range(2, len(ts)):
         proto_msg = make_pose_position_velocity_proto(i, rospy.Time.now().to_time() - init_time, 
@@ -54,3 +54,5 @@ if __name__ == "__main__":
 
     fa.wait_for_skill()
     rospy.loginfo('Done')
+
+    import IPython; IPython.embed(); exit(0)

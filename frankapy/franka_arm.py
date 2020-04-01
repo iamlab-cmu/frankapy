@@ -272,6 +272,9 @@ class FrankaArm:
                         block=block,
                         ignore_errors=ignore_errors)
 
+        if dynamic:
+            sleep(FC.DYNAMIC_SKILL_WAIT_TIME)
+
     def goto_pose_delta(self,
                         delta_tool_pose,
                         duration=3,
@@ -468,6 +471,9 @@ class FrankaArm:
                         cb=lambda x: skill.feedback_callback(x),
                         block=block,
                         ignore_errors=ignore_errors)
+
+        if dynamic:
+            sleep(FC.DYNAMIC_SKILL_WAIT_TIME)
 
     def apply_joint_torques(self, torques, duration, ignore_errors=True, skill_desc='',):
         '''Commands Arm to apply given joint torques for duration seconds
