@@ -8,6 +8,8 @@
 
 ## Install ProtoBuf
 
+**This is only needed if you plan to modify the proto messages. You don't need to install or compile protobuf for using frankapy**
+
 1. Read installation instructions here https://github.com/protocolbuffers/protobuf/blob/master/src/README.md.
 
 2. We use both C++ and Python versions of protobufs so you would need to install Protobufs from source. In short you will have to do the following. NOTE: However, make to read protobuf installation instructions once.
