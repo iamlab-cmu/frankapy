@@ -1,6 +1,7 @@
 from franka_interface_msgs.msg import SensorData
 from frankapy.proto import *
 
+
 ## Feedback Controller Protobufs
 
 def make_cartesian_impedance_feedback_controller_msg_proto(translational_stiffnesses, rotational_stiffnesses):
@@ -10,6 +11,7 @@ def make_cartesian_impedance_feedback_controller_msg_proto(translational_stiffne
 
     return cartesian_impedance_feedback_controller_msg_proto
 
+
 def make_force_axis_feedback_controller_msg_proto(translational_stiffness, rotational_stiffness, axis):
     force_axis_feedback_controller_msg_proto = feedback_controller_params_msg_pb2.ForceAxisFeedbackControllerMessage()
     force_axis_feedback_controller_msg_proto.translational_stiffness = translational_stiffness
@@ -18,6 +20,7 @@ def make_force_axis_feedback_controller_msg_proto(translational_stiffness, rotat
 
     return force_axis_feedback_controller_msg_proto
 
+
 def make_joint_feedback_controller_msg_proto(k_gains, d_gains):
     joint_feedback_controller_msg_proto = feedback_controller_params_msg_pb2.JointImpedanceFeedbackControllerMessage()
     joint_feedback_controller_msg_proto.k_gains.extend(k_gains)
@@ -25,12 +28,14 @@ def make_joint_feedback_controller_msg_proto(k_gains, d_gains):
 
     return joint_feedback_controller_msg_proto
 
+
 def make_internal_feedback_controller_msg_proto(cartesian_impedances, joint_impedances):
     internal_feedback_controller_msg_proto = feedback_controller_params_msg_pb2.InternalImpedanceFeedbackControllerMessage()
     internal_feedback_controller_msg_proto.cartesian_impedances.extend(cartesian_impedances)
     internal_feedback_controller_msg_proto.joint_impedances.extend(joint_impedances)
 
     return internal_feedback_controller_msg_proto
+
 
 ## Termination Handler Protobufs
 
@@ -42,12 +47,14 @@ def make_contact_termination_handler_msg_proto(buffer_time, force_thresholds, to
 
     return contact_termination_handler_msg_proto
 
+
 def make_joint_threshold_msg_proto(buffer_time, joint_thresholds):
     joint_threshold_msg_proto = termination_handler_params_msg_pb2.JointThresholdMessage()
     joint_threshold_msg_proto.buffer_time = buffer_time
     joint_threshold_msg_proto.joint_thresholds.extend(joint_thresholds)
 
     return joint_threshold_msg_proto
+
 
 def make_pose_threshold_msg_proto(buffer_time, pose_thresholds):
     pose_threshold_msg_proto = termination_handler_params_msg_pb2.PoseThresholdMessage()
@@ -57,11 +64,13 @@ def make_pose_threshold_msg_proto(buffer_time, pose_thresholds):
 
     return pose_threshold_msg_proto
 
+
 def make_time_termination_handler_msg_proto(buffer_time):
     time_termination_handler_msg_proto = termination_handler_params_msg_pb2.TimeTerminationHandlerMessage()
     time_termination_handler_msg_proto.buffer_time = buffer_time
 
     return time_termination_handler_msg_proto
+
 
 ## Trajector Generator Protobufs
 
@@ -74,6 +83,7 @@ def make_gripper_trajectory_generator_msg_proto(grasp, width, speed, force):
 
     return gripper_trajectory_generator_msg_proto
 
+
 def make_impulse_trajectory_generator_msg_proto(run_time, acc_time, max_trans, max_rot, forces, torques):
     impulse_trajectory_generator_msg_proto = trajectory_generator_params_msg_pb2.ImpulseTrajectoryGeneratorMessage()
     impulse_trajectory_generator_msg_proto.run_time = run_time
@@ -85,12 +95,14 @@ def make_impulse_trajectory_generator_msg_proto(run_time, acc_time, max_trans, m
 
     return impulse_trajectory_generator_msg_proto
 
+
 def make_joint_trajectory_generator_msg_proto(run_time, joints):
     joint_trajectory_generator_msg_proto = trajectory_generator_params_msg_pb2.JointTrajectoryGeneratorMessage()
     joint_trajectory_generator_msg_proto.run_time = run_time
     joint_trajectory_generator_msg_proto.joints.extend(joints)
 
     return joint_trajectory_generator_msg_proto
+
 
 def make_pose_trajectory_generator_msg_proto(run_time, pose_rigid_transform):
     pose_trajectory_generator_msg_proto = trajectory_generator_params_msg_pb2.PoseTrajectoryGeneratorMessage()
@@ -100,6 +112,7 @@ def make_pose_trajectory_generator_msg_proto(run_time, pose_rigid_transform):
     pose_trajectory_generator_msg_proto.pose.extend(pose_rigid_transform.matrix.T.flatten().tolist())
 
     return pose_trajectory_generator_msg_proto
+
 
 def make_joint_dmp_trajectory_generator_msg_proto(run_time, tau, alpha, beta, num_basis, num_sensor_values, 
                                                   basis_mean, basis_std, weights, initial_sensor_values):
@@ -116,6 +129,7 @@ def make_joint_dmp_trajectory_generator_msg_proto(run_time, tau, alpha, beta, nu
     joint_dmp_trajectory_generator_msg_proto.initial_sensor_values.extend(initial_sensor_values)
 
     return joint_dmp_trajectory_generator_msg_proto
+
 
 def make_pose_dmp_trajectory_generator_msg_proto(orientation_only, position_only,
                                                  run_time, tau, alpha, beta, num_basis, num_sensor_values, 
@@ -137,11 +151,13 @@ def make_pose_dmp_trajectory_generator_msg_proto(orientation_only, position_only
 
     return pose_dmp_trajectory_generator_msg_proto
 
+
 def make_run_time_msg_proto(run_time):
     run_time_msg_proto = trajectory_generator_params_msg_pb2.RunTimeMessage()
     run_time_msg_proto.run_time = run_time
 
     return run_time_msg_proto
+
 
 ## Sensor Msg Protobufs
 
@@ -152,6 +168,15 @@ def make_joint_position_velocity_proto(id, timestamp, seg_run_time, joints, join
     joint_position_velocity_proto.seg_run_time = seg_run_time
     joint_position_velocity_proto.joints.extend(joints)
     joint_position_velocity_proto.joint_vels.extend(joint_velocities)
+
+    return joint_position_velocity_proto
+
+
+def make_joint_position_proto(id, timestamp, joints):
+    joint_position_velocity_proto = sensor_msg_pb2.JointPositionSensorMessage()   
+    joint_position_velocity_proto.id = id
+    joint_position_velocity_proto.timestamp = timestamp
+    joint_position_velocity_proto.joints.extend(joints)
 
     return joint_position_velocity_proto
 
@@ -171,6 +196,22 @@ def make_pose_position_velocity_proto(id, timestamp, seg_run_time, pose_rigid_tr
     pose_position_velocity_proto.pose_velocities.extend(pose_velocities)
 
     return pose_position_velocity_proto
+
+
+def make_pose_position_proto(id, timestamp, pose_rigid_transform):
+    '''
+    pose_rigid_transform is a RigidTransform object
+    pose_velocities is an ndarray of length 6 with velocities in xyz and euler angles xyz
+    '''
+    pose_position_proto = sensor_msg_pb2.PosePositionSensorMessage()   
+    pose_position_proto.id = id
+    pose_position_proto.timestamp = timestamp
+
+    pose_position_proto.position.extend(pose_rigid_transform.translation)
+    pose_position_proto.quaternion.extend(pose_rigid_transform.quaternion)
+
+    return pose_position_proto
+
 
 def sensor_proto2ros_msg(sensor_proto_msg, sensor_data_type, info=''):
     sensor_ros_msg = SensorData()

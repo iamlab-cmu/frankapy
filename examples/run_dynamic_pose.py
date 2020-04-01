@@ -4,7 +4,7 @@ import numpy as np
 from autolab_core import RigidTransform
 from frankapy import FrankaArm, SensorDataMessageType
 from frankapy import FrankaConstants as FC
-from frankapy.proto_utils import make_pose_position_velocity_proto, sensor_proto2ros_msg
+from frankapy.proto_utils import make_pose_position_proto, sensor_proto2ros_msg
 from franka_interface_msgs.msg import SensorData
 from frankapy.utils import min_jerk, min_jerk_delta, min_jerk_weight
 
@@ -32,10 +32,6 @@ if __name__ == "__main__":
     weights = [min_jerk_weight(t, T) for t in ts]
     pose_traj = [p1.interpolate_with(p0, w) for w in weights]
 
-    p0_array = np.concatenate([p0.translation, p0.euler_angles])
-    p1_array = np.concatenate([p1.translation, p1.euler_angles])
-    pose_velocities_traj = [min_jerk_delta(p1_array, p0_array, t, T, dt) for t in ts]
-
     rospy.loginfo('Initializing Sensor Publisher')
     pub = rospy.Publisher(FC.DEFAULT_SENSOR_PUBLISHER_TOPIC, SensorData, queue_size=1000)
     rate = rospy.Rate(1 / dt)
@@ -44,9 +40,8 @@ if __name__ == "__main__":
     fa.goto_pose(pose_traj[1], duration=T, dynamic=True, buffer_time=5)
     init_time = rospy.Time.now().to_time()
     for i in range(2, len(ts)):
-        proto_msg = make_pose_position_velocity_proto(i, rospy.Time.now().to_time() - init_time, 
-                                                      dt, pose_traj[i], pose_velocities_traj[i])
-        ros_msg = sensor_proto2ros_msg(proto_msg, SensorDataMessageType.POSE_POSITION_VELOCITY)
+        proto_msg = make_pose_position_proto(i, rospy.Time.now().to_time() - init_time, pose_traj[i])
+        ros_msg = sensor_proto2ros_msg(proto_msg, SensorDataMessageType.POSE_POSITION)
         
         rospy.loginfo('Publishing: ID {}'.format(proto_msg.id))
         pub.publish(ros_msg)

@@ -48,7 +48,7 @@ All directories below are given relative to `/frankapy`.
 
 4. To make the protobufs use the following script:
 	```bash
-   ./bash_scripts/compile_proto.sh
+   ./bash_scripts/make_proto.sh
    ```
 
 ## Setting Up SSH Key to Control PC

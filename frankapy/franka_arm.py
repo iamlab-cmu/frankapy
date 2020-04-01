@@ -223,7 +223,7 @@ class FrankaArm:
         '''
         if dynamic:
             skill = Skill(SkillType.ImpedanceControlSkill, 
-                          TrajectoryGeneratorType.CubicHermiteSplinePoseTrajectoryGenerator,
+                          TrajectoryGeneratorType.PassThroughPoseTrajectoryGenerator,
                           feedback_controller_type=FeedbackControllerType.CartesianImpedanceFeedbackController,
                           termination_handler_type=TerminationHandlerType.TimeTerminationHandler, 
                           skill_desc=skill_desc)
@@ -428,7 +428,7 @@ class FrankaArm:
 
         if dynamic:
             skill = Skill(SkillType.ImpedanceControlSkill, 
-                          TrajectoryGeneratorType.CubicHermiteSplineJointTrajectoryGenerator,
+                          TrajectoryGeneratorType.PassThroughJointTrajectoryGenerator,
                           feedback_controller_type=FeedbackControllerType.JointImpedanceFeedbackController,
                           termination_handler_type=TerminationHandlerType.TimeTerminationHandler, 
                           skill_desc=skill_desc)

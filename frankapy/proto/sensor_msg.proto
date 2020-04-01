@@ -28,3 +28,18 @@ message PosePositionVelocitySensorMessage {
   repeated double quaternion = 5;
   repeated double pose_velocities = 6;
 }
+
+message JointPositionSensorMessage {
+  required int32 id = 1;
+  required double timestamp = 2;
+
+  repeated double joints = 4;
+}
+
+message PosePositionSensorMessage {
+  required int32 id = 1;
+  required double timestamp = 2;
+
+  repeated double position = 4;
+  repeated double quaternion = 5;
+}

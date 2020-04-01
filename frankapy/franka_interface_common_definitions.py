@@ -1,7 +1,7 @@
 #######################################################################
 #                                                                     #
 #   Important: Any Changes here should also be reflected in changes   #
-#   in the frankapy franka_interface_common_definitions.py file as well.   #
+#   in the definitions.h file as well.                                #
 #                                                                     #
 #   The order of the enums matter!!                                   #
 #                                                                     #
@@ -41,6 +41,8 @@ class TrajectoryGeneratorType:
     LinearPoseTrajectoryGenerator = _enum_auto('TrajectoryGeneratorType')
     MinJerkJointTrajectoryGenerator = _enum_auto('TrajectoryGeneratorType')
     MinJerkPoseTrajectoryGenerator = _enum_auto('TrajectoryGeneratorType')
+    PassThroughJointTrajectoryGenerator = _enum_auto('TrajectoryGeneratorType')
+    PassThroughPoseTrajectoryGenerator = _enum_auto('TrajectoryGeneratorType')
     PoseDmpTrajectoryGenerator = _enum_auto('TrajectoryGeneratorType')
     RelativeLinearPoseTrajectoryGenerator = _enum_auto('TrajectoryGeneratorType')
     RelativeMinJerkPoseTrajectoryGenerator = _enum_auto('TrajectoryGeneratorType')
@@ -76,5 +78,7 @@ class SkillStatus:
 
 class SensorDataMessageType:
     JOINT_POSITION_VELOCITY = _enum_auto('SensorDataMessageType')
+    JOINT_POSITION = _enum_auto('SensorDataMessageType')
     POSE_POSITION_VELOCITY = _enum_auto('SensorDataMessageType')
+    POSE_POSITION = _enum_auto('SensorDataMessageType')
     BOUNDING_BOX = _enum_auto('SensorDataMessageType')
