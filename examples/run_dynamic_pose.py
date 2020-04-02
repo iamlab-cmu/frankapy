@@ -4,8 +4,8 @@ import numpy as np
 from autolab_core import RigidTransform
 from frankapy import FrankaArm, SensorDataMessageType
 from frankapy import FrankaConstants as FC
-from frankapy.proto_utils import make_pose_position_proto, sensor_proto2ros_msg
-from franka_interface_msgs.msg import SensorData
+from frankapy.proto_utils import make_pose_position_proto, sensor_proto2ros_msg, make_sensor_group_msg
+from franka_interface_msgs.msg import SensorDataGroup
 from frankapy.utils import min_jerk, min_jerk_delta, min_jerk_weight
 
 import rospy
@@ -33,21 +33,20 @@ if __name__ == "__main__":
     pose_traj = [p1.interpolate_with(p0, w) for w in weights]
 
     rospy.loginfo('Initializing Sensor Publisher')
-    pub = rospy.Publisher(FC.DEFAULT_SENSOR_PUBLISHER_TOPIC, SensorData, queue_size=1000)
+    pub = rospy.Publisher(FC.DEFAULT_SENSOR_PUBLISHER_TOPIC, SensorDataGroup, queue_size=1000)
     rate = rospy.Rate(1 / dt)
 
     rospy.loginfo('Publishing pose trajectory...')
     fa.goto_pose(pose_traj[1], duration=T, dynamic=True, buffer_time=5)
     init_time = rospy.Time.now().to_time()
     for i in range(2, len(ts)):
-        proto_msg = make_pose_position_proto(i, rospy.Time.now().to_time() - init_time, pose_traj[i])
-        ros_msg = sensor_proto2ros_msg(proto_msg, SensorDataMessageType.POSE_POSITION)
+        traj_gen_proto_msg = make_pose_position_proto(i, rospy.Time.now().to_time() - init_time, pose_traj[i])
+        traj_gen_ros_msg = sensor_proto2ros_msg(traj_gen_proto_msg, SensorDataMessageType.POSE_POSITION)
+        ros_msg = make_sensor_group_msg(trajectory_generator_sensor_msg=traj_gen_ros_msg)
         
-        rospy.loginfo('Publishing: ID {}'.format(proto_msg.id))
+        rospy.loginfo('Publishing: ID {}'.format(traj_gen_proto_msg.id))
         pub.publish(ros_msg)
         rate.sleep()
 
     fa.wait_for_skill()
     rospy.loginfo('Done')
-
-    import IPython; IPython.embed(); exit(0)
