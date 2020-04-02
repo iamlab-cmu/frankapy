@@ -1,3 +1,5 @@
+// This file should match franka-interface/proto/sensor_msg.proto
+
 syntax = "proto2";
 
 message BoundingBox {
@@ -42,4 +44,9 @@ message PosePositionSensorMessage {
 
   repeated double position = 4;
   repeated double quaternion = 5;
+}
+
+message ShouldTerminateSensorMessage {
+  required double timestamp = 1;
+  required bool should_terminate = 2;
 }

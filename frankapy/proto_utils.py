@@ -188,7 +188,7 @@ def make_pose_position_velocity_proto(id, timestamp, seg_run_time, pose_rigid_tr
     '''
     pose_position_velocity_proto = sensor_msg_pb2.PosePositionVelocitySensorMessage()   
     pose_position_velocity_proto.id = id
-    pose_position_velocity_proto.timestamp = timestamp
+    pose_position_velocity_proto.timestamp = rospy.Time.now().to_time()
     pose_position_velocity_proto.seg_run_time = seg_run_time
 
     pose_position_velocity_proto.position.extend(pose_rigid_transform.translation)
@@ -211,6 +211,14 @@ def make_pose_position_proto(id, timestamp, pose_rigid_transform):
     pose_position_proto.quaternion.extend(pose_rigid_transform.quaternion)
 
     return pose_position_proto
+
+
+def make_should_terminate_proto(timestamp, should_terminate):
+    should_terminate_proto = sensor_msg_pb2.ShouldTerminateSensorMessage()
+    should_terminate_proto.timestamp = timestamp
+
+    should_terminate_proto.should_terminate = should_terminate
+    return should_terminate_proto
 
 
 def sensor_proto2ros_msg(sensor_proto_msg, sensor_data_type, info=''):

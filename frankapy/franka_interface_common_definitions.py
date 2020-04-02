@@ -81,4 +81,5 @@ class SensorDataMessageType:
     JOINT_POSITION = _enum_auto('SensorDataMessageType')
     POSE_POSITION_VELOCITY = _enum_auto('SensorDataMessageType')
     POSE_POSITION = _enum_auto('SensorDataMessageType')
+    SHOULD_TERMINATE = _enum_auto('SensorDataMessageType')
     BOUNDING_BOX = _enum_auto('SensorDataMessageType')
