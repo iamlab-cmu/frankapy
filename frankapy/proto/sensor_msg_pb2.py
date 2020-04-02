@@ -18,7 +18,7 @@ DESCRIPTOR = _descriptor.FileDescriptor(
   package='',
   syntax='proto2',
   serialized_options=None,
-  serialized_pb=b'\n\x10sensor_msg.proto\"S\n\x0b\x42oundingBox\x12\x0c\n\x04name\x18\x01 \x02(\t\x12\n\n\x02id\x18\x02 \x02(\x05\x12\t\n\x01x\x18\x03 \x02(\x05\x12\t\n\x01y\x18\x04 \x02(\x05\x12\t\n\x01w\x18\x05 \x02(\x05\x12\t\n\x01h\x18\x06 \x02(\x05\"}\n\"JointPositionVelocitySensorMessage\x12\n\n\x02id\x18\x01 \x02(\x05\x12\x11\n\ttimestamp\x18\x02 \x02(\x01\x12\x14\n\x0cseg_run_time\x18\x03 \x02(\x01\x12\x0e\n\x06joints\x18\x04 \x03(\x01\x12\x12\n\njoint_vels\x18\x05 \x03(\x01\"\x97\x01\n!PosePositionVelocitySensorMessage\x12\n\n\x02id\x18\x01 \x02(\x05\x12\x11\n\ttimestamp\x18\x02 \x02(\x01\x12\x14\n\x0cseg_run_time\x18\x03 \x02(\x01\x12\x10\n\x08position\x18\x04 \x03(\x01\x12\x12\n\nquaternion\x18\x05 \x03(\x01\x12\x17\n\x0fpose_velocities\x18\x06 \x03(\x01\"K\n\x1aJointPositionSensorMessage\x12\n\n\x02id\x18\x01 \x02(\x05\x12\x11\n\ttimestamp\x18\x02 \x02(\x01\x12\x0e\n\x06joints\x18\x04 \x03(\x01\"`\n\x19PosePositionSensorMessage\x12\n\n\x02id\x18\x01 \x02(\x05\x12\x11\n\ttimestamp\x18\x02 \x02(\x01\x12\x10\n\x08position\x18\x04 \x03(\x01\x12\x12\n\nquaternion\x18\x05 \x03(\x01\"K\n\x1cShouldTerminateSensorMessage\x12\x11\n\ttimestamp\x18\x01 \x02(\x01\x12\x18\n\x10should_terminate\x18\x02 \x02(\x08'
+  serialized_pb=b'\n\x10sensor_msg.proto\"S\n\x0b\x42oundingBox\x12\x0c\n\x04name\x18\x01 \x02(\t\x12\n\n\x02id\x18\x02 \x02(\x05\x12\t\n\x01x\x18\x03 \x02(\x05\x12\t\n\x01y\x18\x04 \x02(\x05\x12\t\n\x01w\x18\x05 \x02(\x05\x12\t\n\x01h\x18\x06 \x02(\x05\"}\n\"JointPositionVelocitySensorMessage\x12\n\n\x02id\x18\x01 \x02(\x05\x12\x11\n\ttimestamp\x18\x02 \x02(\x01\x12\x14\n\x0cseg_run_time\x18\x03 \x02(\x01\x12\x0e\n\x06joints\x18\x04 \x03(\x01\x12\x12\n\njoint_vels\x18\x05 \x03(\x01\"\x97\x01\n!PosePositionVelocitySensorMessage\x12\n\n\x02id\x18\x01 \x02(\x05\x12\x11\n\ttimestamp\x18\x02 \x02(\x01\x12\x14\n\x0cseg_run_time\x18\x03 \x02(\x01\x12\x10\n\x08position\x18\x04 \x03(\x01\x12\x12\n\nquaternion\x18\x05 \x03(\x01\x12\x17\n\x0fpose_velocities\x18\x06 \x03(\x01\"K\n\x1aJointPositionSensorMessage\x12\n\n\x02id\x18\x01 \x02(\x05\x12\x11\n\ttimestamp\x18\x02 \x02(\x01\x12\x0e\n\x06joints\x18\x03 \x03(\x01\"`\n\x19PosePositionSensorMessage\x12\n\n\x02id\x18\x01 \x02(\x05\x12\x11\n\ttimestamp\x18\x02 \x02(\x01\x12\x10\n\x08position\x18\x03 \x03(\x01\x12\x12\n\nquaternion\x18\x04 \x03(\x01\"K\n\x1cShouldTerminateSensorMessage\x12\x11\n\ttimestamp\x18\x01 \x02(\x01\x12\x18\n\x10should_terminate\x18\x02 \x02(\x08\"\x83\x01\n\x1f\x43\x61rtesianImpedanceSensorMessage\x12\n\n\x02id\x18\x01 \x02(\x05\x12\x11\n\ttimestamp\x18\x02 \x02(\x01\x12!\n\x19translational_stiffnesses\x18\x03 \x03(\x01\x12\x1e\n\x16rotational_stiffnesses\x18\x04 \x03(\x01'
 )
 
 
@@ -238,7 +238,7 @@ _JOINTPOSITIONSENSORMESSAGE = _descriptor.Descriptor(
       serialized_options=None, file=DESCRIPTOR),
     _descriptor.FieldDescriptor(
       name='joints', full_name='JointPositionSensorMessage.joints', index=2,
-      number=4, type=1, cpp_type=5, label=3,
+      number=3, type=1, cpp_type=5, label=3,
       has_default_value=False, default_value=[],
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
@@ -283,14 +283,14 @@ _POSEPOSITIONSENSORMESSAGE = _descriptor.Descriptor(
       serialized_options=None, file=DESCRIPTOR),
     _descriptor.FieldDescriptor(
       name='position', full_name='PosePositionSensorMessage.position', index=2,
-      number=4, type=1, cpp_type=5, label=3,
+      number=3, type=1, cpp_type=5, label=3,
       has_default_value=False, default_value=[],
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       serialized_options=None, file=DESCRIPTOR),
     _descriptor.FieldDescriptor(
       name='quaternion', full_name='PosePositionSensorMessage.quaternion', index=3,
-      number=5, type=1, cpp_type=5, label=3,
+      number=4, type=1, cpp_type=5, label=3,
       has_default_value=False, default_value=[],
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
@@ -349,12 +349,65 @@ _SHOULDTERMINATESENSORMESSAGE = _descriptor.Descriptor(
   serialized_end=636,
 )
 
+
+_CARTESIANIMPEDANCESENSORMESSAGE = _descriptor.Descriptor(
+  name='CartesianImpedanceSensorMessage',
+  full_name='CartesianImpedanceSensorMessage',
+  filename=None,
+  file=DESCRIPTOR,
+  containing_type=None,
+  fields=[
+    _descriptor.FieldDescriptor(
+      name='id', full_name='CartesianImpedanceSensorMessage.id', index=0,
+      number=1, type=5, cpp_type=1, label=2,
+      has_default_value=False, default_value=0,
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR),
+    _descriptor.FieldDescriptor(
+      name='timestamp', full_name='CartesianImpedanceSensorMessage.timestamp', index=1,
+      number=2, type=1, cpp_type=5, label=2,
+      has_default_value=False, default_value=float(0),
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR),
+    _descriptor.FieldDescriptor(
+      name='translational_stiffnesses', full_name='CartesianImpedanceSensorMessage.translational_stiffnesses', index=2,
+      number=3, type=1, cpp_type=5, label=3,
+      has_default_value=False, default_value=[],
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR),
+    _descriptor.FieldDescriptor(
+      name='rotational_stiffnesses', full_name='CartesianImpedanceSensorMessage.rotational_stiffnesses', index=3,
+      number=4, type=1, cpp_type=5, label=3,
+      has_default_value=False, default_value=[],
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR),
+  ],
+  extensions=[
+  ],
+  nested_types=[],
+  enum_types=[
+  ],
+  serialized_options=None,
+  is_extendable=False,
+  syntax='proto2',
+  extension_ranges=[],
+  oneofs=[
+  ],
+  serialized_start=639,
+  serialized_end=770,
+)
+
 DESCRIPTOR.message_types_by_name['BoundingBox'] = _BOUNDINGBOX
 DESCRIPTOR.message_types_by_name['JointPositionVelocitySensorMessage'] = _JOINTPOSITIONVELOCITYSENSORMESSAGE
 DESCRIPTOR.message_types_by_name['PosePositionVelocitySensorMessage'] = _POSEPOSITIONVELOCITYSENSORMESSAGE
 DESCRIPTOR.message_types_by_name['JointPositionSensorMessage'] = _JOINTPOSITIONSENSORMESSAGE
 DESCRIPTOR.message_types_by_name['PosePositionSensorMessage'] = _POSEPOSITIONSENSORMESSAGE
 DESCRIPTOR.message_types_by_name['ShouldTerminateSensorMessage'] = _SHOULDTERMINATESENSORMESSAGE
+DESCRIPTOR.message_types_by_name['CartesianImpedanceSensorMessage'] = _CARTESIANIMPEDANCESENSORMESSAGE
 _sym_db.RegisterFileDescriptor(DESCRIPTOR)
 
 BoundingBox = _reflection.GeneratedProtocolMessageType('BoundingBox', (_message.Message,), {
@@ -398,6 +451,13 @@ ShouldTerminateSensorMessage = _reflection.GeneratedProtocolMessageType('ShouldT
   # @@protoc_insertion_point(class_scope:ShouldTerminateSensorMessage)
   })
 _sym_db.RegisterMessage(ShouldTerminateSensorMessage)
+
+CartesianImpedanceSensorMessage = _reflection.GeneratedProtocolMessageType('CartesianImpedanceSensorMessage', (_message.Message,), {
+  'DESCRIPTOR' : _CARTESIANIMPEDANCESENSORMESSAGE,
+  '__module__' : 'sensor_msg_pb2'
+  # @@protoc_insertion_point(class_scope:CartesianImpedanceSensorMessage)
+  })
+_sym_db.RegisterMessage(CartesianImpedanceSensorMessage)
 
 
 # @@protoc_insertion_point(module_scope)

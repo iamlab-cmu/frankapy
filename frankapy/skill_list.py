@@ -1,14 +1,13 @@
-#!/usr/bin/env python
-
 import roslib
 roslib.load_manifest('franka_interface_msgs')
 import rospy
 import actionlib
 import numpy as np
 from autolab_core import RigidTransform
-from .franka_interface_common_definitions import *
+
 from .franka_constants import FrankaConstants as FC
-from .proto_utils import *
+from .franka_interface_common_definitions import *
+from .proto import *
 
 from franka_interface_msgs.msg import ExecuteSkillAction, ExecuteSkillGoal
 
@@ -81,7 +80,6 @@ class Skill:
     ## Feedback Controllers
 
     def set_cartesian_impedances(self, use_impedance, cartesian_impedances, joint_impedances):
-
         if use_impedance:
               if cartesian_impedances is not None:
                   self.add_cartesian_impedances(cartesian_impedances)
@@ -96,7 +94,6 @@ class Skill:
                 self.add_internal_impedances([], FC.DEFAULT_JOINT_IMPEDANCES)
 
     def set_joint_impedances(self, use_impedance, cartesian_impedances, joint_impedances, k_gains, d_gains):
-
         if use_impedance:
             if k_gains is not None and d_gains is not None:
                 self.add_joint_gains(k_gains, d_gains)
@@ -119,8 +116,9 @@ class Skill:
                 "Incorrect skill type. Should be ImpedanceControlSkill."
 
         cartesian_impedance_feedback_controller_msg_proto = \
-            make_cartesian_impedance_feedback_controller_msg_proto(cartesian_impedances[:3], 
-                                                                   cartesian_impedances[3:])
+                CartesianImpedanceFeedbackControllerMessage(
+                        translational_stiffnesses=cartesian_impedances[:3], 
+                        rotational_stiffnesses=cartesian_impedances[3:])
 
         self.add_feedback_controller_params(cartesian_impedance_feedback_controller_msg_proto.SerializeToString())
 
@@ -134,8 +132,10 @@ class Skill:
         assert len(axis) == 3, \
                 "Incorrect axis len. Should be 3."
 
-        force_axis_feedback_controller_msg_proto = make_force_axis_feedback_controller_msg_proto(translational_stiffness,
-                                                                                                 rotational_stiffness, axis)
+        force_axis_feedback_controller_msg_proto = \
+                ForceAxisFeedbackControllerMessage(translational_stiffness=translational_stiffness,
+                                                   rotational_stiffness=rotational_stiffness, 
+                                                   axis=axis)
 
         self.add_feedback_controller_params(force_axis_feedback_controller_msg_proto.SerializeToString())
 
@@ -152,7 +152,8 @@ class Skill:
                 "Incorrect skill type. Should be CartesianPoseSkill or JointPositionSkill."
 
         internal_feedback_controller_msg_proto = \
-            make_internal_feedback_controller_msg_proto(cartesian_impedances, joint_impedances)
+                InternalImpedanceFeedbackControllerMessage(
+                        cartesian_impedances=cartesian_impedances, joint_impedances=joint_impedances)
 
         self.add_feedback_controller_params(internal_feedback_controller_msg_proto.SerializeToString())
 
@@ -165,7 +166,7 @@ class Skill:
                 "Incorrect skill type. Should be ImpedanceControlSkill"
 
         joint_feedback_controller_msg_proto = \
-            make_joint_feedback_controller_msg_proto(k_gains, d_gains)
+            JointImpedanceFeedbackControllerMessage(k_gains=k_gains, d_gains=d_gains)
 
         self.add_feedback_controller_params(joint_feedback_controller_msg_proto.SerializeToString())
 
@@ -204,8 +205,8 @@ class Skill:
                 "Incorrect termination handler type. Should be ContactTerminationHandler"
 
         contact_termination_handler_msg_proto = \
-            make_contact_termination_handler_msg_proto(buffer_time, force_thresholds,
-                                                       torque_thresholds)
+            ContactTerminationHandlerMessage(buffer_time=buffer_time, force_thresholds=force_thresholds,
+                                                torque_thresholds=torque_thresholds)
 
         self.add_termination_params(contact_termination_handler_msg_proto.SerializeToString())
 
@@ -220,7 +221,8 @@ class Skill:
         assert self._termination_handler_type == TerminationHandlerType.FinalJointTerminationHandler, \
                 "Incorrect termination handler type. Should be FinalJointTerminationHandler"
 
-        joint_threshold_msg_proto = make_joint_threshold_msg_proto(buffer_time, joint_thresholds)
+        joint_threshold_msg_proto = JointThresholdMessage(buffer_time=buffer_time, 
+                                                          joint_thresholds=joint_thresholds)
 
         self.add_termination_params(joint_threshold_msg_proto.SerializeToString())
 
@@ -235,7 +237,9 @@ class Skill:
         assert self._termination_handler_type == TerminationHandlerType.FinalPoseTerminationHandler, \
                 "Incorrect termination handler type. Should be FinalPoseTerminationHandler"
 
-        pose_threshold_msg_proto = make_pose_threshold_msg_proto(buffer_time, pose_thresholds)
+        pose_threshold_msg_proto = PoseThresholdMessage(buffer_time=buffer_time, 
+                                                        position_thresholds=pose_thresholds[:3], 
+                                                        orientation_thresholds=pose_thresholds[3:])
 
         self.add_termination_params(pose_threshold_msg_proto.SerializeToString())
 
@@ -246,7 +250,7 @@ class Skill:
         assert self._termination_handler_type == TerminationHandlerType.TimeTerminationHandler, \
                 "Incorrect termination handler type. Should be TimeTerminationHandler"
 
-        time_termination_handler_msg_proto = make_time_termination_handler_msg_proto(buffer_time)
+        time_termination_handler_msg_proto = TimeTerminationHandlerMessage(buffer_time=buffer_time)
 
         self.add_termination_params(time_termination_handler_msg_proto.SerializeToString())
 
@@ -269,14 +273,15 @@ class Skill:
         assert self._trajectory_generator_type == TrajectoryGeneratorType.GripperTrajectoryGenerator, \
                 "Incorrect trajectory generator type. Should be GripperTrajectoryGenerator"
 
-        gripper_trajectory_generator_msg_proto = make_gripper_trajectory_generator_msg_proto(grasp, width, speed, force)
+        gripper_trajectory_generator_msg_proto = GripperTrajectoryGeneratorMessage(
+                grasp=grasp, width=width, speed=speed, force=force)
 
         self.add_trajectory_params(gripper_trajectory_generator_msg_proto.SerializeToString())
 
-    def add_impulse_params(self, time, acc_time, max_trans, max_rot, forces, torques):
-        assert type(time) is float or type(time) is int, \
-                "Incorrect time type. Should be int or float."
-        assert time >= 0, "Incorrect time. Should be non negative."
+    def add_impulse_params(self, run_time, acc_time, max_trans, max_rot, forces, torques):
+        assert type(run_time) is float or type(run_time) is int, \
+                "Incorrect run_time type. Should be int or float."
+        assert run_time >= 0, "Incorrect run_time. Should be non negative."
         assert type(acc_time) is float or type(acc_time) is int, \
                 "Incorrect acc time type. Should be int or float."
         assert acc_time >= 0, "Incorrect acc time. Should be non negative."
@@ -291,35 +296,39 @@ class Skill:
         assert type(torques) is list, "Incorrect torques type. Should be list."
         assert len(torques) == 3, "Incorrect torques len. Should be 3."
 
-        impulse_trajectory_generator_msg_proto = make_impulse_trajectory_generator_msg_proto(time, acc_time, max_trans, max_rot, forces, torques)
+        impulse_trajectory_generator_msg_proto = ImpulseTrajectoryGeneratorMessage(
+                run_time=run_time, acc_time=acc_time, max_trans=max_trans, 
+                max_rot=max_rot, forces=forces, torques=torques)
 
         self.add_trajectory_params(impulse_trajectory_generator_msg_proto.SerializeToString())
 
-    def add_goal_pose(self, time, goal_pose):
-        assert type(time) is float or type(time) is int, \
-                "Incorrect time type. Should be int or float."
-        assert time >= 0, "Incorrect time. Should be non negative."
+    def add_goal_pose(self, run_time, goal_pose):
+        assert type(run_time) is float or type(run_time) is int, \
+                "Incorrect run_time type. Should be int or float."
+        assert run_time >= 0, "Incorrect run_time. Should be non negative."
         assert type(goal_pose) is RigidTransform, "Incorrect goal_pose type. Should be RigidTransform."
 
-        pose_trajectory_generator_msg_proto = make_pose_trajectory_generator_msg_proto(time, goal_pose)
+        pose_trajectory_generator_msg_proto = PoseTrajectoryGeneratorMessage(
+                run_time=run_time, position=goal_pose.translation, quaternion=goal_pose.quaternion,
+                pose=goal_pose.matrix.T.flatten().tolist())
 
         self.add_trajectory_params(pose_trajectory_generator_msg_proto.SerializeToString())
 
-    def add_goal_joints(self, time, joints):
-        assert type(time) is float or type(time) is int,\
+    def add_goal_joints(self, run_time, joints):
+        assert type(run_time) is float or type(run_time) is int,\
                 "Incorrect time type. Should be int or float."
-        assert time >= 0, "Incorrect time. Should be non negative."
+        assert run_time >= 0, "Incorrect time. Should be non negative."
         assert type(joints) is list, "Incorrect joints type. Should be list."
         assert len(joints) == 7, "Incorrect joints len. Should be 7."
 
-        joint_trajectory_generator_msg_proto = make_joint_trajectory_generator_msg_proto(time, joints)
+        joint_trajectory_generator_msg_proto = JointTrajectoryGeneratorMessage(run_time=run_time, joints=joints)
 
         self.add_trajectory_params(joint_trajectory_generator_msg_proto.SerializeToString())
 
-    def add_joint_dmp_params(self, time, joint_dmp_info, initial_sensor_values):
-        assert type(time) is float or type(time) is int,\
-                "Incorrect time type. Should be int or float."
-        assert time >= 0, "Incorrect time. Should be non negative."
+    def add_joint_dmp_params(self, run_time, joint_dmp_info, initial_sensor_values):
+        assert type(run_time) is float or type(run_time) is int,\
+                "Incorrect run_time type. Should be int or float."
+        assert run_time >= 0, "Incorrect run_time. Should be non negative."
 
         assert type(joint_dmp_info['tau']) is float or type(joint_dmp_info['tau']) is int,\
                 "Incorrect tau type. Should be int or float."
@@ -365,19 +374,19 @@ class Skill:
         assert self._trajectory_generator_type == TrajectoryGeneratorType.JointDmpTrajectoryGenerator, \
                 "Incorrect trajectory generator type. Should be JointDmpTrajectoryGenerator"
 
-        joint_dmp_trajectory_generator_msg_proto = make_joint_dmp_trajectory_generator_msg_proto(run_time, 
-                                                   joint_dmp_info['tau'], joint_dmp_info['alpha'], joint_dmp_info['beta'], 
-                                                   joint_dmp_info['num_basis'], joint_dmp_info['num_sensors'], 
-                                                   joint_dmp_info['mu'], joint_dmp_info['h'], 
-                                                   np.array(joint_dmp_info['weights']).reshape(-1).tolist(), 
-                                                   initial_sensor_values)
+        joint_dmp_trajectory_generator_msg_proto = JointDMPTrajectoryGeneratorMessage(run_time=run_time, 
+                                                   tau=joint_dmp_info['tau'], alpha=joint_dmp_info['alpha'], beta=joint_dmp_info['beta'], 
+                                                   num_basis=joint_dmp_info['num_basis'], num_sensors=joint_dmp_info['num_sensors'], 
+                                                   basis_mean=joint_dmp_info['mu'], basis_std=joint_dmp_info['h'], 
+                                                   weights=np.array(joint_dmp_info['weights']).reshape(-1).tolist(), 
+                                                   initial_sensor_values=initial_sensor_values)
 
         self.add_trajectory_params(joint_dmp_trajectory_generator_msg_proto.SerializeToString())
 
-    def add_pose_dmp_params(self, orientation_only, position_only, time, pose_dmp_info, initial_sensor_values):
-        assert type(time) is float or type(time) is int,\
-                "Incorrect time type. Should be int or float."
-        assert time >= 0, "Incorrect time. Should be non negative."
+    def add_pose_dmp_params(self, orientation_only, position_only, run_time, pose_dmp_info, initial_sensor_values):
+        assert type(run_time) is float or type(run_time) is int,\
+                "Incorrect run_time type. Should be int or float."
+        assert run_time >= 0, "Incorrect run_time. Should be non negative."
 
         assert type(pose_dmp_info['tau']) is float or type(pose_dmp_info['tau']) is int,\
                 "Incorrect tau type. Should be int or float."
@@ -428,22 +437,22 @@ class Skill:
         assert self._trajectory_generator_type == TrajectoryGeneratorType.PoseDmpTrajectoryGenerator, \
                 "Incorrect trajectory generator type. Should be PoseDmpTrajectoryGenerator"
 
-        pose_dmp_trajectory_generator_msg_proto = make_pose_dmp_trajectory_generator_msg_proto(orientation_only,
-                                                   position_only, run_time, 
-                                                   pose_dmp_info['tau'], pose_dmp_info['alpha'], pose_dmp_info['beta'], 
-                                                   pose_dmp_info['num_basis'], pose_dmp_info['num_sensors'], 
-                                                   pose_dmp_info['mu'], pose_dmp_info['h'], 
-                                                   np.array(pose_dmp_info['weights']).reshape(-1).tolist(), 
-                                                   initial_sensor_values)
+        pose_dmp_trajectory_generator_msg_proto = PoseDMPTrajectoryGeneratorMessage(orientation_only=orientation_only,
+                                                   position_only=position_only, run_time=run_time, 
+                                                   tau=pose_dmp_info['tau'], alpha=pose_dmp_info['alpha'], beta=pose_dmp_info['beta'], 
+                                                   num_basis=pose_dmp_info['num_basis'], num_sensors=pose_dmp_info['num_sensors'], 
+                                                   basis_mean=pose_dmp_info['mu'], basis_std=pose_dmp_info['h'], 
+                                                   weights=np.array(pose_dmp_info['weights']).reshape(-1).tolist(), 
+                                                   initial_sensor_values=initial_sensor_values)
 
         self.add_trajectory_params(pose_dmp_trajectory_generator_msg_proto.SerializeToString())
 
-    def add_run_time(self, time):
-        assert type(time) is float or type(time) is int, \
-                "Incorrect time type. Should be int or float."
-        assert time >= 0, "Incorrect time. Should be non negative."
+    def add_run_time(self, run_time):
+        assert type(run_time) is float or type(run_time) is int, \
+                "Incorrect run_time type. Should be int or float."
+        assert run_time >= 0, "Incorrect run_time. Should be non negative."
 
-        run_time_msg_proto = make_run_time_msg_proto(time)
+        run_time_msg_proto = RunTimeMessage(run_time=run_time)
         self.add_trajectory_params(run_time_msg_proto.SerializeToString())
 
     # Add checks for these

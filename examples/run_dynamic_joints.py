@@ -3,9 +3,11 @@ import numpy as np
 
 from frankapy import FrankaArm, SensorDataMessageType
 from frankapy import FrankaConstants as FC
-from frankapy.proto_utils import make_joint_position_proto, sensor_proto2ros_msg, make_sensor_group_msg, make_should_terminate_proto
+from frankapy.proto_utils import sensor_proto2ros_msg, make_sensor_group_msg
+from frankapy.proto import JointPositionSensorMessage, ShouldTerminateSensorMessage
 from franka_interface_msgs.msg import SensorDataGroup
-from frankapy.utils import min_jerk, min_jerk_delta
+
+from frankapy.utils import min_jerk
 
 import rospy
 
@@ -35,7 +37,10 @@ if __name__ == "__main__":
     fa.goto_joints(joints_traj[1], duration=T, dynamic=True, buffer_time=10)
     init_time = rospy.Time.now().to_time()
     for i in range(2, len(ts)):
-        traj_gen_proto_msg = make_joint_position_proto(i, rospy.Time.now().to_time() - init_time, joints_traj[i])
+        traj_gen_proto_msg = JointPositionSensorMessage(
+            id=i, timestamp=rospy.Time.now().to_time() - init_time, 
+            joints=joints_traj[i]
+        )
         ros_msg = make_sensor_group_msg(
             trajectory_generator_sensor_msg=sensor_proto2ros_msg(
                 traj_gen_proto_msg, SensorDataMessageType.JOINT_POSITION)
@@ -47,7 +52,7 @@ if __name__ == "__main__":
 
     # Stop the skill
     # Alternatively can call fa.stop_skill()
-    term_proto_msg = make_should_terminate_proto(rospy.Time.now().to_time() - init_time, True)
+    term_proto_msg = ShouldTerminateSensorMessage(timestamp=rospy.Time.now().to_time() - init_time, should_terminate=True)
     ros_msg = make_sensor_group_msg(
         termination_handler_sensor_msg=sensor_proto2ros_msg(
             term_proto_msg, SensorDataMessageType.SHOULD_TERMINATE)

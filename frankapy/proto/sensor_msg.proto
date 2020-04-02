@@ -1,4 +1,4 @@
-// This file should match franka-interface/proto/sensor_msg.proto
+// franka-interface/proto/sensor_msg.proto and frankapy/protosensor_msg.proto should match
 
 syntax = "proto2";
 
@@ -35,18 +35,26 @@ message JointPositionSensorMessage {
   required int32 id = 1;
   required double timestamp = 2;
 
-  repeated double joints = 4;
+  repeated double joints = 3;
 }
 
 message PosePositionSensorMessage {
   required int32 id = 1;
   required double timestamp = 2;
 
-  repeated double position = 4;
-  repeated double quaternion = 5;
+  repeated double position = 3;
+  repeated double quaternion = 4;
 }
 
 message ShouldTerminateSensorMessage {
   required double timestamp = 1;
   required bool should_terminate = 2;
+}
+
+message CartesianImpedanceSensorMessage {
+  required int32 id = 1;
+  required double timestamp = 2;
+
+  repeated double translational_stiffnesses = 3;
+  repeated double rotational_stiffnesses = 4;
 }
