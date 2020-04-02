@@ -46,7 +46,7 @@ def get_closest_grasp_pose(T_tag_world, T_ee_world):
 if __name__ == "__main__":
     logging.getLogger().setLevel(logging.INFO)
     parser = argparse.ArgumentParser()
-    parser.add_argument('--cfg', '-c', type=str, default='cfg/examples/april_tag_pick_place_cfg.yaml')
+    parser.add_argument('--cfg', '-c', type=str, default='cfg/april_tag_pick_place_cfg.yaml')
     parser.add_argument('--no_grasp', '-ng', action='store_true')
     args = parser.parse_args()
     cfg = YamlConfig(args.cfg)
@@ -63,7 +63,7 @@ if __name__ == "__main__":
     T_ready_world.translation[0] += 0.25
     T_ready_world.translation[2] = 0.4
 
-    ret = fa.goto_pose(T_ready_world)
+    fa.goto_pose(T_ready_world)
 
     logging.info('Init camera')
     sensor = get_first_realsense_sensor(cfg['rs'])
@@ -90,8 +90,8 @@ if __name__ == "__main__":
         vis3d.figure()
         vis3d.pose(RigidTransform())
         vis3d.points(subsample(points_world.data.T), color=(0,1,0), scale=0.002)
-        vis3d.pose(T_ready_world, length=0.05)
-        vis3d.pose(T_camera_world, length=0.1)
+        vis3d.pose(T_ready_world)
+        vis3d.pose(T_camera_world)
         vis3d.pose(T_tag_world)
         vis3d.pose(T_grasp_world)
         vis3d.pose(T_lift_world)
@@ -99,14 +99,14 @@ if __name__ == "__main__":
 
     if not args.no_grasp:
         logging.info('Commanding robot')
-        fa.goto_pose_with_cartesian_control(T_lift_world)
-        fa.goto_pose_with_cartesian_control(T_grasp_world)
+        fa.goto_pose(T_lift_world, use_impedance=False)
+        fa.goto_pose(T_grasp_world, use_impedance=False)
         fa.close_gripper()
-        fa.goto_pose_with_cartesian_control(T_lift_world)
+        fa.goto_pose(T_lift_world, use_impedance=False)
         sleep(3)
-        fa.goto_pose_with_cartesian_control(T_grasp_world)
+        fa.goto_pose(T_grasp_world, use_impedance=False)
         fa.open_gripper()
-        fa.goto_pose_with_cartesian_control(T_lift_world)
-        fa.goto_pose_with_cartesian_control(T_ready_world)
+        fa.goto_pose(T_lift_world, use_impedance=False)
+        fa.goto_pose(T_ready_world, use_impedance=False)
 
     import IPython; IPython.embed(); exit(0)
