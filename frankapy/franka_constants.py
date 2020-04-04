@@ -179,3 +179,7 @@ class FrankaConstants:
 
     DEFAULT_SENSOR_PUBLISHER_TOPIC = 'franka_ros_interface/sensor'
     DYNAMIC_SKILL_WAIT_TIME = 0.3
+
+    DEFAULT_HFPC_POSITION_GAIN = 1
+    DEFAULT_HFPC_FORCE_GAIN = 1
+    DEFAULT_HFPC_S = [1, 1, 1, 1, 1, 1]

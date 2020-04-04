@@ -21,3 +21,9 @@ message InternalImpedanceFeedbackControllerMessage {
   repeated double cartesian_impedances = 1;
   repeated double joint_impedances = 2;
 }
+
+message ForcePositionFeedbackControllerMessage {
+  required double position_kp = 1;
+  required double force_kp = 2;
+  repeated double selection = 3;
+}

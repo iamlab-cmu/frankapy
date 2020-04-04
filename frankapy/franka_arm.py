@@ -989,6 +989,63 @@ class FrankaArm:
     def run_guide_mode(self, duration=10, block=True):
         self.apply_effector_forces_torques(duration, 0, 0, 0, block=block)
 
+    def run_dynamic_force_position(self,
+                  duration=3,
+                  buffer_time=FC.DEFAULT_TERM_BUFFER_TIME,
+                  force_thresholds=None,
+                  torque_thresholds=None,
+                  position_kp=FC.DEFAULT_HFPC_POSITION_GAIN,
+                  force_kp=FC.DEFAULT_HFPC_FORCE_GAIN,
+                  S=FC.DEFAULT_HFPC_S,
+                  ignore_errors=True,
+                  ignore_virtual_walls=False,
+                  skill_desc=''):
+        '''Commands Arm to run dynamic hybrid force position control
+
+        Args:
+            duration (float) : How much time this robot motion should take
+            use_impedance (boolean) : Function uses our impedance controller 
+                by default. If False, uses the Franka cartesian controller.
+            buffer_time (float): How much extra time the termination handler will wait
+                before stopping the skill after duration has passed.
+            force_thresholds (list): List of 6 floats corresponding to
+                force limits on translation (xyz) and rotation about (xyz) axes.
+                Default is None. If None then will not stop on contact.
+            torque_thresholds (list): List of 7 floats corresponding to
+                torque limits on each joint. Default is None. If None then will
+                not stop on contact.
+            position_kp (float): Proportional gain used for position errors.
+            force_kp (float): Proportional gain used for force errors.
+            S (list): List of 6 numbers between 0 and 1 for the HFPC selection matrix.
+            ignore_errors (boolean) : Function ignores errors by default. 
+                If False, errors and some exceptions can be thrown.
+            ignore_virtual_walls (boolean): Function checks for collisions with 
+                virtual walls by default. If False, the robot no longer checks,
+                which may be dangerous.
+            skill_desc (string) : Skill description to use for logging on
+                control-pc.
+        '''
+        skill = Skill(SkillType.ForceTorqueSkill, 
+                        TrajectoryGeneratorType.PassThroughForcePositionTrajectoryGenerator,
+                        feedback_controller_type=FeedbackControllerType.ForcePositionFeedbackController,
+                        termination_handler_type=TerminationHandlerType.TimeTerminationHandler, 
+                        skill_desc=skill_desc)
+
+        skill.add_initial_sensor_values(FC.EMPTY_SENSOR_VALUES)
+        skill.add_force_position_params(position_kp, force_kp, S)
+
+        if not skill.check_for_contact_params(buffer_time, force_thresholds, torque_thresholds):
+            skill.add_time_termination_params(buffer_time)
+
+        goal = skill.create_goal()
+
+        self._send_goal(goal,
+                        cb=lambda x: skill.feedback_callback(x),
+                        block=False,
+                        ignore_errors=ignore_errors)
+
+        sleep(FC.DYNAMIC_SKILL_WAIT_TIME)
+
     '''
     Reads
     '''

@@ -58,3 +58,20 @@ message CartesianImpedanceSensorMessage {
   repeated double translational_stiffnesses = 3;
   repeated double rotational_stiffnesses = 4;
 }
+
+message ForcePositionSensorMessage {
+  required int32 id = 1;
+  required double timestamp = 2;
+
+  repeated double pose = 3;
+  repeated double force = 4;
+}
+
+message ForcePositionControllerSensorMessage {
+  required int32 id = 1;
+  required double timestamp = 2;
+
+  required double position_kp = 3;
+  required double force_kp = 4;
+  repeated double selection = 5;
+}
