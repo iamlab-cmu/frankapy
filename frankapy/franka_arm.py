@@ -994,8 +994,8 @@ class FrankaArm:
                   buffer_time=FC.DEFAULT_TERM_BUFFER_TIME,
                   force_thresholds=None,
                   torque_thresholds=None,
-                  position_kp=FC.DEFAULT_HFPC_POSITION_GAIN,
-                  force_kp=FC.DEFAULT_HFPC_FORCE_GAIN,
+                  position_kps=FC.DEFAULT_HFPC_POSITION_GAIN,
+                  force_kps=FC.DEFAULT_HFPC_FORCE_GAIN,
                   S=FC.DEFAULT_HFPC_S,
                   ignore_errors=True,
                   ignore_virtual_walls=False,
@@ -1032,11 +1032,12 @@ class FrankaArm:
                         skill_desc=skill_desc)
 
         skill.add_initial_sensor_values(FC.EMPTY_SENSOR_VALUES)
-        skill.add_force_position_params(position_kp, force_kp, S)
+        skill.add_force_position_params(position_kps, force_kps, S)
+        skill.add_run_time(duration)
 
         if not skill.check_for_contact_params(buffer_time, force_thresholds, torque_thresholds):
             skill.add_time_termination_params(buffer_time)
-
+            
         goal = skill.create_goal()
 
         self._send_goal(goal,

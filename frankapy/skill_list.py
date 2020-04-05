@@ -171,19 +171,17 @@ class Skill:
 
         self.add_feedback_controller_params(joint_feedback_controller_msg_proto.SerializeToString())
 
-    def add_force_position_params(self, position_kp, force_kp, S):
-        assert type(position_kp) is float or type(position_kp) is int, \
-            "Incorrect position_kp type. Should be int or float."
-        assert type(force_kp) is float or type(force_kp) is int, \
-            "Incorrect force_kp type. Should be int or float."
-        assert type(S) is list, \
-                "Incorrect S type. Should be list."
-        assert len(S) == 6, \
-                "Incorrect S len. Should be 6."
+    def add_force_position_params(self, position_kps, force_kps, S):
+        assert type(position_kps) is list or len(position_kps) == 6, \
+            "Incorrect position_kps type. Should be list of length 6."
+        assert type(force_kps) is list or len(force_kps) == 6, \
+            "Incorrect force_kps type. Should be list of length 6."
+        assert type(S) is list and len(S) == 6, \
+                "Incorrect S type. Should be list of length 6."
 
         force_position_feedback_controller_msg_proto = \
             ForcePositionFeedbackControllerMessage(
-                position_kp=position_kp, force_kp=force_kp, selection=S)
+                position_kps=position_kps, force_kps=force_kps, selection=S)
         
         self.add_feedback_controller_params(force_position_feedback_controller_msg_proto.SerializeToString())
         

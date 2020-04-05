@@ -23,7 +23,7 @@ message InternalImpedanceFeedbackControllerMessage {
 }
 
 message ForcePositionFeedbackControllerMessage {
-  required double position_kp = 1;
-  required double force_kp = 2;
+  repeated double position_kps = 1;
+  repeated double force_kps = 2;
   repeated double selection = 3;
 }
