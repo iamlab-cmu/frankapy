@@ -62,16 +62,19 @@ message CartesianImpedanceSensorMessage {
 message ForcePositionSensorMessage {
   required int32 id = 1;
   required double timestamp = 2;
+  required double seg_run_time = 3;
 
-  repeated double pose = 3;
-  repeated double force = 4;
+  repeated double pose = 4;
+  repeated double force = 5;
 }
 
 message ForcePositionControllerSensorMessage {
   required int32 id = 1;
   required double timestamp = 2;
 
-  repeated double position_kps = 3;
-  repeated double force_kps = 4;
-  repeated double selection = 5;
+  repeated double position_kps_cart = 3;
+  repeated double force_kps_cart = 4;
+  repeated double position_kps_joint = 5;
+  repeated double force_kps_joint = 6;
+  repeated double selection = 7;
 }

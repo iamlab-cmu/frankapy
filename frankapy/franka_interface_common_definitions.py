@@ -37,6 +37,7 @@ class TrajectoryGeneratorType:
     GripperTrajectoryGenerator = _enum_auto('TrajectoryGeneratorType')
     ImpulseTrajectoryGenerator = _enum_auto('TrajectoryGeneratorType')
     JointDmpTrajectoryGenerator = _enum_auto('TrajectoryGeneratorType')
+    LinearForcePositionTrajectoryGenerator = _enum_auto('TrajectoryGeneratorType')
     LinearJointTrajectoryGenerator = _enum_auto('TrajectoryGeneratorType')
     LinearPoseTrajectoryGenerator = _enum_auto('TrajectoryGeneratorType')
     MinJerkJointTrajectoryGenerator = _enum_auto('TrajectoryGeneratorType')

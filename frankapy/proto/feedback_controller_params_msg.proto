@@ -23,7 +23,10 @@ message InternalImpedanceFeedbackControllerMessage {
 }
 
 message ForcePositionFeedbackControllerMessage {
-  repeated double position_kps = 1;
-  repeated double force_kps = 2;
-  repeated double selection = 3;
+  repeated double position_kps_cart = 1;
+  repeated double force_kps_cart = 2;
+  repeated double position_kps_joint = 3;
+  repeated double force_kps_joint = 4;
+  repeated double selection = 5;
+  required bool use_cartesian_gains = 6;
 }

@@ -137,7 +137,7 @@ class FrankaArm:
     def stop_skill(self): 
         if self._connected and self._in_skill:
             self._client.cancel_goal()
-        self._in_skill = False 
+        self.wait_for_skill()
 
     def _sigint_handler_gen(self):
         def sigint_handler(sig, frame):
@@ -994,9 +994,13 @@ class FrankaArm:
                   buffer_time=FC.DEFAULT_TERM_BUFFER_TIME,
                   force_thresholds=None,
                   torque_thresholds=None,
-                  position_kps=FC.DEFAULT_HFPC_POSITION_GAIN,
-                  force_kps=FC.DEFAULT_HFPC_FORCE_GAIN,
+                  position_kps_cart=FC.DEFAULT_TRANSLATIONAL_STIFFNESSES + FC.DEFAULT_ROTATIONAL_STIFFNESSES,
+                  force_kps_cart=FC.DEFAULT_HFPC_FORCE_GAIN,
+                  position_kps_joint=FC.DEFAULT_K_GAINS,
+                  force_kps_joint=FC.DEFAULT_HFPC_FORCE_GAIN,
                   S=FC.DEFAULT_HFPC_S,
+                  interpolate=False,
+                  use_cartesian_gains=True,
                   ignore_errors=True,
                   ignore_virtual_walls=False,
                   skill_desc=''):
@@ -1014,9 +1018,19 @@ class FrankaArm:
             torque_thresholds (list): List of 7 floats corresponding to
                 torque limits on each joint. Default is None. If None then will
                 not stop on contact.
-            position_kp (float): Proportional gain used for position errors.
-            force_kp (float): Proportional gain used for force errors.
+            position_kp_cart (list): List of 6 floats corresponding to 
+                proportional gain used for position errors in cartesian space.
+            force_kp_cart (list): List of 6 floats corresponding to 
+                proportional gain used for force errors in cartesian space.
+            position_kp_joint (list): List of 7 floats corresponding to 
+                proportional gain used for position errors in joint space.
+            force_kp_joint (list): List of 6 floats corresponding to 
+                proportional gain used for force errors in joint space.
             S (list): List of 6 numbers between 0 and 1 for the HFPC selection matrix.
+            interpolate (boolean): Whether or not to perform linear interpolation
+                in between way points.
+            use_cartesian_gains (boolean): Whether to use cartesian gains or
+                joint gains.
             ignore_errors (boolean) : Function ignores errors by default. 
                 If False, errors and some exceptions can be thrown.
             ignore_virtual_walls (boolean): Function checks for collisions with 
@@ -1025,14 +1039,18 @@ class FrankaArm:
             skill_desc (string) : Skill description to use for logging on
                 control-pc.
         '''
+        if interpolate:
+            traj_gen = TrajectoryGeneratorType.LinearForcePositionTrajectoryGenerator
+        else:
+            traj_gen = TrajectoryGeneratorType.PassThroughForcePositionTrajectoryGenerator
         skill = Skill(SkillType.ForceTorqueSkill, 
-                        TrajectoryGeneratorType.PassThroughForcePositionTrajectoryGenerator,
+                        traj_gen,
                         feedback_controller_type=FeedbackControllerType.ForcePositionFeedbackController,
                         termination_handler_type=TerminationHandlerType.TimeTerminationHandler, 
                         skill_desc=skill_desc)
 
         skill.add_initial_sensor_values(FC.EMPTY_SENSOR_VALUES)
-        skill.add_force_position_params(position_kps, force_kps, S)
+        skill.add_force_position_params(position_kps_cart, force_kps_cart, position_kps_joint, force_kps_joint, S, use_cartesian_gains)
         skill.add_run_time(duration)
 
         if not skill.check_for_contact_params(buffer_time, force_thresholds, torque_thresholds):
