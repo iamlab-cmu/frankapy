@@ -8,6 +8,7 @@ from autolab_core import RigidTransform
 from .franka_constants import FrankaConstants as FC
 from .franka_interface_common_definitions import *
 from .proto import *
+from .utils import transform_to_list
 
 from franka_interface_msgs.msg import ExecuteSkillAction, ExecuteSkillGoal
 
@@ -170,6 +171,20 @@ class Skill:
 
         self.add_feedback_controller_params(joint_feedback_controller_msg_proto.SerializeToString())
 
+    def add_force_position_params(self, position_kps, force_kps, S):
+        assert type(position_kps) is list or len(position_kps) == 6, \
+            "Incorrect position_kps type. Should be list of length 6."
+        assert type(force_kps) is list or len(force_kps) == 6, \
+            "Incorrect force_kps type. Should be list of length 6."
+        assert type(S) is list and len(S) == 6, \
+                "Incorrect S type. Should be list of length 6."
+
+        force_position_feedback_controller_msg_proto = \
+            ForcePositionFeedbackControllerMessage(
+                position_kps=position_kps, force_kps=force_kps, selection=S)
+        
+        self.add_feedback_controller_params(force_position_feedback_controller_msg_proto.SerializeToString())
+        
     ## Termination Handlers
 
     def check_for_contact_params(self, buffer_time, force_thresholds, torque_thresholds):
@@ -310,7 +325,7 @@ class Skill:
 
         pose_trajectory_generator_msg_proto = PoseTrajectoryGeneratorMessage(
                 run_time=run_time, position=goal_pose.translation, quaternion=goal_pose.quaternion,
-                pose=goal_pose.matrix.T.flatten().tolist())
+                pose=transform_to_list(goal_pose))
 
         self.add_trajectory_params(pose_trajectory_generator_msg_proto.SerializeToString())
 

@@ -18,7 +18,7 @@ DESCRIPTOR = _descriptor.FileDescriptor(
   package='',
   syntax='proto2',
   serialized_options=None,
-  serialized_pb=b'\n$feedback_controller_params_msg.proto\"p\n+CartesianImpedanceFeedbackControllerMessage\x12!\n\x19translational_stiffnesses\x18\x01 \x03(\x01\x12\x1e\n\x16rotational_stiffnesses\x18\x02 \x03(\x01\"q\n\"ForceAxisFeedbackControllerMessage\x12\x1f\n\x17translational_stiffness\x18\x01 \x02(\x01\x12\x1c\n\x14rotational_stiffness\x18\x02 \x02(\x01\x12\x0c\n\x04\x61xis\x18\x03 \x03(\x01\"K\n\'JointImpedanceFeedbackControllerMessage\x12\x0f\n\x07k_gains\x18\x01 \x03(\x01\x12\x0f\n\x07\x64_gains\x18\x02 \x03(\x01\"d\n*InternalImpedanceFeedbackControllerMessage\x12\x1c\n\x14\x63\x61rtesian_impedances\x18\x01 \x03(\x01\x12\x18\n\x10joint_impedances\x18\x02 \x03(\x01'
+  serialized_pb=b'\n$feedback_controller_params_msg.proto\"p\n+CartesianImpedanceFeedbackControllerMessage\x12!\n\x19translational_stiffnesses\x18\x01 \x03(\x01\x12\x1e\n\x16rotational_stiffnesses\x18\x02 \x03(\x01\"q\n\"ForceAxisFeedbackControllerMessage\x12\x1f\n\x17translational_stiffness\x18\x01 \x02(\x01\x12\x1c\n\x14rotational_stiffness\x18\x02 \x02(\x01\x12\x0c\n\x04\x61xis\x18\x03 \x03(\x01\"K\n\'JointImpedanceFeedbackControllerMessage\x12\x0f\n\x07k_gains\x18\x01 \x03(\x01\x12\x0f\n\x07\x64_gains\x18\x02 \x03(\x01\"d\n*InternalImpedanceFeedbackControllerMessage\x12\x1c\n\x14\x63\x61rtesian_impedances\x18\x01 \x03(\x01\x12\x18\n\x10joint_impedances\x18\x02 \x03(\x01\"d\n&ForcePositionFeedbackControllerMessage\x12\x14\n\x0cposition_kps\x18\x01 \x03(\x01\x12\x11\n\tforce_kps\x18\x02 \x03(\x01\x12\x11\n\tselection\x18\x03 \x03(\x01'
 )
 
 
@@ -182,10 +182,56 @@ _INTERNALIMPEDANCEFEEDBACKCONTROLLERMESSAGE = _descriptor.Descriptor(
   serialized_end=446,
 )
 
+
+_FORCEPOSITIONFEEDBACKCONTROLLERMESSAGE = _descriptor.Descriptor(
+  name='ForcePositionFeedbackControllerMessage',
+  full_name='ForcePositionFeedbackControllerMessage',
+  filename=None,
+  file=DESCRIPTOR,
+  containing_type=None,
+  fields=[
+    _descriptor.FieldDescriptor(
+      name='position_kps', full_name='ForcePositionFeedbackControllerMessage.position_kps', index=0,
+      number=1, type=1, cpp_type=5, label=3,
+      has_default_value=False, default_value=[],
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR),
+    _descriptor.FieldDescriptor(
+      name='force_kps', full_name='ForcePositionFeedbackControllerMessage.force_kps', index=1,
+      number=2, type=1, cpp_type=5, label=3,
+      has_default_value=False, default_value=[],
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR),
+    _descriptor.FieldDescriptor(
+      name='selection', full_name='ForcePositionFeedbackControllerMessage.selection', index=2,
+      number=3, type=1, cpp_type=5, label=3,
+      has_default_value=False, default_value=[],
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR),
+  ],
+  extensions=[
+  ],
+  nested_types=[],
+  enum_types=[
+  ],
+  serialized_options=None,
+  is_extendable=False,
+  syntax='proto2',
+  extension_ranges=[],
+  oneofs=[
+  ],
+  serialized_start=448,
+  serialized_end=548,
+)
+
 DESCRIPTOR.message_types_by_name['CartesianImpedanceFeedbackControllerMessage'] = _CARTESIANIMPEDANCEFEEDBACKCONTROLLERMESSAGE
 DESCRIPTOR.message_types_by_name['ForceAxisFeedbackControllerMessage'] = _FORCEAXISFEEDBACKCONTROLLERMESSAGE
 DESCRIPTOR.message_types_by_name['JointImpedanceFeedbackControllerMessage'] = _JOINTIMPEDANCEFEEDBACKCONTROLLERMESSAGE
 DESCRIPTOR.message_types_by_name['InternalImpedanceFeedbackControllerMessage'] = _INTERNALIMPEDANCEFEEDBACKCONTROLLERMESSAGE
+DESCRIPTOR.message_types_by_name['ForcePositionFeedbackControllerMessage'] = _FORCEPOSITIONFEEDBACKCONTROLLERMESSAGE
 _sym_db.RegisterFileDescriptor(DESCRIPTOR)
 
 CartesianImpedanceFeedbackControllerMessage = _reflection.GeneratedProtocolMessageType('CartesianImpedanceFeedbackControllerMessage', (_message.Message,), {
@@ -215,6 +261,13 @@ InternalImpedanceFeedbackControllerMessage = _reflection.GeneratedProtocolMessag
   # @@protoc_insertion_point(class_scope:InternalImpedanceFeedbackControllerMessage)
   })
 _sym_db.RegisterMessage(InternalImpedanceFeedbackControllerMessage)
+
+ForcePositionFeedbackControllerMessage = _reflection.GeneratedProtocolMessageType('ForcePositionFeedbackControllerMessage', (_message.Message,), {
+  'DESCRIPTOR' : _FORCEPOSITIONFEEDBACKCONTROLLERMESSAGE,
+  '__module__' : 'feedback_controller_params_msg_pb2'
+  # @@protoc_insertion_point(class_scope:ForcePositionFeedbackControllerMessage)
+  })
+_sym_db.RegisterMessage(ForcePositionFeedbackControllerMessage)
 
 
 # @@protoc_insertion_point(module_scope)

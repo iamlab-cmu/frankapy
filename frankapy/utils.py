@@ -29,3 +29,7 @@ def min_jerk(xi, xf, t, T):
 def min_jerk_delta(xi, xf, t, T, dt):
     r = t/T
     return (xf - xi) * (30 * r ** 2 - 60 * r ** 3 + 30 * r ** 4) / T * dt
+
+
+def transform_to_list(T):
+    return T.matrix.T.flatten().tolist()

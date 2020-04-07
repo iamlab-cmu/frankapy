@@ -41,6 +41,7 @@ class TrajectoryGeneratorType:
     LinearPoseTrajectoryGenerator = _enum_auto('TrajectoryGeneratorType')
     MinJerkJointTrajectoryGenerator = _enum_auto('TrajectoryGeneratorType')
     MinJerkPoseTrajectoryGenerator = _enum_auto('TrajectoryGeneratorType')
+    PassThroughForcePositionTrajectoryGenerator = _enum_auto('TrajectoryGeneratorType')
     PassThroughJointTrajectoryGenerator = _enum_auto('TrajectoryGeneratorType')
     PassThroughPoseTrajectoryGenerator = _enum_auto('TrajectoryGeneratorType')
     PoseDmpTrajectoryGenerator = _enum_auto('TrajectoryGeneratorType')
@@ -55,6 +56,7 @@ class TrajectoryGeneratorType:
 class FeedbackControllerType:
     CartesianImpedanceFeedbackController = _enum_auto('FeedbackControllerType')
     ForceAxisImpedenceFeedbackController = _enum_auto('FeedbackControllerType')
+    ForcePositionFeedbackController = _enum_auto('FeedbackControllerType')
     JointImpedanceFeedbackController = _enum_auto('FeedbackControllerType')
     NoopFeedbackController = _enum_auto('FeedbackControllerType')
     PassThroughFeedbackController = _enum_auto('FeedbackControllerType')
@@ -77,10 +79,12 @@ class SkillStatus:
 
 
 class SensorDataMessageType:
+    BOUNDING_BOX = _enum_auto('SensorDataMessageType')
+    CARTESIAN_IMPEDANCE = _enum_auto('SensorDataMessageType')
+    FORCE_POSITION = _enum_auto('SensorDataMessageType')
+    FORCE_POSITION_GAINS = _enum_auto('SensorDataMessageType')
     JOINT_POSITION_VELOCITY = _enum_auto('SensorDataMessageType')
     JOINT_POSITION = _enum_auto('SensorDataMessageType')
     POSE_POSITION_VELOCITY = _enum_auto('SensorDataMessageType')
     POSE_POSITION = _enum_auto('SensorDataMessageType')
     SHOULD_TERMINATE = _enum_auto('SensorDataMessageType')
-    CARTESIAN_IMPEDANCE = _enum_auto('SensorDataMessageType')
-    BOUNDING_BOX = _enum_auto('SensorDataMessageType')

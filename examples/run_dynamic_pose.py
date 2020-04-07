@@ -1,4 +1,3 @@
-from time import sleep
 import numpy as np
 
 from autolab_core import RigidTransform
