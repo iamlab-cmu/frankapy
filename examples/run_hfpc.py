@@ -47,36 +47,36 @@ if __name__ == "__main__":
         pose.translation[0] += r + circ[i, 0]
         pose.translation[1] += circ[i, 1]
         target_poses.append(pose)
-
     target_force = [0, 0, -10, 0, 0, 0]
-    S = [1, 1, 0, 1, 1, 1]
-    position_kps_traj = np.array([min_jerk(
-        np.array([100, 800, 800, 50, 50, 50]),
-        np.array([800, 800, 800, 50, 50, 50]),
-        t, T
-    ) for t in ts])
-    force_kps = [0.1] * 6
+    S = [1, 1, 1, 1, 1, 1]
+    position_kps_cart = FC.DEFAULT_TRANSLATIONAL_STIFFNESSES + FC.DEFAULT_ROTATIONAL_STIFFNESSES
+    force_kps_cart = [0.1] * 6
+    position_kps_joint = FC.DEFAULT_K_GAINS
+    force_kps_joint = [0.1] * 7
 
     rospy.loginfo('Initializing Sensor Publisher')
-    pub = rospy.Publisher(FC.DEFAULT_SENSOR_PUBLISHER_TOPIC, SensorDataGroup, queue_size=1000)
+    pub = rospy.Publisher(FC.DEFAULT_SENSOR_PUBLISHER_TOPIC, SensorDataGroup, queue_size=1)
     rate = rospy.Rate(1 / dt)
-
-    rospy.loginfo('Publishing HFPC trajectory...')
     n_times = 1
-    fa.run_dynamic_force_position(duration=T * n_times, buffer_time=3, S=S, position_kps=position_kps_traj[0].tolist(), force_kps=force_kps)
+
+    rospy.loginfo('Publishing HFPC trajectory w/ cartesian gains...')
+    fa.run_dynamic_force_position(duration=T * n_times, buffer_time=3, S=S,
+                                use_cartesian_gains=True,
+                                position_kps_cart=position_kps_cart,
+                                force_kps_cart=force_kps_cart)
     init_time = rospy.Time.now().to_time()
     for i in trange(N * n_times):
         t = i % N
         timestamp = rospy.Time.now().to_time() - init_time
         traj_gen_proto_msg = ForcePositionSensorMessage(
-            id=i, timestamp=timestamp, 
+            id=i, timestamp=timestamp, seg_run_time=dt,
             pose=transform_to_list(target_poses[t]),
             force=target_force
         )
         fb_ctrlr_proto = ForcePositionControllerSensorMessage(
             id=i, timestamp=timestamp,
-            position_kps=position_kps_traj[t].tolist(),
-            force_kps=force_kps,
+            position_kps_cart=position_kps_cart,
+            force_kps_cart=force_kps_cart,
             selection=S
         )
         ros_msg = make_sensor_group_msg(
@@ -85,10 +85,38 @@ if __name__ == "__main__":
             feedback_controller_sensor_msg=sensor_proto2ros_msg(
                 fb_ctrlr_proto, SensorDataMessageType.FORCE_POSITION_GAINS)
             )
-        
         pub.publish(ros_msg)
         rate.sleep()
+    fa.stop_skill()
 
+    rospy.loginfo('Publishing HFPC trajectory w/ joint gains...')
+    fa.run_dynamic_force_position(duration=T * n_times, buffer_time=3, S=S,
+                                use_cartesian_gains=False,
+                                position_kps_joint=position_kps_joint,
+                                force_kps_joint=force_kps_joint)
+    init_time = rospy.Time.now().to_time()
+    for i in trange(N * n_times):
+        t = i % N
+        timestamp = rospy.Time.now().to_time() - init_time
+        traj_gen_proto_msg = ForcePositionSensorMessage(
+            id=i, timestamp=timestamp, seg_run_time=dt,
+            pose=transform_to_list(target_poses[t]),
+            force=target_force
+        )
+        fb_ctrlr_proto = ForcePositionControllerSensorMessage(
+            id=i, timestamp=timestamp,
+            position_kps_joint=position_kps_joint,
+            force_kps_joint=force_kps_joint,
+            selection=S
+        )
+        ros_msg = make_sensor_group_msg(
+            trajectory_generator_sensor_msg=sensor_proto2ros_msg(
+                traj_gen_proto_msg, SensorDataMessageType.FORCE_POSITION),
+            feedback_controller_sensor_msg=sensor_proto2ros_msg(
+                fb_ctrlr_proto, SensorDataMessageType.FORCE_POSITION_GAINS)
+            )
+        pub.publish(ros_msg)
+        rate.sleep()
     fa.stop_skill()
 
     fa.reset_joints()
