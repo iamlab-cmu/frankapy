@@ -73,8 +73,15 @@ message ForcePositionControllerSensorMessage {
   required double timestamp = 2;
 
   repeated double position_kps_cart = 3;
-  repeated double force_kps_cart = 4;
-  repeated double position_kps_joint = 5;
-  repeated double force_kps_joint = 6;
-  repeated double selection = 7;
+  repeated double position_kds_cart = 4;
+  repeated double force_kps_cart = 5;
+  repeated double force_kis_cart = 6;
+  repeated double position_kps_joint = 7;
+  repeated double position_kds_joint = 8;
+  repeated double force_kps_joint = 9;
+  repeated double force_kis_joint = 10;
+  repeated double selection = 11;
+  repeated double error_frame = 12;
+
+  optional bool reset_force_integral_error = 13;
 }

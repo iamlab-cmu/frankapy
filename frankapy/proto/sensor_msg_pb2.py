@@ -18,7 +18,7 @@ DESCRIPTOR = _descriptor.FileDescriptor(
   package='',
   syntax='proto2',
   serialized_options=None,
-  serialized_pb=b'\n\x10sensor_msg.proto\"S\n\x0b\x42oundingBox\x12\x0c\n\x04name\x18\x01 \x02(\t\x12\n\n\x02id\x18\x02 \x02(\x05\x12\t\n\x01x\x18\x03 \x02(\x05\x12\t\n\x01y\x18\x04 \x02(\x05\x12\t\n\x01w\x18\x05 \x02(\x05\x12\t\n\x01h\x18\x06 \x02(\x05\"}\n\"JointPositionVelocitySensorMessage\x12\n\n\x02id\x18\x01 \x02(\x05\x12\x11\n\ttimestamp\x18\x02 \x02(\x01\x12\x14\n\x0cseg_run_time\x18\x03 \x02(\x01\x12\x0e\n\x06joints\x18\x04 \x03(\x01\x12\x12\n\njoint_vels\x18\x05 \x03(\x01\"\x97\x01\n!PosePositionVelocitySensorMessage\x12\n\n\x02id\x18\x01 \x02(\x05\x12\x11\n\ttimestamp\x18\x02 \x02(\x01\x12\x14\n\x0cseg_run_time\x18\x03 \x02(\x01\x12\x10\n\x08position\x18\x04 \x03(\x01\x12\x12\n\nquaternion\x18\x05 \x03(\x01\x12\x17\n\x0fpose_velocities\x18\x06 \x03(\x01\"K\n\x1aJointPositionSensorMessage\x12\n\n\x02id\x18\x01 \x02(\x05\x12\x11\n\ttimestamp\x18\x02 \x02(\x01\x12\x0e\n\x06joints\x18\x03 \x03(\x01\"`\n\x19PosePositionSensorMessage\x12\n\n\x02id\x18\x01 \x02(\x05\x12\x11\n\ttimestamp\x18\x02 \x02(\x01\x12\x10\n\x08position\x18\x03 \x03(\x01\x12\x12\n\nquaternion\x18\x04 \x03(\x01\"K\n\x1cShouldTerminateSensorMessage\x12\x11\n\ttimestamp\x18\x01 \x02(\x01\x12\x18\n\x10should_terminate\x18\x02 \x02(\x08\"\x83\x01\n\x1f\x43\x61rtesianImpedanceSensorMessage\x12\n\n\x02id\x18\x01 \x02(\x05\x12\x11\n\ttimestamp\x18\x02 \x02(\x01\x12!\n\x19translational_stiffnesses\x18\x03 \x03(\x01\x12\x1e\n\x16rotational_stiffnesses\x18\x04 \x03(\x01\"n\n\x1a\x46orcePositionSensorMessage\x12\n\n\x02id\x18\x01 \x02(\x05\x12\x11\n\ttimestamp\x18\x02 \x02(\x01\x12\x14\n\x0cseg_run_time\x18\x03 \x02(\x01\x12\x0c\n\x04pose\x18\x04 \x03(\x01\x12\r\n\x05\x66orce\x18\x05 \x03(\x01\"\xc0\x01\n$ForcePositionControllerSensorMessage\x12\n\n\x02id\x18\x01 \x02(\x05\x12\x11\n\ttimestamp\x18\x02 \x02(\x01\x12\x19\n\x11position_kps_cart\x18\x03 \x03(\x01\x12\x16\n\x0e\x66orce_kps_cart\x18\x04 \x03(\x01\x12\x1a\n\x12position_kps_joint\x18\x05 \x03(\x01\x12\x17\n\x0f\x66orce_kps_joint\x18\x06 \x03(\x01\x12\x11\n\tselection\x18\x07 \x03(\x01'
+  serialized_pb=b'\n\x10sensor_msg.proto\"S\n\x0b\x42oundingBox\x12\x0c\n\x04name\x18\x01 \x02(\t\x12\n\n\x02id\x18\x02 \x02(\x05\x12\t\n\x01x\x18\x03 \x02(\x05\x12\t\n\x01y\x18\x04 \x02(\x05\x12\t\n\x01w\x18\x05 \x02(\x05\x12\t\n\x01h\x18\x06 \x02(\x05\"}\n\"JointPositionVelocitySensorMessage\x12\n\n\x02id\x18\x01 \x02(\x05\x12\x11\n\ttimestamp\x18\x02 \x02(\x01\x12\x14\n\x0cseg_run_time\x18\x03 \x02(\x01\x12\x0e\n\x06joints\x18\x04 \x03(\x01\x12\x12\n\njoint_vels\x18\x05 \x03(\x01\"\x97\x01\n!PosePositionVelocitySensorMessage\x12\n\n\x02id\x18\x01 \x02(\x05\x12\x11\n\ttimestamp\x18\x02 \x02(\x01\x12\x14\n\x0cseg_run_time\x18\x03 \x02(\x01\x12\x10\n\x08position\x18\x04 \x03(\x01\x12\x12\n\nquaternion\x18\x05 \x03(\x01\x12\x17\n\x0fpose_velocities\x18\x06 \x03(\x01\"K\n\x1aJointPositionSensorMessage\x12\n\n\x02id\x18\x01 \x02(\x05\x12\x11\n\ttimestamp\x18\x02 \x02(\x01\x12\x0e\n\x06joints\x18\x03 \x03(\x01\"`\n\x19PosePositionSensorMessage\x12\n\n\x02id\x18\x01 \x02(\x05\x12\x11\n\ttimestamp\x18\x02 \x02(\x01\x12\x10\n\x08position\x18\x03 \x03(\x01\x12\x12\n\nquaternion\x18\x04 \x03(\x01\"K\n\x1cShouldTerminateSensorMessage\x12\x11\n\ttimestamp\x18\x01 \x02(\x01\x12\x18\n\x10should_terminate\x18\x02 \x02(\x08\"\x83\x01\n\x1f\x43\x61rtesianImpedanceSensorMessage\x12\n\n\x02id\x18\x01 \x02(\x05\x12\x11\n\ttimestamp\x18\x02 \x02(\x01\x12!\n\x19translational_stiffnesses\x18\x03 \x03(\x01\x12\x1e\n\x16rotational_stiffnesses\x18\x04 \x03(\x01\"n\n\x1a\x46orcePositionSensorMessage\x12\n\n\x02id\x18\x01 \x02(\x05\x12\x11\n\ttimestamp\x18\x02 \x02(\x01\x12\x14\n\x0cseg_run_time\x18\x03 \x02(\x01\x12\x0c\n\x04pose\x18\x04 \x03(\x01\x12\r\n\x05\x66orce\x18\x05 \x03(\x01\"\xe1\x02\n$ForcePositionControllerSensorMessage\x12\n\n\x02id\x18\x01 \x02(\x05\x12\x11\n\ttimestamp\x18\x02 \x02(\x01\x12\x19\n\x11position_kps_cart\x18\x03 \x03(\x01\x12\x19\n\x11position_kds_cart\x18\x04 \x03(\x01\x12\x16\n\x0e\x66orce_kps_cart\x18\x05 \x03(\x01\x12\x16\n\x0e\x66orce_kis_cart\x18\x06 \x03(\x01\x12\x1a\n\x12position_kps_joint\x18\x07 \x03(\x01\x12\x1a\n\x12position_kds_joint\x18\x08 \x03(\x01\x12\x17\n\x0f\x66orce_kps_joint\x18\t \x03(\x01\x12\x17\n\x0f\x66orce_kis_joint\x18\n \x03(\x01\x12\x11\n\tselection\x18\x0b \x03(\x01\x12\x13\n\x0b\x65rror_frame\x18\x0c \x03(\x01\x12\"\n\x1areset_force_integral_error\x18\r \x01(\x08'
 )
 
 
@@ -490,30 +490,72 @@ _FORCEPOSITIONCONTROLLERSENSORMESSAGE = _descriptor.Descriptor(
       is_extension=False, extension_scope=None,
       serialized_options=None, file=DESCRIPTOR),
     _descriptor.FieldDescriptor(
-      name='force_kps_cart', full_name='ForcePositionControllerSensorMessage.force_kps_cart', index=3,
+      name='position_kds_cart', full_name='ForcePositionControllerSensorMessage.position_kds_cart', index=3,
       number=4, type=1, cpp_type=5, label=3,
       has_default_value=False, default_value=[],
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       serialized_options=None, file=DESCRIPTOR),
     _descriptor.FieldDescriptor(
-      name='position_kps_joint', full_name='ForcePositionControllerSensorMessage.position_kps_joint', index=4,
+      name='force_kps_cart', full_name='ForcePositionControllerSensorMessage.force_kps_cart', index=4,
       number=5, type=1, cpp_type=5, label=3,
       has_default_value=False, default_value=[],
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       serialized_options=None, file=DESCRIPTOR),
     _descriptor.FieldDescriptor(
-      name='force_kps_joint', full_name='ForcePositionControllerSensorMessage.force_kps_joint', index=5,
+      name='force_kis_cart', full_name='ForcePositionControllerSensorMessage.force_kis_cart', index=5,
       number=6, type=1, cpp_type=5, label=3,
       has_default_value=False, default_value=[],
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       serialized_options=None, file=DESCRIPTOR),
     _descriptor.FieldDescriptor(
-      name='selection', full_name='ForcePositionControllerSensorMessage.selection', index=6,
+      name='position_kps_joint', full_name='ForcePositionControllerSensorMessage.position_kps_joint', index=6,
       number=7, type=1, cpp_type=5, label=3,
       has_default_value=False, default_value=[],
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR),
+    _descriptor.FieldDescriptor(
+      name='position_kds_joint', full_name='ForcePositionControllerSensorMessage.position_kds_joint', index=7,
+      number=8, type=1, cpp_type=5, label=3,
+      has_default_value=False, default_value=[],
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR),
+    _descriptor.FieldDescriptor(
+      name='force_kps_joint', full_name='ForcePositionControllerSensorMessage.force_kps_joint', index=8,
+      number=9, type=1, cpp_type=5, label=3,
+      has_default_value=False, default_value=[],
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR),
+    _descriptor.FieldDescriptor(
+      name='force_kis_joint', full_name='ForcePositionControllerSensorMessage.force_kis_joint', index=9,
+      number=10, type=1, cpp_type=5, label=3,
+      has_default_value=False, default_value=[],
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR),
+    _descriptor.FieldDescriptor(
+      name='selection', full_name='ForcePositionControllerSensorMessage.selection', index=10,
+      number=11, type=1, cpp_type=5, label=3,
+      has_default_value=False, default_value=[],
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR),
+    _descriptor.FieldDescriptor(
+      name='error_frame', full_name='ForcePositionControllerSensorMessage.error_frame', index=11,
+      number=12, type=1, cpp_type=5, label=3,
+      has_default_value=False, default_value=[],
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR),
+    _descriptor.FieldDescriptor(
+      name='reset_force_integral_error', full_name='ForcePositionControllerSensorMessage.reset_force_integral_error', index=12,
+      number=13, type=8, cpp_type=7, label=1,
+      has_default_value=False, default_value=False,
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       serialized_options=None, file=DESCRIPTOR),
@@ -530,7 +572,7 @@ _FORCEPOSITIONCONTROLLERSENSORMESSAGE = _descriptor.Descriptor(
   oneofs=[
   ],
   serialized_start=885,
-  serialized_end=1077,
+  serialized_end=1238,
 )
 
 DESCRIPTOR.message_types_by_name['BoundingBox'] = _BOUNDINGBOX

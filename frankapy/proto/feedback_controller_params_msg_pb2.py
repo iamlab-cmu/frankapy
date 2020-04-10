@@ -18,7 +18,7 @@ DESCRIPTOR = _descriptor.FileDescriptor(
   package='',
   syntax='proto2',
   serialized_options=None,
-  serialized_pb=b'\n$feedback_controller_params_msg.proto\"p\n+CartesianImpedanceFeedbackControllerMessage\x12!\n\x19translational_stiffnesses\x18\x01 \x03(\x01\x12\x1e\n\x16rotational_stiffnesses\x18\x02 \x03(\x01\"q\n\"ForceAxisFeedbackControllerMessage\x12\x1f\n\x17translational_stiffness\x18\x01 \x02(\x01\x12\x1c\n\x14rotational_stiffness\x18\x02 \x02(\x01\x12\x0c\n\x04\x61xis\x18\x03 \x03(\x01\"K\n\'JointImpedanceFeedbackControllerMessage\x12\x0f\n\x07k_gains\x18\x01 \x03(\x01\x12\x0f\n\x07\x64_gains\x18\x02 \x03(\x01\"d\n*InternalImpedanceFeedbackControllerMessage\x12\x1c\n\x14\x63\x61rtesian_impedances\x18\x01 \x03(\x01\x12\x18\n\x10joint_impedances\x18\x02 \x03(\x01\"\xc0\x01\n&ForcePositionFeedbackControllerMessage\x12\x19\n\x11position_kps_cart\x18\x01 \x03(\x01\x12\x16\n\x0e\x66orce_kps_cart\x18\x02 \x03(\x01\x12\x1a\n\x12position_kps_joint\x18\x03 \x03(\x01\x12\x17\n\x0f\x66orce_kps_joint\x18\x04 \x03(\x01\x12\x11\n\tselection\x18\x05 \x03(\x01\x12\x1b\n\x13use_cartesian_gains\x18\x06 \x02(\x08'
+  serialized_pb=b'\n$feedback_controller_params_msg.proto\"p\n+CartesianImpedanceFeedbackControllerMessage\x12!\n\x19translational_stiffnesses\x18\x01 \x03(\x01\x12\x1e\n\x16rotational_stiffnesses\x18\x02 \x03(\x01\"q\n\"ForceAxisFeedbackControllerMessage\x12\x1f\n\x17translational_stiffness\x18\x01 \x02(\x01\x12\x1c\n\x14rotational_stiffness\x18\x02 \x02(\x01\x12\x0c\n\x04\x61xis\x18\x03 \x03(\x01\"K\n\'JointImpedanceFeedbackControllerMessage\x12\x0f\n\x07k_gains\x18\x01 \x03(\x01\x12\x0f\n\x07\x64_gains\x18\x02 \x03(\x01\"d\n*InternalImpedanceFeedbackControllerMessage\x12\x1c\n\x14\x63\x61rtesian_impedances\x18\x01 \x03(\x01\x12\x18\n\x10joint_impedances\x18\x02 \x03(\x01\"\xbd\x02\n&ForcePositionFeedbackControllerMessage\x12\x19\n\x11position_kps_cart\x18\x01 \x03(\x01\x12\x19\n\x11position_kds_cart\x18\x02 \x03(\x01\x12\x16\n\x0e\x66orce_kps_cart\x18\x03 \x03(\x01\x12\x16\n\x0e\x66orce_kis_cart\x18\x04 \x03(\x01\x12\x1a\n\x12position_kps_joint\x18\x05 \x03(\x01\x12\x1a\n\x12position_kds_joint\x18\x06 \x03(\x01\x12\x17\n\x0f\x66orce_kps_joint\x18\x07 \x03(\x01\x12\x17\n\x0f\x66orce_kis_joint\x18\x08 \x03(\x01\x12\x11\n\tselection\x18\t \x03(\x01\x12\x1b\n\x13use_cartesian_gains\x18\n \x02(\x08\x12\x13\n\x0b\x65rror_frame\x18\x0b \x03(\x01'
 )
 
 
@@ -198,37 +198,72 @@ _FORCEPOSITIONFEEDBACKCONTROLLERMESSAGE = _descriptor.Descriptor(
       is_extension=False, extension_scope=None,
       serialized_options=None, file=DESCRIPTOR),
     _descriptor.FieldDescriptor(
-      name='force_kps_cart', full_name='ForcePositionFeedbackControllerMessage.force_kps_cart', index=1,
+      name='position_kds_cart', full_name='ForcePositionFeedbackControllerMessage.position_kds_cart', index=1,
       number=2, type=1, cpp_type=5, label=3,
       has_default_value=False, default_value=[],
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       serialized_options=None, file=DESCRIPTOR),
     _descriptor.FieldDescriptor(
-      name='position_kps_joint', full_name='ForcePositionFeedbackControllerMessage.position_kps_joint', index=2,
+      name='force_kps_cart', full_name='ForcePositionFeedbackControllerMessage.force_kps_cart', index=2,
       number=3, type=1, cpp_type=5, label=3,
       has_default_value=False, default_value=[],
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       serialized_options=None, file=DESCRIPTOR),
     _descriptor.FieldDescriptor(
-      name='force_kps_joint', full_name='ForcePositionFeedbackControllerMessage.force_kps_joint', index=3,
+      name='force_kis_cart', full_name='ForcePositionFeedbackControllerMessage.force_kis_cart', index=3,
       number=4, type=1, cpp_type=5, label=3,
       has_default_value=False, default_value=[],
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       serialized_options=None, file=DESCRIPTOR),
     _descriptor.FieldDescriptor(
-      name='selection', full_name='ForcePositionFeedbackControllerMessage.selection', index=4,
+      name='position_kps_joint', full_name='ForcePositionFeedbackControllerMessage.position_kps_joint', index=4,
       number=5, type=1, cpp_type=5, label=3,
       has_default_value=False, default_value=[],
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       serialized_options=None, file=DESCRIPTOR),
     _descriptor.FieldDescriptor(
-      name='use_cartesian_gains', full_name='ForcePositionFeedbackControllerMessage.use_cartesian_gains', index=5,
-      number=6, type=8, cpp_type=7, label=2,
+      name='position_kds_joint', full_name='ForcePositionFeedbackControllerMessage.position_kds_joint', index=5,
+      number=6, type=1, cpp_type=5, label=3,
+      has_default_value=False, default_value=[],
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR),
+    _descriptor.FieldDescriptor(
+      name='force_kps_joint', full_name='ForcePositionFeedbackControllerMessage.force_kps_joint', index=6,
+      number=7, type=1, cpp_type=5, label=3,
+      has_default_value=False, default_value=[],
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR),
+    _descriptor.FieldDescriptor(
+      name='force_kis_joint', full_name='ForcePositionFeedbackControllerMessage.force_kis_joint', index=7,
+      number=8, type=1, cpp_type=5, label=3,
+      has_default_value=False, default_value=[],
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR),
+    _descriptor.FieldDescriptor(
+      name='selection', full_name='ForcePositionFeedbackControllerMessage.selection', index=8,
+      number=9, type=1, cpp_type=5, label=3,
+      has_default_value=False, default_value=[],
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR),
+    _descriptor.FieldDescriptor(
+      name='use_cartesian_gains', full_name='ForcePositionFeedbackControllerMessage.use_cartesian_gains', index=9,
+      number=10, type=8, cpp_type=7, label=2,
       has_default_value=False, default_value=False,
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR),
+    _descriptor.FieldDescriptor(
+      name='error_frame', full_name='ForcePositionFeedbackControllerMessage.error_frame', index=10,
+      number=11, type=1, cpp_type=5, label=3,
+      has_default_value=False, default_value=[],
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       serialized_options=None, file=DESCRIPTOR),
@@ -245,7 +280,7 @@ _FORCEPOSITIONFEEDBACKCONTROLLERMESSAGE = _descriptor.Descriptor(
   oneofs=[
   ],
   serialized_start=449,
-  serialized_end=641,
+  serialized_end=766,
 )
 
 DESCRIPTOR.message_types_by_name['CartesianImpedanceFeedbackControllerMessage'] = _CARTESIANIMPEDANCEFEEDBACKCONTROLLERMESSAGE

@@ -171,15 +171,25 @@ class Skill:
 
         self.add_feedback_controller_params(joint_feedback_controller_msg_proto.SerializeToString())
 
-    def add_force_position_params(self, position_kps_cart, force_kps_cart, position_kps_joint, force_kps_joint, S, use_cartesian_gains):
+    def add_force_position_params(self, position_kps_cart, position_kds_cart, force_kps_cart, force_kis_cart, 
+                                position_kps_joint, position_kds_joint, force_kps_joint, force_kis_joint,
+                                S, use_cartesian_gains):
         assert type(position_kps_cart) is list or len(position_kps_cart) == 6, \
             "Incorrect position_kps_cart type. Should be list of length 6."
+        assert type(position_kds_cart) is list or len(position_kds_cart) in (0, 6), \
+            "Incorrect position_kds_cart type. Should be list of length 0 or 6."
         assert type(force_kps_cart) is list or len(force_kps_cart) == 6, \
             "Incorrect force_kps_cart type. Should be list of length 6."
+        assert type(force_kis_cart) is list or len(force_kis_cart) in (0, 6), \
+            "Incorrect force_kis_cart type. Should be list of length 0 or 6."
         assert type(position_kps_joint) is list or len(position_kps_joint) == 7, \
             "Incorrect position_kps_joint type. Should be list of length 7."
+        assert type(position_kds_joint) is list or len(position_kds_joint) in (0, 7), \
+            "Incorrect position_kds_joint type. Should be list of length 0 or 7."
         assert type(force_kps_joint) is list or len(force_kps_joint) == 7, \
             "Incorrect force_kps_joint type. Should be list of length 7."
+        assert type(force_kis_joint) is list or len(force_kis_joint) in (0, 7), \
+            "Incorrect force_kis_joint type. Should be list of length 0 or 7."
         assert type(S) is list and len(S) == 6, \
                 "Incorrect S type. Should be list of length 6."
         assert type(use_cartesian_gains) is bool, \
@@ -187,8 +197,10 @@ class Skill:
 
         force_position_feedback_controller_msg_proto = \
             ForcePositionFeedbackControllerMessage(
-                position_kps_cart=position_kps_cart, force_kps_cart=force_kps_cart, 
-                position_kps_joint=position_kps_joint, force_kps_joint=force_kps_joint,
+                position_kps_cart=position_kps_cart, position_kds_cart=position_kds_cart,
+                force_kps_cart=force_kps_cart, force_kis_cart=force_kis_cart,
+                position_kps_joint=position_kps_joint, position_kds_joint=position_kds_joint,
+                force_kps_joint=force_kps_joint, force_kis_joint=force_kis_joint,
                 selection=S, use_cartesian_gains=use_cartesian_gains)
         
         self.add_feedback_controller_params(force_position_feedback_controller_msg_proto.SerializeToString())

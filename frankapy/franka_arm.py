@@ -995,9 +995,13 @@ class FrankaArm:
                   force_thresholds=None,
                   torque_thresholds=None,
                   position_kps_cart=FC.DEFAULT_TRANSLATIONAL_STIFFNESSES + FC.DEFAULT_ROTATIONAL_STIFFNESSES,
+                  position_kds_cart=None,
                   force_kps_cart=FC.DEFAULT_HFPC_FORCE_GAIN,
+                  force_kis_cart=None,
                   position_kps_joint=FC.DEFAULT_K_GAINS,
+                  position_kds_joint=None,
                   force_kps_joint=FC.DEFAULT_HFPC_FORCE_GAIN,
+                  force_kis_joint=None,
                   S=FC.DEFAULT_HFPC_S,
                   interpolate=False,
                   use_cartesian_gains=True,
@@ -1049,8 +1053,15 @@ class FrankaArm:
                         termination_handler_type=TerminationHandlerType.TimeTerminationHandler, 
                         skill_desc=skill_desc)
 
+        position_kds_cart = [] if position_kds_cart is None else position_kds_cart
+        force_kis_cart = [] if force_kis_cart is None else force_kis_cart
+        position_kds_joint = [] if position_kds_joint is None else position_kds_joint
+        force_kis_joint = [] if force_kis_joint is None else force_kis_joint
+        skill.add_force_position_params(position_kps_cart, position_kds_cart, force_kps_cart, force_kis_cart, 
+                                        position_kps_joint, position_kds_joint, force_kps_joint, force_kis_joint,
+                                        S, use_cartesian_gains)
+
         skill.add_initial_sensor_values(FC.EMPTY_SENSOR_VALUES)
-        skill.add_force_position_params(position_kps_cart, force_kps_cart, position_kps_joint, force_kps_joint, S, use_cartesian_gains)
         skill.add_run_time(duration)
 
         if not skill.check_for_contact_params(buffer_time, force_thresholds, torque_thresholds):
@@ -1135,6 +1146,9 @@ class FrankaArm:
             RigidTransform of current tool base pose
         '''
         return self._tool_delta_pose.copy()
+
+    def get_force_torque(self):
+        return self._state_client.get_force_torque()
 
     '''
     Sets
