@@ -1,7 +1,7 @@
 #######################################################################
 #                                                                     #
 #   Important: Any Changes here should also be reflected in changes   #
-#   in the definitions.h file as well.                                #
+#   in the franka-interface-common definitions.h file as well.        #
 #                                                                     #
 #   The order of the enums matter!!                                   #
 #                                                                     #
@@ -56,6 +56,7 @@ class TrajectoryGeneratorType:
 
 class FeedbackControllerType:
     CartesianImpedanceFeedbackController = _enum_auto('FeedbackControllerType')
+    EECartesianImpedanceFeedbackController = _enum_auto('FeedbackControllerType')
     ForceAxisImpedenceFeedbackController = _enum_auto('FeedbackControllerType')
     ForcePositionFeedbackController = _enum_auto('FeedbackControllerType')
     JointImpedanceFeedbackController = _enum_auto('FeedbackControllerType')
