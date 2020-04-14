@@ -11,5 +11,5 @@ if __name__ == '__main__':
     fa = FrankaArm()
     if args.open_gripper:
         fa.open_gripper()
-    fa.run_guide_mode_with_selective_pose_compliance(args.time, translational_stiffnesses=[600.0, 600.0, 0.0], 
-                                                     rotational_stiffnesses=[50.0,50.0,50.0])
+    fa.selective_guidance_mode(args.time, use_impedance=True, use_ee_frame=True, 
+                               cartesian_impedances=[600.0, 0.0, 0.0, 0.0, 0.0, 0.0])

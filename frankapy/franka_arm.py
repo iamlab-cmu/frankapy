@@ -878,6 +878,7 @@ class FrankaArm:
                                 duration=5,
                                 use_joints=False, 
                                 use_impedance=False,
+                                use_ee_frame=False,
                                 buffer_time=FC.DEFAULT_TERM_BUFFER_TIME,
                                 force_thresholds=None,
                                 torque_thresholds=None,
@@ -898,6 +899,8 @@ class FrankaArm:
                 controller by default. If True, it uses joint impedance.
             use_impedance (boolean) : Function uses the Franka joint impedance  
                 controller by default. If True, uses our joint impedance controller.
+            use_ee_frame (boolean) : Function uses the end-effector cartesian feedback
+                controller only when use_impedance is True.
             buffer_time (float): How much extra time the termination handler will wait
                 before stopping the skill after duration has passed.
             force_thresholds (list): List of 6 floats corresponding to
@@ -943,11 +946,18 @@ class FrankaArm:
                               skill_desc=skill_desc)
         else:
             if use_impedance:
-                skill = Skill(SkillType.ImpedanceControlSkill, 
-                              TrajectoryGeneratorType.StayInInitialPoseTrajectoryGenerator,
-                              feedback_controller_type=FeedbackControllerType.CartesianImpedanceFeedbackController,
-                              termination_handler_type=TerminationHandlerType.TimeTerminationHandler, 
-                              skill_desc=skill_desc)
+                if use_ee_frame:
+                    skill = Skill(SkillType.ImpedanceControlSkill, 
+                                  TrajectoryGeneratorType.StayInInitialPoseTrajectoryGenerator,
+                                  feedback_controller_type=FeedbackControllerType.EECartesianImpedanceFeedbackController,
+                                  termination_handler_type=TerminationHandlerType.TimeTerminationHandler, 
+                                  skill_desc=skill_desc)
+                else:
+                    skill = Skill(SkillType.ImpedanceControlSkill, 
+                                  TrajectoryGeneratorType.StayInInitialPoseTrajectoryGenerator,
+                                  feedback_controller_type=FeedbackControllerType.CartesianImpedanceFeedbackController,
+                                  termination_handler_type=TerminationHandlerType.TimeTerminationHandler, 
+                                  skill_desc=skill_desc)
             else:
                 skill = Skill(SkillType.CartesianPoseSkill, 
                               TrajectoryGeneratorType.StayInInitialPoseTrajectoryGenerator,
