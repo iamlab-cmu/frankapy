@@ -6,13 +6,16 @@
 * ROS Kinetic / Melodic
 * [Protocol Buffers](https://github.com/protocolbuffers/protobuf)
 
+## Computer Setup Instructions
+
+This library is intended to be installed on any computer in the same ROS network with the computer that interfaces with the Franka (we call the latter the Control PC).
+`FrankaPy` will send commands to [franka-interface](https://github.com/iamlab-cmu/franka-interface), which actually controls the robot.
+
 ## Install ProtoBuf
 
 **This is only needed if you plan to modify the proto messages. You don't need to install or compile protobuf for using frankapy**
 
-1. Read installation instructions here https://github.com/protocolbuffers/protobuf/blob/master/src/README.md.
-
-2. We use both C++ and Python versions of protobufs so you would need to install Protobufs from source. In short you will have to do the following. NOTE: However, make to read protobuf installation instructions once.
+We use both C++ and Python versions of protobufs so you would need to install Protobufs from source. 
 
 Do `nproc` to find out how many cores you have, and use that as the `N` number in the `make` command below:
 
@@ -27,6 +30,7 @@ make check -jN
 sudo make install
 sudo ldconfig
 ```
+See detailed instructions [here](https://github.com/protocolbuffers/protobuf/blob/master/src/README.md)
 
 ## Installation
 
@@ -46,7 +50,6 @@ All directories below are given relative to `/frankapy`.
 	```bash
    ./bash_scripts/make_catkin.sh
    ```
-
 
 4. To make the protobufs use the following script:
 	```bash
