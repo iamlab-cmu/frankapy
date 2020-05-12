@@ -105,6 +105,8 @@ All directories below are given relative to `/frankapy`.
    ```bash
    bash ./bash_scripts/start_control_pc.sh -i iam-[control-pc-name]
    ```
+   Please see the bash script for additional arguments, including specifying a custom directory for where `franka-interface` is installed on the Control PC.
+   
 3. Open up a new terminal and go to the frankapy directory. Be in the same virtualenv or Conda env that FrankaPy was installed in. Place your hand on top of the e-stop. Reset the robot pose with the following command.
    ```bash
    python scripts/reset_arm.py
