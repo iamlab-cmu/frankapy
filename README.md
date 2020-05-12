@@ -51,7 +51,7 @@ All directories below are given relative to `/frankapy`.
    ./bash_scripts/make_catkin.sh
    ```
 
-4. To make the protobufs use the following script:
+4. To make the protobufs use the following script (**you don't need to do this if you haven't modified the proto messages**):
 	```bash
    ./bash_scripts/make_proto.sh
    ```
