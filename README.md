@@ -56,6 +56,36 @@ All directories below are given relative to `/frankapy`.
    ./bash_scripts/make_proto.sh
    ```
 
+## Configuring the network with the Control PC
+### Ethernet
+1. If you have an ethernet cable directly between the Control PC and the one sending Frankapy commands, you can go into the Ubuntu Network Connections Menu on the Control PC.
+2. Select the Ethernet connection that corresponds to the port that you plugged the ethernet cable into and then click edit.
+3. Go to the IPv4 Settings Tab and switch from Automatic (DHCP) to Manual.
+4. Add a static ip address like 192.168.1.3 on the Control PC with netmask 24 and then click save.
+5. Then do the same on the FrankaPy PC but instead set the static ip address to be 192.168.1.2.
+
+### Wifi
+1. If you are only communicating with the Control PC over Wifi, use the command `ifconfig` in order to get the wifi ip address of both computers and note them down.
+
+### Editing the /etc/hosts file
+1. Now that you have the ip addresses for both the Control PC and FrankaPy PC, you will need to edit the /etc/hosts files on both in order to allow communication between the 2 over ROS.
+2. On the Control PC, run the command: `sudo gedit /etc/hosts`
+3. If you are using an Ethernet connection, then add the following above the line `# The following lines are desirable for IPv6 capable hosts`:
+   ```bash
+   192.168.1.2     [frankapy-pc-name]
+   ```
+   Otherwise substitute 192.168.1.2 with the ip address of the FrankaPy PC that you discovered using the command `ifconfig`.
+4. Afterwards, on the FrankaPy PC, again run the command `sudo gedit /etc/hosts` and add the line:
+   ```bash
+   192.168.1.3     [control-pc-name]
+   ```
+   Otherwise substitute 192.168.1.3 with the ip address of the Control PC that you discovered using the command `ifconfig`.
+5. Now you should be able to ssh between the FrankaPy PC and the Control PC using the command:
+   ```bash
+   ssh [control-pc-username]@[control-pc-name]
+   Input password to control-pc.
+   ```
+
 ## Setting Up SSH Key to Control PC
 1. Generate an ssh key by executing the following commands or reading the instructions here: https://help.github.com/en/articles/generating-a-new-ssh-key-and-adding-it-to-the-ssh-agent
    ```bash
@@ -69,7 +99,7 @@ All directories below are given relative to `/frankapy`.
 2. Upload your public ssh key to the control pc.
    1. In a new terminal, ssh to the control PC.
       ```bash
-      ssh iam-lab@iam-[control-pc-name]
+      ssh [control-pc-username]@[control-pc-name]
       Input password to control-pc.
       ```
    2. Use your favorite text editor to open the authorized_keys file.
@@ -87,7 +117,7 @@ All directories below are given relative to `/frankapy`.
 ## Unlocking the Franka Robot
 1. In a new terminal, ssh to the control PC with option -X.
    ```bash
-   ssh -X iam-lab@iam-[control-pc-name]
+   ssh -X [control-pc-username]@[control-pc-name]
    ```
 2. Open a web browser, either firefox or google chrome.
    ```bash
@@ -103,9 +133,9 @@ All directories below are given relative to `/frankapy`.
 1. Make sure that both the user stop and the brakes of the Franka robot have been unlocked in the Franka Desk GUI.
 2. Open up a new terminal and go to the frankapy directory.
    ```bash
-   bash ./bash_scripts/start_control_pc.sh -i iam-[control-pc-name]
+   bash ./bash_scripts/start_control_pc.sh -i [control-pc-name]
    ```
-   Please see the bash script for additional arguments, including specifying a custom directory for where `franka-interface` is installed on the Control PC.
+   Please see the `start_control_pc.sh` bash script for additional arguments, including specifying a custom directory for where `franka-interface` is installed on the Control PC as well as the username of the account on the Control PC. By default the username is `iam-lab`.
    
 3. Open up a new terminal and go to the frankapy directory. Be in the same virtualenv or Conda env that FrankaPy was installed in. Place your hand on top of the e-stop. Reset the robot pose with the following command.
    ```bash
