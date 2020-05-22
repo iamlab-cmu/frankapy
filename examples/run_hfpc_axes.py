@@ -8,6 +8,7 @@ from franka_interface_msgs.msg import SensorDataGroup
 from frankapy.utils import transform_to_list
 
 from tqdm import trange
+from time import time
 
 import rospy
 
@@ -20,12 +21,12 @@ if __name__ == "__main__":
     input('Please hold a flat surface right beneath the robot gripper. [ENTER] to continue.')
 
     dt = 0.01
-    T = 20
+    T = 60
     N = int(T / dt)
 
-    position_kps_cart = FC.DEFAULT_TRANSLATIONAL_STIFFNESSES + FC.DEFAULT_ROTATIONAL_STIFFNESSES
+    position_kps_cart = FC.DEFAULT_TRANSLATIONAL_STIFFNESSES + [2., 2., 2.]
     force_kps_cart = FC.DEFAULT_HFPC_FORCE_GAIN
-    S = [1, 1, 1, 1, 1, 1]
+    S = [0, 0, 0, 1, 1, 1]
 
     rospy.loginfo('Initializing Sensor Publisher')
     pub = rospy.Publisher(FC.DEFAULT_SENSOR_PUBLISHER_TOPIC, SensorDataGroup, queue_size=1)
@@ -36,6 +37,7 @@ if __name__ == "__main__":
                                 use_cartesian_gains=True,
                                 position_kps_cart=position_kps_cart,
                                 force_kps_cart=force_kps_cart)
+    s = time()
     for i in range(N):
         timestamp = rospy.Time.now().to_time()
 
@@ -45,26 +47,38 @@ if __name__ == "__main__":
         force_axis = force / force_mag
         in_contact = force_mag > 2
 
+        print('{:.2f}ms | {}in contact {:.2f}N'.format((time() - s) * 1000, '' if in_contact else 'not ', force_mag))
+
         current_pose = fa.get_pose()
         
         # if in contact, maintain z-direction contact
         if in_contact:
-            print('in contact', force_mag)
-            target_force = np.array([0, 0, -10, 0, 0, 0])
-            target_pose = current_pose
+            target_force = np.array([0, 0, 7, 0, 0, 0])
             S = [0, 0, 0, 1, 1, 1]
-            force_kis_cart = [0.01 * v for v in FC.DEFAULT_HFPC_FORCE_GAIN]
+            force_kis_cart = [0.01 * v for v in position_kps_cart[3:]]
             reset_force_integral_error = False
+
+            R_z = force_axis
+            R_x = current_pose.rotation[:3, 0].copy()
+            R_y = current_pose.rotation[:3, 1].copy()
+
+            R_x -= R_x @ R_z * R_z
+            R_x /= np.linalg.norm(R_x)
+            R_y = np.cross(R_z, R_x)
+
+            err_frame = np.c_[R_x, R_y, R_z]
+            target_pose = current_pose.copy()
+            target_pose.rotation = err_frame
+
         # if not in contact, stay in place
         else:
-            print('not in contact', force_mag)
-            target_pose = current_pose
+            target_pose = current_pose.copy()
             target_force = np.zeros(6)
-            S = [0, 0, 0, 1, 1, 1]
+            S = [1, 1, 1, 1, 1, 1]
             force_kis_cart = [0] * 6
             reset_force_integral_error = True
-
-        err_frame = np.eye(3)
+            err_frame = current_pose.rotation
+        
         traj_gen_proto_msg = ForcePositionSensorMessage(
             id=i, timestamp=timestamp, seg_run_time=dt,
             pose=transform_to_list(target_pose), force=target_force.tolist()
@@ -85,6 +99,8 @@ if __name__ == "__main__":
             )
         pub.publish(ros_msg)
         rate.sleep()
+
+        s = time()
 
     fa.stop_skill()
     fa.reset_joints()
