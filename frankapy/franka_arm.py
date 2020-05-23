@@ -1146,6 +1146,9 @@ class FrankaArm:
         '''
         return self._tool_delta_pose.copy()
 
+    def get_ee_force_torque(self):
+        return self._state_client.get_ee_force_torque()
+
     '''
     Sets
     '''

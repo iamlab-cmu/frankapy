@@ -34,7 +34,8 @@ class FrankaArmStateClient:
                 'joints_desired': np.zeros(7),
                 'joint_velocities': np.zeros(7),
                 'gripper_width': 0,
-                'gripper_is_grasped': False
+                'gripper_is_grasped': False,
+                'ee_force_torque': np.zeros(6)
             }
 
         ros_data = self._get_current_robot_state().robot_state
@@ -47,7 +48,8 @@ class FrankaArmStateClient:
             'joints_desired': np.array(ros_data.q_d),
             'joint_velocities': np.array(ros_data.dq),
             'gripper_width': ros_data.gripper_width,
-            'gripper_is_grasped': ros_data.gripper_is_grasped       
+            'gripper_is_grasped': ros_data.gripper_is_grasped,
+            'ee_force_torque': np.array(ros_data.O_F_ext_hat_K)
         }
 
         return data
@@ -101,3 +103,12 @@ class FrankaArmStateClient:
             True if gripper is grasping something. False otherwise
         '''
         return self.get_data()['gripper_is_grasped']
+
+    def get_ee_force_torque(self):
+        '''Get the current ee force torque in base frame.
+
+        Returns:
+            ndarray of shape (6,)
+        '''
+
+        return self.get_data()['ee_force_torque']
