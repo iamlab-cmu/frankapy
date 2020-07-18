@@ -187,7 +187,7 @@ class FrankaArm:
                   block=True,
                   ignore_errors=True,
                   ignore_virtual_walls=False,
-                  skill_desc=''):
+                  skill_desc='GoToPose'):
         '''Commands Arm to the given pose via min jerk interpolation
 
         Args:
@@ -287,7 +287,7 @@ class FrankaArm:
                         block=True,
                         ignore_errors=True,
                         ignore_virtual_walls=False,
-                        skill_desc=''):
+                        skill_desc='GoToPoseDelta'):
         '''Commands Arm to the given delta pose via min jerk interpolation
 
         Args:
@@ -379,7 +379,7 @@ class FrankaArm:
                     block=True,
                     ignore_errors=True,
                     ignore_virtual_walls=False,
-                    skill_desc=''):
+                    skill_desc='GoToJoints'):
         '''Commands Arm to the given joint configuration
 
         Args:
@@ -500,7 +500,7 @@ class FrankaArm:
                           d_gains=None, 
                           block=True, 
                           ignore_errors=True,
-                          skill_desc=''):
+                          skill_desc='JointDmp'):
         '''Commands Arm to execute a given joint dmp
 
         Args:
@@ -586,7 +586,7 @@ class FrankaArm:
                          joint_impedances=None, 
                          block=True, 
                          ignore_errors=True,
-                         skill_desc=''):
+                         skill_desc='PoseDmp'):
         '''Commands Arm to execute a given pose dmp
 
         Args:
@@ -683,7 +683,7 @@ class FrankaArm:
                                       torque_thresholds=None,
                                       block=True,
                                       ignore_errors=True,
-                                      skill_desc=''):
+                                      skill_desc='ForceTorque'):
         '''Applies the given end-effector forces and torques in N and Nm
 
         Args:
@@ -763,7 +763,7 @@ class FrankaArm:
                                          torque_thresholds=None,
                                          block=True,
                                          ignore_errors=True,
-                                         skill_desc=''):
+                                         skill_desc='ForcesAlongAxis'):
         '''Applies the given end-effector forces and torques in N and Nm
 
         Args:
@@ -835,7 +835,7 @@ class FrankaArm:
                      force=0.0, 
                      block=True, 
                      ignore_errors=True, 
-                     skill_desc=''):
+                     skill_desc='GoToGripper'):
         '''Commands gripper to goto a certain width, applying up to the given
             (default is max) force if needed
 
@@ -889,7 +889,7 @@ class FrankaArm:
                                 block=True,
                                 ignore_errors=True,
                                 ignore_virtual_walls=False,
-                                skill_desc=''):
+                                skill_desc='SelectiveGuidance'):
         '''Commands the Arm to stay in its current position with selective impedances
         that allow guidance in either certain joints or in cartesian pose.
 
@@ -984,20 +984,20 @@ class FrankaArm:
                         block=block,
                         ignore_errors=ignore_errors)
 
-    def open_gripper(self, block=True):
+    def open_gripper(self, block=True, skill_desc='OpenGripper'):
         '''Opens gripper to maximum width
         '''
-        self.goto_gripper(FC.GRIPPER_WIDTH_MAX, block=block)
+        self.goto_gripper(FC.GRIPPER_WIDTH_MAX, block=block, skill_desc=skill_desc)
 
-    def close_gripper(self, grasp=True, block=True):
+    def close_gripper(self, grasp=True, block=True, skill_desc='CloseGripper'):
         '''Closes the gripper as much as possible
         '''
         self.goto_gripper(FC.GRIPPER_WIDTH_MIN, grasp=grasp,
                           force=FC.GRIPPER_MAX_FORCE if grasp else None,
-                          block=block)
+                          block=block, skill_desc=skill_desc)
 
-    def run_guide_mode(self, duration=10, block=True):
-        self.apply_effector_forces_torques(duration, 0, 0, 0, block=block)
+    def run_guide_mode(self, duration=10, block=True, skill_desc='GuideMode'):
+        self.apply_effector_forces_torques(duration, 0, 0, 0, block=block, skill_desc=skill_desc)
 
     def run_dynamic_force_position(self,
                   duration=3,

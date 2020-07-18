@@ -12,4 +12,4 @@ if __name__ == '__main__':
     if args.open_gripper:
         fa.open_gripper()
     print('Applying 0 force torque control for {}s'.format(args.time))
-    fa.apply_effector_forces_torques(args.time, 0, 0, 0)
+    fa.run_guide_mode(args.time)
