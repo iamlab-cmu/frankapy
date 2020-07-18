@@ -4,7 +4,7 @@ from frankapy import FrankaArm
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--use_pose', '-u', action='store_true')
-    parser.add_argument('--close_gripers', '-c', action='store_true')
+    parser.add_argument('--close_grippers', '-c', action='store_true')
     args = parser.parse_args()
 
     print('Starting robot')
@@ -17,7 +17,7 @@ if __name__ == '__main__':
         print('Reset with joints')
         fa.reset_joints()
     
-    if args.close_gripers:
+    if args.close_grippers:
         print('Closing Grippers')
         fa.close_gripper()
     else:
