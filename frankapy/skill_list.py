@@ -440,8 +440,9 @@ class Skill:
                 "Incorrect basis std dev len. Should be equal to num basis."
 
         assert type(initial_sensor_values) is list, "Incorrect initial sensor values type. Should be list."
-        assert len(initial_sensor_values) == pose_dmp_info['num_sensors'], \
-                "Incorrect initial sensor values len. Should be equal to num sensors."
+        assert len(initial_sensor_values) == pose_dmp_info['num_sensors'] or  \
+               len(initial_sensor_values) == pose_dmp_info['num_sensors']*pose_dmp_info['num_dims'], \
+               "Incorrect initial sensor values len. Should be equal to num sensors."
 
         weights = np.array(pose_dmp_info['weights']).reshape(-1).tolist()
 
@@ -457,7 +458,8 @@ class Skill:
         assert self._skill_type == SkillType.CartesianPoseSkill or \
                self._skill_type == SkillType.ImpedanceControlSkill, \
                 "Incorrect skill type. Should be CartesianPoseSkill or ImpedanceControlSkill."
-        assert self._trajectory_generator_type == TrajectoryGeneratorType.PoseDmpTrajectoryGenerator, \
+        assert self._trajectory_generator_type == TrajectoryGeneratorType.PoseDmpTrajectoryGenerator or \
+               self._trajectory_generator_type == TrajectoryGeneratorType.GoalPoseDmpTrajectoryGenerator, \
                 "Incorrect trajectory generator type. Should be PoseDmpTrajectoryGenerator"
 
         pose_dmp_trajectory_generator_msg_proto = PoseDMPTrajectoryGeneratorMessage(orientation_only=orientation_only,

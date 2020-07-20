@@ -595,8 +595,9 @@ class FrankaArm:
             duration (float): A float in the unit of seconds
             use_goal_formulation (boolean) : Flag that represents whether to use
                 the explicit goal pose dmp formulation.
-            initial_sensor_values (list): List of initial sensor values.
-                If None it will default to ones.
+            initial_sensor_values (list): List of initial sensor values. 
+                If None it will default to ones. For multi-dimensional values, use 
+                a flattened num_dims x num_sensor_values array.
             orientation_only (boolean) : Flag that represents if the dmp weights
                 are to generate a dmp only for orientation.
             position_only (boolean) : Flag that represents if the dmp weights
