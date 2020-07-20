@@ -399,7 +399,7 @@ class Skill:
 
         joint_dmp_trajectory_generator_msg_proto = JointDMPTrajectoryGeneratorMessage(run_time=run_time, 
                                                    tau=joint_dmp_info['tau'], alpha=joint_dmp_info['alpha'], beta=joint_dmp_info['beta'], 
-                                                   num_basis=joint_dmp_info['num_basis'], num_sensors=joint_dmp_info['num_sensors'], 
+                                                   num_basis=joint_dmp_info['num_basis'], num_sensor_values=joint_dmp_info['num_sensors'], 
                                                    basis_mean=joint_dmp_info['mu'], basis_std=joint_dmp_info['h'], 
                                                    weights=np.array(joint_dmp_info['weights']).reshape(-1).tolist(), 
                                                    initial_sensor_values=initial_sensor_values)
@@ -463,7 +463,7 @@ class Skill:
         pose_dmp_trajectory_generator_msg_proto = PoseDMPTrajectoryGeneratorMessage(orientation_only=orientation_only,
                                                    position_only=position_only, run_time=run_time, 
                                                    tau=pose_dmp_info['tau'], alpha=pose_dmp_info['alpha'], beta=pose_dmp_info['beta'], 
-                                                   num_basis=pose_dmp_info['num_basis'], num_sensors=pose_dmp_info['num_sensors'], 
+                                                   num_basis=pose_dmp_info['num_basis'], num_sensor_values=pose_dmp_info['num_sensors'], 
                                                    basis_mean=pose_dmp_info['mu'], basis_std=pose_dmp_info['h'], 
                                                    weights=np.array(pose_dmp_info['weights']).reshape(-1).tolist(), 
                                                    initial_sensor_values=initial_sensor_values)
