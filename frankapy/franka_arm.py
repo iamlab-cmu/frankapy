@@ -332,37 +332,74 @@ class FrankaArm:
                           termination_handler_type=TerminationHandlerType.FinalPoseTerminationHandler, 
                           skill_desc=skill_desc)
 
-        if delta_tool_pose.from_frame != 'franka_tool' \
+        if delta_tool_pose.from_frame == 'world' \
+                and delta_tool_pose.to_frame == 'world':
+            skill.add_initial_sensor_values(FC.EMPTY_SENSOR_VALUES)
+
+            skill.set_cartesian_impedances(use_impedance, cartesian_impedances, joint_impedances)
+            
+            if not skill.check_for_contact_params(buffer_time, force_thresholds, torque_thresholds):
+                skill.add_pose_threshold_params(buffer_time, FC.DEFAULT_POSE_THRESHOLDS)
+
+            skill.add_goal_pose(duration, delta_tool_pose)
+
+            goal = skill.create_goal()
+
+            self._send_goal(goal,
+                            cb=lambda x: skill.feedback_callback(x),
+                            block=block,
+                            ignore_errors=ignore_errors)
+        elif delta_tool_pose.from_frame != 'franka_tool' \
                 or delta_tool_pose.to_frame != 'franka_tool':
             raise ValueError('delta_pose has invalid frame names! ' \
                              'Make sure delta_pose has from_frame=franka_tool ' \
                              'and to_frame=franka_tool')
 
-        delta_tool_base_pose = self._tool_delta_pose \
-                * delta_tool_pose * self._tool_delta_pose.inverse()
+        else:
+            starting_pose = self.get_pose()
 
-        if not ignore_virtual_walls and not self._offline:
-            tool_base_pose = self.get_pose() * delta_tool_base_pose
-            if np.any([
-                tool_base_pose.translation <= FC.WORKSPACE_WALLS[:, :3].min(axis=0),
-                tool_base_pose.translation >= FC.WORKSPACE_WALLS[:, :3].max(axis=0)]):
-                raise ValueError('Target pose is outside of workspace virtual walls!')
+            starting_tool_base_pose = starting_pose * self._tool_delta_pose.inverse()
 
-        skill.add_initial_sensor_values(FC.EMPTY_SENSOR_VALUES)
+            final_goal_pose = starting_pose * delta_tool_pose
 
-        skill.set_cartesian_impedances(use_impedance, cartesian_impedances, joint_impedances)
-        
-        if not skill.check_for_contact_params(buffer_time, force_thresholds, torque_thresholds):
-            skill.add_pose_threshold_params(buffer_time, FC.DEFAULT_POSE_THRESHOLDS)
+            final_tool_base_pose = final_goal_pose * self._tool_delta_pose.inverse()
 
-        skill.add_goal_pose(duration, delta_tool_base_pose)
+            
+            delta_tool_base_pose = starting_tool_base_pose.inverse() * final_tool_base_pose
 
-        goal = skill.create_goal()
+            starting_rotation = RigidTransform(
+                rotation=starting_pose.rotation,
+                from_frame='franka_tool', to_frame='franka_tool'
+            )
+            predicted_translation = RigidTransform(
+                translation=delta_tool_base_pose.translation,
+                from_frame='franka_tool', to_frame='franka_tool'
+            )
+            actual_translation = starting_rotation * predicted_translation
+            delta_tool_base_pose.translation = actual_translation.translation
 
-        self._send_goal(goal,
-                        cb=lambda x: skill.feedback_callback(x),
-                        block=block,
-                        ignore_errors=ignore_errors)
+
+            if not ignore_virtual_walls and not self._offline:
+                if np.any([
+                    final_tool_base_pose.translation <= FC.WORKSPACE_WALLS[:, :3].min(axis=0),
+                    final_tool_base_pose.translation >= FC.WORKSPACE_WALLS[:, :3].max(axis=0)]):
+                    raise ValueError('Target pose is outside of workspace virtual walls!')
+
+            skill.add_initial_sensor_values(FC.EMPTY_SENSOR_VALUES)
+
+            skill.set_cartesian_impedances(use_impedance, cartesian_impedances, joint_impedances)
+            
+            if not skill.check_for_contact_params(buffer_time, force_thresholds, torque_thresholds):
+                skill.add_pose_threshold_params(buffer_time, FC.DEFAULT_POSE_THRESHOLDS)
+
+            skill.add_goal_pose(duration, delta_tool_base_pose)
+
+            goal = skill.create_goal()
+
+            self._send_goal(goal,
+                            cb=lambda x: skill.feedback_callback(x),
+                            block=block,
+                            ignore_errors=ignore_errors)
 
     def goto_joints(self,
                     joints,
@@ -578,6 +615,7 @@ class FrankaArm:
                          initial_sensor_values=None,
                          orientation_only = False,
                          position_only = False,
+                         ee_frame = False,
                          use_impedance=True, 
                          buffer_time=FC.DEFAULT_TERM_BUFFER_TIME,
                          force_thresholds=None,
@@ -657,7 +695,7 @@ class FrankaArm:
 
         skill.add_initial_sensor_values(initial_sensor_values)  # sensor values
 
-        skill.add_pose_dmp_params(orientation_only, position_only, duration, pose_dmp_info, initial_sensor_values)
+        skill.add_pose_dmp_params(orientation_only, position_only, ee_frame, duration, pose_dmp_info, initial_sensor_values)
 
         skill.set_cartesian_impedances(use_impedance, cartesian_impedances, joint_impedances)
 

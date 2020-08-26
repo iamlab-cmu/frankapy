@@ -18,7 +18,7 @@ DESCRIPTOR = _descriptor.FileDescriptor(
   package='',
   syntax='proto2',
   serialized_options=None,
-  serialized_pb=b'\n%trajectory_generator_params_msg.proto\"_\n!GripperTrajectoryGeneratorMessage\x12\r\n\x05grasp\x18\x01 \x02(\x08\x12\r\n\x05width\x18\x02 \x02(\x01\x12\r\n\x05speed\x18\x03 \x02(\x01\x12\r\n\x05\x66orce\x18\x04 \x02(\x01\"\x8c\x01\n!ImpulseTrajectoryGeneratorMessage\x12\x10\n\x08run_time\x18\x01 \x02(\x01\x12\x10\n\x08\x61\x63\x63_time\x18\x02 \x02(\x01\x12\x11\n\tmax_trans\x18\x03 \x02(\x01\x12\x0f\n\x07max_rot\x18\x04 \x02(\x01\x12\x0e\n\x06\x66orces\x18\x05 \x03(\x01\x12\x0f\n\x07torques\x18\x06 \x03(\x01\"C\n\x1fJointTrajectoryGeneratorMessage\x12\x10\n\x08run_time\x18\x01 \x02(\x01\x12\x0e\n\x06joints\x18\x02 \x03(\x01\"f\n\x1ePoseTrajectoryGeneratorMessage\x12\x10\n\x08run_time\x18\x01 \x02(\x01\x12\x10\n\x08position\x18\x02 \x03(\x01\x12\x12\n\nquaternion\x18\x03 \x03(\x01\x12\x0c\n\x04pose\x18\x04 \x03(\x01\"\xe5\x01\n\"JointDMPTrajectoryGeneratorMessage\x12\x10\n\x08run_time\x18\x01 \x02(\x01\x12\x0b\n\x03tau\x18\x02 \x02(\x01\x12\r\n\x05\x61lpha\x18\x03 \x02(\x01\x12\x0c\n\x04\x62\x65ta\x18\x04 \x02(\x01\x12\x11\n\tnum_basis\x18\x05 \x02(\x01\x12\x19\n\x11num_sensor_values\x18\x06 \x02(\x01\x12\x12\n\nbasis_mean\x18\x07 \x03(\x01\x12\x11\n\tbasis_std\x18\x08 \x03(\x01\x12\x0f\n\x07weights\x18\t \x03(\x01\x12\x1d\n\x15initial_sensor_values\x18\n \x03(\x01\"\x95\x02\n!PoseDMPTrajectoryGeneratorMessage\x12\x18\n\x10orientation_only\x18\x01 \x02(\x08\x12\x15\n\rposition_only\x18\x02 \x02(\x08\x12\x10\n\x08run_time\x18\x03 \x02(\x01\x12\x0b\n\x03tau\x18\x04 \x02(\x01\x12\r\n\x05\x61lpha\x18\x05 \x02(\x01\x12\x0c\n\x04\x62\x65ta\x18\x06 \x02(\x01\x12\x11\n\tnum_basis\x18\x07 \x02(\x01\x12\x19\n\x11num_sensor_values\x18\x08 \x02(\x01\x12\x12\n\nbasis_mean\x18\t \x03(\x01\x12\x11\n\tbasis_std\x18\n \x03(\x01\x12\x0f\n\x07weights\x18\x0b \x03(\x01\x12\x1d\n\x15initial_sensor_values\x18\x0c \x03(\x01\"\"\n\x0eRunTimeMessage\x12\x10\n\x08run_time\x18\x01 \x02(\x01'
+  serialized_pb=b'\n%trajectory_generator_params_msg.proto\"_\n!GripperTrajectoryGeneratorMessage\x12\r\n\x05grasp\x18\x01 \x02(\x08\x12\r\n\x05width\x18\x02 \x02(\x01\x12\r\n\x05speed\x18\x03 \x02(\x01\x12\r\n\x05\x66orce\x18\x04 \x02(\x01\"\x8c\x01\n!ImpulseTrajectoryGeneratorMessage\x12\x10\n\x08run_time\x18\x01 \x02(\x01\x12\x10\n\x08\x61\x63\x63_time\x18\x02 \x02(\x01\x12\x11\n\tmax_trans\x18\x03 \x02(\x01\x12\x0f\n\x07max_rot\x18\x04 \x02(\x01\x12\x0e\n\x06\x66orces\x18\x05 \x03(\x01\x12\x0f\n\x07torques\x18\x06 \x03(\x01\"C\n\x1fJointTrajectoryGeneratorMessage\x12\x10\n\x08run_time\x18\x01 \x02(\x01\x12\x0e\n\x06joints\x18\x02 \x03(\x01\"f\n\x1ePoseTrajectoryGeneratorMessage\x12\x10\n\x08run_time\x18\x01 \x02(\x01\x12\x10\n\x08position\x18\x02 \x03(\x01\x12\x12\n\nquaternion\x18\x03 \x03(\x01\x12\x0c\n\x04pose\x18\x04 \x03(\x01\"\xe5\x01\n\"JointDMPTrajectoryGeneratorMessage\x12\x10\n\x08run_time\x18\x01 \x02(\x01\x12\x0b\n\x03tau\x18\x02 \x02(\x01\x12\r\n\x05\x61lpha\x18\x03 \x02(\x01\x12\x0c\n\x04\x62\x65ta\x18\x04 \x02(\x01\x12\x11\n\tnum_basis\x18\x05 \x02(\x01\x12\x19\n\x11num_sensor_values\x18\x06 \x02(\x01\x12\x12\n\nbasis_mean\x18\x07 \x03(\x01\x12\x11\n\tbasis_std\x18\x08 \x03(\x01\x12\x0f\n\x07weights\x18\t \x03(\x01\x12\x1d\n\x15initial_sensor_values\x18\n \x03(\x01\"\xa7\x02\n!PoseDMPTrajectoryGeneratorMessage\x12\x18\n\x10orientation_only\x18\x01 \x02(\x08\x12\x15\n\rposition_only\x18\x02 \x02(\x08\x12\x10\n\x08\x65\x65_frame\x18\x03 \x02(\x08\x12\x10\n\x08run_time\x18\x04 \x02(\x01\x12\x0b\n\x03tau\x18\x05 \x02(\x01\x12\r\n\x05\x61lpha\x18\x06 \x02(\x01\x12\x0c\n\x04\x62\x65ta\x18\x07 \x02(\x01\x12\x11\n\tnum_basis\x18\x08 \x02(\x01\x12\x19\n\x11num_sensor_values\x18\t \x02(\x01\x12\x12\n\nbasis_mean\x18\n \x03(\x01\x12\x11\n\tbasis_std\x18\x0b \x03(\x01\x12\x0f\n\x07weights\x18\x0c \x03(\x01\x12\x1d\n\x15initial_sensor_values\x18\r \x03(\x01\"\"\n\x0eRunTimeMessage\x12\x10\n\x08run_time\x18\x01 \x02(\x01'
 )
 
 
@@ -348,71 +348,78 @@ _POSEDMPTRAJECTORYGENERATORMESSAGE = _descriptor.Descriptor(
       is_extension=False, extension_scope=None,
       serialized_options=None, file=DESCRIPTOR),
     _descriptor.FieldDescriptor(
-      name='run_time', full_name='PoseDMPTrajectoryGeneratorMessage.run_time', index=2,
-      number=3, type=1, cpp_type=5, label=2,
-      has_default_value=False, default_value=float(0),
+      name='ee_frame', full_name='PoseDMPTrajectoryGeneratorMessage.ee_frame', index=2,
+      number=3, type=8, cpp_type=7, label=2,
+      has_default_value=False, default_value=False,
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       serialized_options=None, file=DESCRIPTOR),
     _descriptor.FieldDescriptor(
-      name='tau', full_name='PoseDMPTrajectoryGeneratorMessage.tau', index=3,
+      name='run_time', full_name='PoseDMPTrajectoryGeneratorMessage.run_time', index=3,
       number=4, type=1, cpp_type=5, label=2,
       has_default_value=False, default_value=float(0),
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       serialized_options=None, file=DESCRIPTOR),
     _descriptor.FieldDescriptor(
-      name='alpha', full_name='PoseDMPTrajectoryGeneratorMessage.alpha', index=4,
+      name='tau', full_name='PoseDMPTrajectoryGeneratorMessage.tau', index=4,
       number=5, type=1, cpp_type=5, label=2,
       has_default_value=False, default_value=float(0),
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       serialized_options=None, file=DESCRIPTOR),
     _descriptor.FieldDescriptor(
-      name='beta', full_name='PoseDMPTrajectoryGeneratorMessage.beta', index=5,
+      name='alpha', full_name='PoseDMPTrajectoryGeneratorMessage.alpha', index=5,
       number=6, type=1, cpp_type=5, label=2,
       has_default_value=False, default_value=float(0),
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       serialized_options=None, file=DESCRIPTOR),
     _descriptor.FieldDescriptor(
-      name='num_basis', full_name='PoseDMPTrajectoryGeneratorMessage.num_basis', index=6,
+      name='beta', full_name='PoseDMPTrajectoryGeneratorMessage.beta', index=6,
       number=7, type=1, cpp_type=5, label=2,
       has_default_value=False, default_value=float(0),
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       serialized_options=None, file=DESCRIPTOR),
     _descriptor.FieldDescriptor(
-      name='num_sensor_values', full_name='PoseDMPTrajectoryGeneratorMessage.num_sensor_values', index=7,
+      name='num_basis', full_name='PoseDMPTrajectoryGeneratorMessage.num_basis', index=7,
       number=8, type=1, cpp_type=5, label=2,
       has_default_value=False, default_value=float(0),
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       serialized_options=None, file=DESCRIPTOR),
     _descriptor.FieldDescriptor(
-      name='basis_mean', full_name='PoseDMPTrajectoryGeneratorMessage.basis_mean', index=8,
-      number=9, type=1, cpp_type=5, label=3,
-      has_default_value=False, default_value=[],
+      name='num_sensor_values', full_name='PoseDMPTrajectoryGeneratorMessage.num_sensor_values', index=8,
+      number=9, type=1, cpp_type=5, label=2,
+      has_default_value=False, default_value=float(0),
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       serialized_options=None, file=DESCRIPTOR),
     _descriptor.FieldDescriptor(
-      name='basis_std', full_name='PoseDMPTrajectoryGeneratorMessage.basis_std', index=9,
+      name='basis_mean', full_name='PoseDMPTrajectoryGeneratorMessage.basis_mean', index=9,
       number=10, type=1, cpp_type=5, label=3,
       has_default_value=False, default_value=[],
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       serialized_options=None, file=DESCRIPTOR),
     _descriptor.FieldDescriptor(
-      name='weights', full_name='PoseDMPTrajectoryGeneratorMessage.weights', index=10,
+      name='basis_std', full_name='PoseDMPTrajectoryGeneratorMessage.basis_std', index=10,
       number=11, type=1, cpp_type=5, label=3,
       has_default_value=False, default_value=[],
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       serialized_options=None, file=DESCRIPTOR),
     _descriptor.FieldDescriptor(
-      name='initial_sensor_values', full_name='PoseDMPTrajectoryGeneratorMessage.initial_sensor_values', index=11,
+      name='weights', full_name='PoseDMPTrajectoryGeneratorMessage.weights', index=11,
       number=12, type=1, cpp_type=5, label=3,
+      has_default_value=False, default_value=[],
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR),
+    _descriptor.FieldDescriptor(
+      name='initial_sensor_values', full_name='PoseDMPTrajectoryGeneratorMessage.initial_sensor_values', index=12,
+      number=13, type=1, cpp_type=5, label=3,
       has_default_value=False, default_value=[],
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
@@ -430,7 +437,7 @@ _POSEDMPTRAJECTORYGENERATORMESSAGE = _descriptor.Descriptor(
   oneofs=[
   ],
   serialized_start=687,
-  serialized_end=964,
+  serialized_end=982,
 )
 
 
@@ -460,8 +467,8 @@ _RUNTIMEMESSAGE = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=966,
-  serialized_end=1000,
+  serialized_start=984,
+  serialized_end=1018,
 )
 
 DESCRIPTOR.message_types_by_name['GripperTrajectoryGeneratorMessage'] = _GRIPPERTRAJECTORYGENERATORMESSAGE

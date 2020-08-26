@@ -48,17 +48,18 @@ message JointDMPTrajectoryGeneratorMessage {
 message PoseDMPTrajectoryGeneratorMessage {
   required bool orientation_only = 1;
   required bool position_only = 2;
-  required double run_time = 3;
-  required double tau = 4;
-  required double alpha = 5;
-  required double beta = 6;
-  required double num_basis = 7;
-  required double num_sensor_values = 8;
+  required bool ee_frame = 3;
+  required double run_time = 4;
+  required double tau = 5;
+  required double alpha = 6;
+  required double beta = 7;
+  required double num_basis = 8;
+  required double num_sensor_values = 9;
 
-  repeated double basis_mean = 9;
-  repeated double basis_std = 10;
-  repeated double weights = 11;
-  repeated double initial_sensor_values = 12;
+  repeated double basis_mean = 10;
+  repeated double basis_std = 11;
+  repeated double weights = 12;
+  repeated double initial_sensor_values = 13;
 }
 
 message RunTimeMessage {

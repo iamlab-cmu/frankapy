@@ -406,7 +406,7 @@ class Skill:
 
         self.add_trajectory_params(joint_dmp_trajectory_generator_msg_proto.SerializeToString())
 
-    def add_pose_dmp_params(self, orientation_only, position_only, run_time, pose_dmp_info, initial_sensor_values):
+    def add_pose_dmp_params(self, orientation_only, position_only, ee_frame, run_time, pose_dmp_info, initial_sensor_values):
         assert type(run_time) is float or type(run_time) is int,\
                 "Incorrect run_time type. Should be int or float."
         assert run_time >= 0, "Incorrect run_time. Should be non negative."
@@ -461,7 +461,7 @@ class Skill:
                 "Incorrect trajectory generator type. Should be PoseDmpTrajectoryGenerator"
 
         pose_dmp_trajectory_generator_msg_proto = PoseDMPTrajectoryGeneratorMessage(orientation_only=orientation_only,
-                                                   position_only=position_only, run_time=run_time, 
+                                                   position_only=position_only, ee_frame=ee_frame, run_time=run_time, 
                                                    tau=pose_dmp_info['tau'], alpha=pose_dmp_info['alpha'], beta=pose_dmp_info['beta'], 
                                                    num_basis=pose_dmp_info['num_basis'], num_sensor_values=pose_dmp_info['num_sensors'], 
                                                    basis_mean=pose_dmp_info['mu'], basis_std=pose_dmp_info['h'], 
