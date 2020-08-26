@@ -691,7 +691,10 @@ class FrankaArm:
                               skill_desc=skill_desc)
 
         if initial_sensor_values is None:
-            initial_sensor_values = np.ones(pose_dmp_info['num_sensors']).tolist()
+            if orientation_only or position_only:
+                initial_sensor_values = np.ones(3*pose_dmp_info['num_sensors']).tolist()
+            else:
+                initial_sensor_values = np.ones(6*pose_dmp_info['num_sensors']).tolist()
 
         skill.add_initial_sensor_values(initial_sensor_values)  # sensor values
 

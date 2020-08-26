@@ -440,8 +440,7 @@ class Skill:
                 "Incorrect basis std dev len. Should be equal to num basis."
 
         assert type(initial_sensor_values) is list, "Incorrect initial sensor values type. Should be list."
-        assert len(initial_sensor_values) == pose_dmp_info['num_sensors'], \
-                "Incorrect initial sensor values len. Should be equal to num sensors."
+        
 
         weights = np.array(pose_dmp_info['weights']).reshape(-1).tolist()
 
@@ -449,10 +448,14 @@ class Skill:
             num_weights = 3 * int(pose_dmp_info['num_basis']) * int(pose_dmp_info['num_sensors'])
             assert len(weights) == num_weights, \
                     "Incorrect weights len. Should be equal to 3 * num basis * num sensors."
+            assert len(initial_sensor_values) == 3 * pose_dmp_info['num_sensors'], \
+                "Incorrect initial sensor values len. Should be equal to 3 * num sensors."
         else:
             num_weights = 6 * int(pose_dmp_info['num_basis']) * int(pose_dmp_info['num_sensors'])
             assert len(weights) == num_weights, \
                     "Incorrect weights len. Should be equal to 6 * num basis * num sensors."
+            assert len(initial_sensor_values) == 6 * pose_dmp_info['num_sensors'], \
+                "Incorrect initial sensor values len. Should be equal to 3 * num sensors."
 
         assert self._skill_type == SkillType.CartesianPoseSkill or \
                self._skill_type == SkillType.ImpedanceControlSkill, \
