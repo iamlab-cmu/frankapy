@@ -5,8 +5,9 @@ from frankapy import FrankaConstants as FC
 from frankapy.proto_utils import sensor_proto2ros_msg, make_sensor_group_msg
 from frankapy.proto import ForcePositionSensorMessage, ForcePositionControllerSensorMessage
 from franka_interface_msgs.msg import SensorDataGroup
-from frankapy.utils import transform_to_list, min_jerk
-from frankapy.utils import DMPPositionTrajectoryGenerator
+#from frankapy.utils import transform_to_list, min_jerk
+#from frankapy.utils import DMPPositionTrajectoryGenerator
+from frankapy.utils import *
 
 from tqdm import trange
 
@@ -54,7 +55,7 @@ if __name__ == "__main__":
         [-0.06875206,  0.97926097, -0.19053231],
        [ 0.99702057,  0.06080344, -0.04726211],
        [-0.03469692, -0.193214  , -0.98054257]
-       ]), translation=np.array([0.48059782, 0.058, 0.08263467]), 
+       ]), translation=np.array([0.48059782, 0.07, 0.25]), 
        from_frame='franka_tool', to_frame='world')
 
     fa.goto_pose(start_cut_pose, duration=5, use_impedance = False)
@@ -66,7 +67,8 @@ if __name__ == "__main__":
     # define length of dmp trajectory
     traject_time = 5 # TODO: make this a CL arg    
     # load dmp traject params
-    dmp_wts_pkl_filepath = '/home/sony/Desktop/debug_dmp_wts.pkl'
+    #dmp_wts_pkl_filepath = '/home/sony/Desktop/debug_dmp_wts.pkl'
+    dmp_wts_pkl_filepath = '/home/sony/092420_normal_cut_dmp_weights_zeroY.pkl' # y weights zero-ed out
     dmp_traj = DMPPositionTrajectoryGenerator(traject_time)
     dmp_traj.load_saved_dmp_params_from_pkl_file(dmp_wts_pkl_filepath)
     dmp_traj.parse_dmp_params_dict()
@@ -76,10 +78,6 @@ if __name__ == "__main__":
     # calculate dmp position trajectory - NOTE: this assumes a 0.001 dt for calc the dmp traject
     dmp_traject, dy, _, _, _ = dmp_traj.run_dmp_with_weights(y0) # y: np array(tx3)
     #target_poses = get_dmp_traj_poses_reformatted(y, starting_rotation) # target_poses is a nx16 list of target poses at each time step
-    import pdb; pdb.set_trace()
-    # downsample dmp traject 
-    downsmpled_dmp_traject = downsample_dmp_traject(dmp_traject, 0.001, 0.01)
-    target_poses = get_dmp_traj_poses_reformatted(downsmpled_dmp_traject, starting_rotation) # target_poses is a nx16 list of target poses at each time step
 
     # sampling info for sending msgs via ROS
     dt = 0.01 #0.001
@@ -87,8 +85,12 @@ if __name__ == "__main__":
     ts = np.arange(0, T, dt)
     N = len(ts)
 
-    target_force = [0, 0, -40, 0, 0, 0] #[0, 0, 0, 0, 0, 0]  
-    S = [1, 1, 0, 1, 1, 1] #[1, 1, 1, 1, 1, 1] 
+    # downsample dmp traject 
+    downsmpled_dmp_traject = downsample_dmp_traject(dmp_traject, 0.001, dt)
+    target_poses = get_dmp_traj_poses_reformatted(downsmpled_dmp_traject, starting_rotation) # target_poses is a nx16 list of target poses at each time step
+    
+    target_force = [0, 0, 0, 0, 0, 0]  #[0, 0, -40, 0, 0, 0]
+    S = [1, 1, 1, 1, 1, 1] #[1, 1, 0, 1, 1, 1]
     position_kps_cart = FC.DEFAULT_TRANSLATIONAL_STIFFNESSES + FC.DEFAULT_ROTATIONAL_STIFFNESSES
     force_kps_cart = [0.1] * 6
     position_kps_joint = FC.DEFAULT_K_GAINS
@@ -141,7 +143,17 @@ if __name__ == "__main__":
         
         current_ht = fa.get_pose().translation[2]
         print('current_ht', current_ht)
-        dmp_num+=1         
+        dmp_num+=1       
+
+        # calculate new dmp traject based on current position
+        y0 = fa.get_pose().translation
+        # calculate dmp position trajectory - NOTE: this assumes a 0.001 dt for calc the dmp traject
+        dmp_traject, dy, _, _, _ = dmp_traj.run_dmp_with_weights(y0) # y: np array(tx3)
+        # downsample dmp traject and reformat target_poses
+        downsmpled_dmp_traject = downsample_dmp_traject(dmp_traject, 0.001, dt)
+        target_poses = get_dmp_traj_poses_reformatted(downsmpled_dmp_traject, starting_rotation) # target_poses is a nx16 list of target poses at each time step
+    
+    
 
     fa.stop_skill()
    

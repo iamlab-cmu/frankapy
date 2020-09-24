@@ -39,9 +39,7 @@ def plot_sampled_new_dmp_traject_and_original_dmp(traject_time, initial_dmp_weig
         ax[i].set_ylabel('Position (m)')
         #ax[i].set_xlabel('Time (s)')
         ax[i].legend((axes[i] + '-original traject', axes[i] + '-new sampled traject'))
-        
-        
-        
+                        
         # plt.xlabel('Time (s)')
         # plt.ylabel('Position (m)')
     # plt.legend([ax[0],ax[1],ax[2]],(axes[i] + '-original traject', axes[i] + '-new sampled traject'))
@@ -51,7 +49,7 @@ def plot_sampled_new_dmp_traject_and_original_dmp(traject_time, initial_dmp_weig
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
-    parser.add_argument('--position_dmp_weights_file_path', '-w', type=str, default='/home/sony/Desktop/debug_dmp_wts.pkl')
+    parser.add_argument('--position_dmp_weights_file_path', '-w', type=str, default='/home/sony/092420_normal_cut_dmp_weights_zeroY.pkl')
     parser.add_argument('--dmp_traject_time', '-t', type=int, default = 5)  
     parser.add_argument('--num_epochs', '-e', type=int, default = 10)  
     parser.add_argument('--num_samples', '-s', type=int, default = 15)    
@@ -84,14 +82,16 @@ if __name__ == '__main__':
         translation=np.array([0.65, 0.1, 0.053]),
         from_frame='franka_tool', to_frame='world')    
     fa.goto_pose(starting_position, duration=5, use_impedance=False)
-    
-    
+        
     # Initialize Gaussian policy params (DMP weights) - mean and sigma
     initial_wts = np.array(init_dmp_info_dict['weights'])
-    initial_mu = initial_wts.flatten()
+    f_initial = -20 # TODO: maybe update?
+    # NOTE: only using x dmp weights and z force value for policy params (not all 3 dims)
+    initial_mu = np.append(initial_wts[0,:,:], f_initial)  #initial_wts.flatten()
     initial_sigma = np.diag(np.repeat(0.0001, initial_mu.shape[0]))
+    initial_sigma[-1,-1] = 120 # change exploration variance for force parameter
     mu, sigma = initial_mu, initial_sigma
-   
+
     mean_params_each_epoch = []
     mean_params_each_epoch.append(initial_mu)
     for epoch in range(args.num_epochs):
@@ -99,10 +99,22 @@ if __name__ == '__main__':
 
         for sample in range(args.num_samples):
             print('Epoch: %i Sample: %i'%(epoch,sample))
-            # Sample new policy params from mu and sigma
-            new_weights = np.random.multivariate_normal(mu, sigma)            
-            policy_params_all_samples.append(new_weights)
-            new_weights = new_weights.reshape(initial_wts.shape)
+            # Sample new policy params from mu and sigma - NOTE: cap force to be [-1, -40]
+            new_params = np.random.multivariate_normal(mu, sigma)            
+            new_x_weights = new_params[0:-1]
+            new_z_force = new_params[-1]
+
+            # cap force value
+            new_z_force = np.clip(new_z_force, -45, -1)
+            new_params[-1] = new_z_force
+
+            # save to policy params buffer
+            policy_params_all_samples.append(new_params)
+            
+            # concat new sampled x weights w/ old y (zero's) and z weights
+            new_weights = np.expand_dims(np.vstack((new_x_weights,initial_wts[1,:,:],initial_wts[2,:,:])),axis=1)
+            #new_weights = new_weights.reshape(initial_wts.shape)
+            import pdb; pdb.set_trace()
             
             # Save new weights to dict
             data_dict = {
@@ -138,20 +150,20 @@ if __name__ == '__main__':
             # check new dmp sampled wt trajectory vs original
             plot_sampled_new_dmp_traject_and_original_dmp(traject_time, \
                 args.position_dmp_weights_file_path, dmp_traject, y0)
-
             import pdb; pdb.set_trace()
-            
-            # downsample dmp traject 
-            downsmpled_dmp_traject = downsample_dmp_traject(dmp_traject, 0.001, 0.01)
-            target_poses = get_dmp_traj_poses_reformatted(downsmpled_dmp_traject, starting_rotation) # target_poses is a nx16 list of target poses at each time step
+
             # sampling info for sending msgs via ROS
             dt = 0.01 
             T = traject_time
             ts = np.arange(0, T, dt)
             N = len(ts)
 
-            target_force = [0, 0, 0, 0, 0, 0] #[0, 0, -40, 0, 0, 0]   
-            S = [1, 1, 1, 1, 1, 1] #[1, 1, 0, 1, 1, 1] 
+            # downsample dmp traject 
+            downsmpled_dmp_traject = downsample_dmp_traject(dmp_traject, 0.001, dt)
+            target_poses = get_dmp_traj_poses_reformatted(downsmpled_dmp_traject, starting_rotation) # target_poses is a nx16 list of target poses at each time step
+            
+            target_force = [0, 0, new_z_force, 0, 0, 0] #[0, 0, -40, 0, 0, 0]   
+            S = [1, 1, 0, 1, 1, 1] #[1, 1, 0, 1, 1, 1] 
             position_kps_cart = FC.DEFAULT_TRANSLATIONAL_STIFFNESSES + FC.DEFAULT_ROTATIONAL_STIFFNESSES
             force_kps_cart = [0.1] * 6
             position_kps_joint = FC.DEFAULT_K_GAINS
@@ -170,8 +182,6 @@ if __name__ == '__main__':
                                             use_cartesian_gains=True,
                                             position_kps_cart=position_kps_cart,
                                             force_kps_cart=force_kps_cart)
-
-
 
             # sample from gaussian to get dmp weights for this execution
             current_ht = fa.get_pose().translation[2] #0.03
@@ -204,8 +214,7 @@ if __name__ == '__main__':
                             fb_ctrlr_proto, SensorDataMessageType.FORCE_POSITION_GAINS)
                         )
                     pub.publish(ros_msg)
-                    rate.sleep()
-                                  
+                    rate.sleep()                             
 
                 (robot_positions, robot_forces) = get_robot_positions_and_forces(fa, 8)
                 import pdb; pdb.set_trace()
@@ -227,9 +236,15 @@ if __name__ == '__main__':
                     current_ht = fa.get_pose().translation[2]
                     print('current_ht', current_ht)
                     dmp_num += 1  
-             
-                    
-            
+
+                    # calculate new dmp traject based on current position
+                    y0 = fa.get_pose().translation
+                    # calculate dmp position trajectory - NOTE: this assumes a 0.001 dt for calc the dmp traject
+                    dmp_traject, dy, _, _, _ = dmp_traj.run_dmp_with_weights(y0) # y: np array(tx3)
+                    # downsample dmp traject and reformat target_poses
+                    downsmpled_dmp_traject = downsample_dmp_traject(dmp_traject, 0.001, dt)
+                    target_poses = get_dmp_traj_poses_reformatted(downsmpled_dmp_traject, starting_rotation) # target_poses is a nx16 list of target poses at each time step
+                
             
             # After finishing set of dmps for a full slice - calculate avg reward here
             #   avg peak force, avg back and forth mvmt ? 
