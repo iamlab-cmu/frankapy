@@ -1,3 +1,8 @@
+''' Notes: 
+- try w/ hard vs soft objects (carrot/celery/potato, vs. cucumber vs. tomato)
+- try w/ pivoted cut and variable cartesian gains/stiffnesses 
+'''
+
 import os
 import subprocess
 import numpy as np
@@ -195,7 +200,7 @@ if __name__ == '__main__':
 
             # sample from gaussian to get dmp weights for this execution            
             dmp_num = 0            
-            peak_forces_all_dmps, x_mvmt_all_dmps = [], [] # sum of abs (+x/-x mvmt)            
+            peak_forces_all_dmps, x_mvmt_all_dmps, forw_vs_back_x_mvmt_all_dmps = [], [], []# sum of abs (+x/-x mvmt)            
             while current_ht > 0.023:   
                 print('starting dmp', dmp_num) 
                 robot_positions = np.zeros((0,3))
@@ -231,10 +236,16 @@ if __name__ == '__main__':
                     rate.sleep()                                            
 
                 peak_force = np.max(np.abs(robot_forces[:,2]))
-                total_x_mvmt = (np.max(np.abs(robot_positions[:,0]) - np.abs(robot_positions[0,0]))) + \
-                    (np.max(np.abs(robot_positions[:,0]) - np.abs(robot_positions[-1,0])))
+                forward_x_mvmt = (np.max(np.abs(robot_positions[:,0]) - np.abs(robot_positions[0,0])))
+                backward_x_mvmt = (np.max(np.abs(robot_positions[:,0]) - np.abs(robot_positions[-1,0])))
+                total_x_mvmt = forward_x_mvmt + backward_x_mvmt
+                # difference between forward x movement and backward x movement
+                diff_forw_back_x_mvmt = np.abs(forward_x_mvmt - backward_x_mvmt)
+
+                # save to buffers 
                 peak_forces_all_dmps.append(peak_force)
                 x_mvmt_all_dmps.append(total_x_mvmt)
+                forw_vs_back_x_mvmt_all_dmps.append(diff_forw_back_x_mvmt)
                 # np.savez(work_dir +'trial_info_'+str(dmp_num)+'.npz', robot_positions=robot_positions, \
                 #     robot_forces=robot_forces)
                 
@@ -265,7 +276,9 @@ if __name__ == '__main__':
             import pdb; pdb.set_trace()
             avg_peak_force = np.mean(peak_forces_all_dmps)
             avg_x_mvmt = np.mean(x_mvmt_all_dmps)
-            reward = -avg_peak_force - 10*avg_x_mvmt
+            avg_diff_forw_back_x_mvmt = np.mean(diff_forw_back_x_mvmt)
+            
+            reward = -avg_peak_force - 10*avg_x_mvmt - 20*avg_diff_forw_back_x_mvmt
 
             # save reward to buffer
             print('Epoch: %i Sample: %i Reward: '%(epoch,sample), reward)
@@ -283,9 +296,13 @@ if __name__ == '__main__':
         reps = rl_utils.Reps(rel_entropy_bound=1.5,min_temperature=0.001) #Create REPS object
         policy_params_mean, policy_params_sigma, reps_info = \
             reps.policy_from_samples_and_rewards(policy_params_all_samples, rewards_all_samples)
-
+        
+        print('updated policy params mean')
+        print(policy_params_mean)
+        print('updated policy cov')
+        print(policy_params_sigma)
         import pdb; pdb.set_trace()
-    
+        # TODO: save new policy params mean    
 
     fa.goto_joints(reset_joint_positions)
 
