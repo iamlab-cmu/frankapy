@@ -68,9 +68,10 @@ if __name__ == '__main__':
     print('Starting robot')
     fa = FrankaArm()
     # set tool delta pose and reset joints
-    tool_delta_pose = RigidTransform(translation=np.array([0.04, 0.16, 0.0]), from_frame='franka_tool', to_frame='franka_tool_base')
+    #tool_delta_pose = RigidTransform(translation=np.array([0.04, 0.16, 0.0]), from_frame='franka_tool', to_frame='franka_tool_base')
+    #fa.set_tool_delta_pose(tool_delta_pose)
+    
     reset_joint_positions = [ 0.02846037, -0.51649966, -0.12048514, -2.86642333, -0.05060268,  2.30209197, 0.7744833 ]
-    fa.set_tool_delta_pose(tool_delta_pose)
     fa.goto_joints(reset_joint_positions)    
 
     knife_orientation = np.array([[0.0,   0.9805069,  -0.19648464],
@@ -79,16 +80,22 @@ if __name__ == '__main__':
     
     # go to initial cutting pose
     starting_position = RigidTransform(rotation=knife_orientation, \
-        translation=np.array([0.65, 0.1, 0.053]),
+        translation=np.array([0.5, 0.01, 0.2]), #z=0.05
         from_frame='franka_tool', to_frame='world')    
     fa.goto_pose(starting_position, duration=5, use_impedance=False)
-        
+
+    # # move down to contact
+    # move_down_to_contact = RigidTransform(translation=np.array([0.0, 0.0, -0.1]),
+    # from_frame='world', to_frame='world')   
+
+    # fa.goto_pose_delta(move_down_to_contact, duration=5, use_impedance=False, force_thresholds=[10.0, 10.0, 3.0, 10.0, 10.0, 10.0], ignore_virtual_walls=True)
+    
     # Initialize Gaussian policy params (DMP weights) - mean and sigma
     initial_wts = np.array(init_dmp_info_dict['weights'])
-    f_initial = -20 # TODO: maybe update?
+    f_initial = -8 # TODO: maybe update?
     # NOTE: only using x dmp weights and z force value for policy params (not all 3 dims)
     initial_mu = np.append(initial_wts[0,:,:], f_initial)  #initial_wts.flatten()
-    initial_sigma = np.diag(np.repeat(0.0001, initial_mu.shape[0]))
+    initial_sigma = np.diag(np.repeat(0.001, initial_mu.shape[0]))
     initial_sigma[-1,-1] = 120 # change exploration variance for force parameter
     mu, sigma = initial_mu, initial_sigma
 
@@ -105,16 +112,15 @@ if __name__ == '__main__':
             new_z_force = new_params[-1]
 
             # cap force value
-            new_z_force = np.clip(new_z_force, -45, -1)
-            new_params[-1] = new_z_force
+            new_z_force = np.clip(new_z_force, -20, -5)
+            new_params[-1] = int(new_z_force)
 
             # save to policy params buffer
-            policy_params_all_samples.append(new_params)
+            policy_params_all_samples.append(new_params.tolist())
             
             # concat new sampled x weights w/ old y (zero's) and z weights
             new_weights = np.expand_dims(np.vstack((new_x_weights,initial_wts[1,:,:],initial_wts[2,:,:])),axis=1)
             #new_weights = new_weights.reshape(initial_wts.shape)
-            import pdb; pdb.set_trace()
             
             # Save new weights to dict
             data_dict = {
@@ -138,12 +144,14 @@ if __name__ == '__main__':
             # Load dmp traject params
             dmp_traj = DMPPositionTrajectoryGenerator(traject_time)
             dmp_traj.load_saved_dmp_params_from_pkl_file(weight_save_file)
+            # DEBUG 
+            #dmp_traj.load_saved_dmp_params_from_pkl_file(args.position_dmp_weights_file_path)
             dmp_traj.parse_dmp_params_dict()
 
             # Define starting position 
             start_pose = fa.get_pose()
             starting_rotation = start_pose.rotation
-            y0 = start_pose.translation # TODO: need to update this and recalc every time new dmp is run...??
+            y0 = start_pose.translation 
             # calculate dmp position trajectory - NOTE: this assumes a 0.001 dt for calc the dmp traject
             dmp_traject, dy, _, _, _ = dmp_traj.run_dmp_with_weights(y0) # y: np array(tx3)
             
@@ -161,9 +169,10 @@ if __name__ == '__main__':
             # downsample dmp traject 
             downsmpled_dmp_traject = downsample_dmp_traject(dmp_traject, 0.001, dt)
             target_poses = get_dmp_traj_poses_reformatted(downsmpled_dmp_traject, starting_rotation) # target_poses is a nx16 list of target poses at each time step
-            
-            target_force = [0, 0, new_z_force, 0, 0, 0] #[0, 0, -40, 0, 0, 0]   
-            S = [1, 1, 0, 1, 1, 1] #[1, 1, 0, 1, 1, 1] 
+            import pdb; pdb.set_trace()
+
+            target_force = [0, 0, 0, 0, 0, 0] #[0, 0, new_z_force, 0, 0, 0] #[0, 0, -40, 0, 0, 0]   
+            S = [1, 1, 1, 1, 1, 1] #[1, 1, 0, 1, 1, 1]
             position_kps_cart = FC.DEFAULT_TRANSLATIONAL_STIFFNESSES + FC.DEFAULT_ROTATIONAL_STIFFNESSES
             force_kps_cart = [0.1] * 6
             position_kps_joint = FC.DEFAULT_K_GAINS
@@ -174,6 +183,7 @@ if __name__ == '__main__':
             rate = rospy.Rate(1 / dt)
             n_times = 1
             rospy.loginfo('Publishing HFPC trajectory w/ cartesian gains...')
+            
             current_ht = fa.get_pose().translation[2]
             dmp_num = 0 
 
@@ -181,18 +191,18 @@ if __name__ == '__main__':
             fa.run_dynamic_force_position(duration=T * 10, buffer_time = 3, S=S,
                                             use_cartesian_gains=True,
                                             position_kps_cart=position_kps_cart,
-                                            force_kps_cart=force_kps_cart)
+                                            force_kps_cart=force_kps_cart, block=False)
 
-            # sample from gaussian to get dmp weights for this execution
-            current_ht = fa.get_pose().translation[2] #0.03
-            dmp_num = 0
-            peak_forces_all_dmps, x_mvmt_all_dmps = [], [] # sum of abs (+x/-x mvmt)
-            import pdb; pdb.set_trace()
+            # sample from gaussian to get dmp weights for this execution            
+            dmp_num = 0            
+            peak_forces_all_dmps, x_mvmt_all_dmps = [], [] # sum of abs (+x/-x mvmt)            
             while current_ht > 0.023:   
-                print('starting dmp', dmp_num)        
+                print('starting dmp', dmp_num) 
+                robot_positions = np.zeros((0,3))
+                robot_forces = np.zeros((0,6))       
                 init_time = rospy.Time.now().to_time()
                 for i in trange(N * n_times):
-                    t = i % N
+                    t = i % N                 
                     timestamp = rospy.Time.now().to_time() - init_time
                     #NOTE: format of pose sent is: 1x16 Transform matrix 
                     
@@ -213,26 +223,30 @@ if __name__ == '__main__':
                         feedback_controller_sensor_msg=sensor_proto2ros_msg(
                             fb_ctrlr_proto, SensorDataMessageType.FORCE_POSITION_GAINS)
                         )
+                    
+                    robot_positions = np.vstack((robot_positions, fa.get_pose().translation.reshape(1,3)))
+                    robot_forces = np.vstack((robot_forces, fa.get_ee_force_torque().reshape(1,6)))
+                    
                     pub.publish(ros_msg)
-                    rate.sleep()                             
+                    rate.sleep()                                            
 
-                (robot_positions, robot_forces) = get_robot_positions_and_forces(fa, 8)
-                import pdb; pdb.set_trace()
                 peak_force = np.max(np.abs(robot_forces[:,2]))
                 total_x_mvmt = (np.max(np.abs(robot_positions[:,0]) - np.abs(robot_positions[0,0]))) + \
                     (np.max(np.abs(robot_positions[:,0]) - np.abs(robot_positions[-1,0])))
                 peak_forces_all_dmps.append(peak_force)
                 x_mvmt_all_dmps.append(total_x_mvmt)
-                import pdb; pdb.set_trace()
-                np.savez(work_dir +'trial_info_'+str(dmp_num)+'.npz', robot_positions=robot_positions, \
-                    robot_forces=robot_forces)
+                # np.savez(work_dir +'trial_info_'+str(dmp_num)+'.npz', robot_positions=robot_positions, \
+                #     robot_forces=robot_forces)
                 
-                completed_cut = input('cut complete? y/n')
-                while completed_cut != 'y' or completed_cut != 'n':
-                    completed_cut = input('please enter valid answer. cut complete? y/n')                
-                if completed_cut == 'y': 
+                completed_cut = input('cut complete? (1 yes/0 n): ')
+
+                while completed_cut not in ['0', '1']:
+                    completed_cut = input('please enter valid answer. cut complete? (1/0): ') 
+
+                if completed_cut == '1': 
                     break
-                elif completed_cut == 'n':
+
+                elif completed_cut == '0':
                     current_ht = fa.get_pose().translation[2]
                     print('current_ht', current_ht)
                     dmp_num += 1  
@@ -248,19 +262,29 @@ if __name__ == '__main__':
             
             # After finishing set of dmps for a full slice - calculate avg reward here
             #   avg peak force, avg back and forth mvmt ? 
+            import pdb; pdb.set_trace()
             avg_peak_force = np.mean(peak_forces_all_dmps)
             avg_x_mvmt = np.mean(x_mvmt_all_dmps)
-            reward = -avg_peak_force - avg_x_mvmt
+            reward = -avg_peak_force - 10*avg_x_mvmt
 
-            # save reward 
+            # save reward to buffer
+            print('Epoch: %i Sample: %i Reward: '%(epoch,sample), reward)
             rewards_all_samples.append(reward)
-            np.save(os.path.join(work_dir, 'rewards_' + 'epoch'+str(epoch) + '_ep'+str(sample)+'.npy', \
-                np.array(rewards_all_samples)))
 
-        #Update policy (REPS)        
+            # reset to starting cut position
+            fa.goto_pose(starting_position, duration=5, use_impedance=False)
+        
+        # save reward 
+        import pdb; pdb.set_trace()
+        np.save(os.path.join(work_dir, 'polParams_rewards_' + 'epoch'+str(epoch) +'.npy', \
+            np.concatenate((np.array(policy_params_all_samples), np.array([rewards_all_samples]).T), axis=1)))
+
+        # update policy mean and cov (REPS)        
         reps = rl_utils.Reps(rel_entropy_bound=1.5,min_temperature=0.001) #Create REPS object
-        policy_params_mean, policy_params_sigma, reps_info = reps.policy_from_samples_and_rewards(policy_params_all, rewards_all)
+        policy_params_mean, policy_params_sigma, reps_info = \
+            reps.policy_from_samples_and_rewards(policy_params_all_samples, rewards_all_samples)
 
+        import pdb; pdb.set_trace()
     
 
     fa.goto_joints(reset_joint_positions)

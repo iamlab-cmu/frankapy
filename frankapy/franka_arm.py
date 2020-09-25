@@ -1052,6 +1052,7 @@ class FrankaArm:
                   S=FC.DEFAULT_HFPC_S,
                   interpolate=False,
                   use_cartesian_gains=True,
+                  block=True,
                   ignore_errors=True,
                   ignore_virtual_walls=False,
                   skill_desc=''):
@@ -1111,7 +1112,7 @@ class FrankaArm:
 
         self._send_goal(goal,
                         cb=lambda x: skill.feedback_callback(x),
-                        block=False,
+                        block=block,
                         ignore_errors=ignore_errors)
 
         sleep(FC.DYNAMIC_SKILL_WAIT_TIME)

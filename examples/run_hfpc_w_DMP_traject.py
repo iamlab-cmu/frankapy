@@ -55,7 +55,7 @@ if __name__ == "__main__":
         [-0.06875206,  0.97926097, -0.19053231],
        [ 0.99702057,  0.06080344, -0.04726211],
        [-0.03469692, -0.193214  , -0.98054257]
-       ]), translation=np.array([0.48059782, 0.07, 0.25]), 
+       ]), translation=np.array([0.48059782, 0.03, 0.2]), 
        from_frame='franka_tool', to_frame='world')
 
     fa.goto_pose(start_cut_pose, duration=5, use_impedance = False)
@@ -89,7 +89,7 @@ if __name__ == "__main__":
     downsmpled_dmp_traject = downsample_dmp_traject(dmp_traject, 0.001, dt)
     target_poses = get_dmp_traj_poses_reformatted(downsmpled_dmp_traject, starting_rotation) # target_poses is a nx16 list of target poses at each time step
     
-    target_force = [0, 0, 0, 0, 0, 0]  #[0, 0, -40, 0, 0, 0]
+    target_force = [0, 0, 0, 0, 0, 0]  #[0, 0, -10, 0, 0, 0] 
     S = [1, 1, 1, 1, 1, 1] #[1, 1, 0, 1, 1, 1]
     position_kps_cart = FC.DEFAULT_TRANSLATIONAL_STIFFNESSES + FC.DEFAULT_ROTATIONAL_STIFFNESSES
     force_kps_cart = [0.1] * 6
