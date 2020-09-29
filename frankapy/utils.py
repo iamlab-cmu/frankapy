@@ -13,6 +13,7 @@ from perception import CameraIntrinsics
 import cv2
 from cv_bridge import CvBridge, CvBridgeError
 
+from rl_utils import reps
 
 class DMPPositionTrajectoryGenerator:
     '''
@@ -178,6 +179,67 @@ def downsample_dmp_traject(original_dmp_traject, og_dt, new_downsampled_dt):
     
     return downsmpled_dmp_traject
 
+def parse_policy_params_and_rews_from_file(work_dir):
+    data_file = glob.glob(work_dir + "*epoch_*.npy")[0]
+    data = np.load(data_file)
+    pol_params_all = data[:,0:-1]
+    rewards_all = data[:,-1]  
+    
+    # plot rewards
+    plt.plot(np.arange(rewards_all.shape[0]),rewards_all,'-o')
+    counter = 0
+    for x,y in zip(np.arange(rewards_all.shape[0]), pol_params_all[:,-1]):
+        label = 'f_z = %i'%np.round(y)
+        plt.annotate(label, (x,rewards_all[counter]), textcoords = 'offset points', xytext = (0,10), ha='center')
+        counter += 1
+    plt.xlabel('sample num')
+    plt.ylabel('reward - average across all dmps for each slice')
+    plt.title('reward vs. sample - epoch 0')
+    plt.xticks(np.arange(rewards_all.shape[0]))
+    plt.show()
+    
+    # update policy mean and cov (REPS)        
+    reps_agent = reps.Reps(rel_entropy_bound=1.5,min_temperature=0.001) #Create REPS object
+    policy_params_mean, policy_params_sigma, reps_info = reps_agent.policy_from_samples_and_rewards(pol_params_all, rewards_all)
+
+    return policy_params_mean, policy_params_sigma
+
+def plot_rewards_mult_epochs(work_dir, num_epochs):
+    pol_params_all_epochs = np.empty((0,8))
+    forces_all_epochs = np.empty((0))
+    rews_all_epochs = np.empty((0))
+    avg_rews_each_epoch = []
+    for i in range(num_epochs):
+        data_file = glob.glob(work_dir + "*epoch_%s*.npy"%str(i))[0]
+        data = np.load(data_file)
+        pol_params = data[:,0:-1]
+        forces = data[:,-2]
+        rewards = data[:,-1]  
+        avg_rews_each_epoch.append(np.mean(rewards))
+        forces_all_epochs = np.concatenate((forces_all_epochs, forces), axis=0)
+        rews_all_epochs = np.concatenate((rews_all_epochs, rewards),axis=0)
+        pol_params_all_epochs = np.concatenate((pol_params_all_epochs, pol_params),axis=0)
+
+    # plot rewards each sample
+    plt.plot(np.arange(rews_all_epochs.shape[0]),rews_all_epochs,'-o')
+    counter = 0
+    for x,y in zip(np.arange(rews_all_epochs.shape[0]), pol_params_all_epochs[:,-1]):
+        label = '%iN'%np.round(y)
+        plt.annotate(label, (x, rews_all_epochs[counter]), textcoords = 'offset points', xytext = (0,7), ha='center')
+        counter += 1
+    plt.xlabel('sample num')
+    plt.ylabel('reward - average across all dmps for each slice')
+    plt.title('rewards vs. samples - epochs 0/1/2')
+    plt.xticks(np.arange(rews_all_epochs.shape[0]))
+    plt.show()
+
+    # plot average rewards each epoch
+    plt.plot(avg_rews_each_epoch, '-o')
+    plt.xlabel('epoch')
+    plt.ylabel('avg reward each epoch - average across all dmps for each slice')
+    plt.title('avg reward vs epochs')
+    plt.xticks(np.arange(3))
+    plt.show()
 
 def franka_pose_to_rigid_transform(franka_pose, from_frame='franka_tool_base', to_frame='world'):
     np_franka_pose = np.array(franka_pose).reshape(4, 4).T

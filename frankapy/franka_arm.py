@@ -138,6 +138,7 @@ class FrankaArm:
         if self._connected and self._in_skill:
             self._client.cancel_goal()
         self.wait_for_skill()
+        sleep(0.1)
 
     def _sigint_handler_gen(self):
         def sigint_handler(sig, frame):
