@@ -179,30 +179,54 @@ def downsample_dmp_traject(original_dmp_traject, og_dt, new_downsampled_dt):
     
     return downsmpled_dmp_traject
 
-def parse_policy_params_and_rews_from_file(work_dir):
-    data_file = glob.glob(work_dir + "*epoch_*.npy")[0]
-    data = np.load(data_file)
-    pol_params_all = data[:,0:-1]
-    rewards_all = data[:,-1]  
+def parse_policy_params_and_rews_from_file(work_dir, hfpc=True):
+    data_files = glob.glob(work_dir + "*epoch_*.npy")
+    num_prev_epochs = len(data_files)
+    rews_all_epochs = np.empty((0))
+    avg_rews_each_epoch = []
+    if hfpc:
+        pol_params_all_epochs = np.empty((0,8))
+    else:
+        pol_params_all_epochs = np.empty((0,21))
+    for i in range(num_prev_epochs):
+        data_file = glob.glob(work_dir + "*epoch_%s*.npy"%str(i))[0]
+        data = np.load(data_file)
+        pol_params = data[:,0:-1]
+        rewards = data[:,-1]  
+        avg_rews_each_epoch.append(np.mean(rewards))
+        rews_all_epochs = np.concatenate((rews_all_epochs, rewards),axis=0)
+        pol_params_all_epochs = np.concatenate((pol_params_all_epochs, pol_params),axis=0)
     
     # plot rewards
-    plt.plot(np.arange(rewards_all.shape[0]),rewards_all,'-o')
+    plt.plot(np.arange(rews_all_epochs.shape[0]),rews_all_epochs,'-o')
     counter = 0
-    for x,y in zip(np.arange(rewards_all.shape[0]), pol_params_all[:,-1]):
-        label = 'f_z = %i'%np.round(y)
-        plt.annotate(label, (x,rewards_all[counter]), textcoords = 'offset points', xytext = (0,10), ha='center')
-        counter += 1
+    if hfpc:
+        for x,y in zip(np.arange(rews_all_epochs.shape[0]), pol_params_all_epochs[:,-1]):
+            label = 'f_z = %i'%np.round(y)
+            plt.annotate(label, (x,rews_all_epochs[counter]), textcoords = 'offset points', xytext = (0,10), ha='center')
+            counter += 1
     plt.xlabel('sample num')
     plt.ylabel('reward - average across all dmps for each slice')
-    plt.title('reward vs. sample - epoch 0')
-    plt.xticks(np.arange(rewards_all.shape[0]))
+    plt.ylim(-60, 0)
+    plt.title('reward vs. sample')
+    plt.xticks(np.arange(rews_all_epochs.shape[0]))
+    plt.show()
+
+    # plot average rewards each epoch
+    plt.plot(avg_rews_each_epoch, '-o')
+    plt.xlabel('epoch')
+    plt.ylabel('avg reward each epoch - average across all dmps for each slice')
+    plt.ylim(-60, 0)
+    plt.title('avg reward vs epochs')
+    plt.xticks(np.arange(3))
     plt.show()
     
     # update policy mean and cov (REPS)        
     reps_agent = reps.Reps(rel_entropy_bound=1.5,min_temperature=0.001) #Create REPS object
-    policy_params_mean, policy_params_sigma, reps_info = reps_agent.policy_from_samples_and_rewards(pol_params_all, rewards_all)
+    policy_params_mean, policy_params_sigma, reps_info = reps_agent.policy_from_samples_and_rewards(pol_params_all_epochs, rews_all_epochs)
 
     return policy_params_mean, policy_params_sigma
+
 
 def plot_rewards_mult_epochs(work_dir, num_epochs):
     pol_params_all_epochs = np.empty((0,8))

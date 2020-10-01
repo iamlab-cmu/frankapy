@@ -2,7 +2,7 @@
 - try w/ hard vs soft objects (carrot/celery/potato, vs. cucumber vs. tomato)
 - try w/ pivoted cut and variable cartesian gains/stiffnesses 
 '''
-
+# TODO: try adding in penalty for y mvmt as well for 3dim position DMP exploration
 import os
 import subprocess
 import numpy as np
@@ -25,6 +25,16 @@ from frankapy.utils import *
 from tqdm import trange
 from rl_utils import reps
 import time
+import copy
+
+'''note: dmp weights trained with:
+python 04_train_dmp.py -i ~/robot_state_data_0.npz -d position -o ~/092420_normal_cut_dmp_weights -b 6 -s 1 -a 5 -t 0.7  -v --time 4.5
+'/home/sony/092420_normal_cut_dmp_weights_zeroY.pkl' --> w/ y weights not zeroed out
+'/home/sony/092420_normal_cut_dmp_weights_wY.pkl' --> with y weights 
+
+to start script from previous data (i.e. later epoch/sample):
+python examples/run_cutting_RL.py -w /home/sony/092420_normal_cut_dmp_weights_wY.pkl -n 6 -sfp True -pd '/home/sony/Documents/cutting_RL_experiments/data/celery/exp_6/' -start_epoch 1 -s 15 --use_all_dmp_dims True
+'''
 
 def plot_sampled_new_dmp_traject_and_original_dmp(epoch, sample, save_dir, new_z_force, traject_time, \
     initial_dmp_weights_pkl_file, new_dmp_traject, y0):
@@ -43,9 +53,13 @@ def plot_sampled_new_dmp_traject_and_original_dmp(epoch, sample, save_dir, new_z
         if i!=0:
             ax[i].set_title('Cartesian Position - '+str(axes[i]))
         else:     
-            ax[i].set_title('Cartesian Position - '+str(axes[i]) + ' ' + 'Downward z-force (N): '+str(new_z_force))
+            if new_z_force == 'NA':
+                ax[i].set_title('Cartesian Position - '+str(axes[i]))
+            else:
+                ax[i].set_title('Cartesian Position - '+str(axes[i]) + ' ' + 'Downward z-force (N): '+str(new_z_force))
         ax[i].set_ylabel('Position (m)')
         ax[i].legend((axes[i] + '-original traject', axes[i] + '-new sampled traject'))
+    
     ax[2].set_xlabel('Time (s)')
     plt.show()
     # save figure to working dir
@@ -54,9 +68,10 @@ def plot_sampled_new_dmp_traject_and_original_dmp(epoch, sample, save_dir, new_z
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--position_dmp_weights_file_path', '-w', type=str, default='/home/sony/092420_normal_cut_dmp_weights_zeroY.pkl')
+    parser.add_argument('--use_all_dmp_dims', type=bool, default = False)
     parser.add_argument('--dmp_traject_time', '-t', type=int, default = 5)  
     parser.add_argument('--num_epochs', '-e', type=int, default = 5)  
-    parser.add_argument('--num_samples', '-s', type=int, default = 15)    
+    parser.add_argument('--num_samples', '-s', type=int, default = 20)    
     parser.add_argument('--data_savedir', '-d', type=str, default='/home/sony/Documents/cutting_RL_experiments/data/celery/')
     parser.add_argument('--exp_num', '-n', type=int)
     parser.add_argument('--start_from_previous', '-sfp', type=bool, default=False)
@@ -87,13 +102,19 @@ if __name__ == '__main__':
     reset_joint_positions = [ 0.02846037, -0.51649966, -0.12048514, -2.86642333, -0.05060268,  2.30209197, 0.7744833 ]
     fa.goto_joints(reset_joint_positions)    
 
-    knife_orientation = np.array([[0.0,   0.9805069,  -0.19648464],
+    # more angled to sharp knife
+    # knife_orientation = np.array([[0.0,   0.9805069,  -0.19648464],
+    #                               [ 1.0,   0.0,  0.0],
+    #                               [ 0.0, -0.19648464,  -0.9805069]])
+
+    # less angled for 3D printed knife
+    knife_orientation = np.array([[0.0,   0.9903,  -0.1392],
                                   [ 1.0,   0.0,  0.0],
-                                  [ 0.0, -0.19648464,  -0.9805069]])
+                                  [ 0.0, -0.1392,  -0.9903]])
     
     # go to initial cutting pose
     starting_position = RigidTransform(rotation=knife_orientation, \
-        translation=np.array([0.44, -0.067, 0.1]), #z=0.05
+        translation=np.array([0.439, -0.025, 0.1]), #z=0.05
         from_frame='franka_tool', to_frame='world')    
     fa.goto_pose(starting_position, duration=5, use_impedance=False)
 
@@ -105,7 +126,11 @@ if __name__ == '__main__':
     # Initialize Gaussian policy params (DMP weights) - mean and sigma
     if args.start_from_previous: # load previous data collected and start from updated policy and/or sample/epoch        
         prev_data_dir = args.previous_datadir
-        policy_params_mean, policy_params_sigma = parse_policy_params_and_rews_from_file(prev_data_dir)
+        if args.use_all_dmp_dims:
+            policy_params_mean, policy_params_sigma = parse_policy_params_and_rews_from_file(prev_data_dir, hfpc = False)
+        else:
+            policy_params_mean, policy_params_sigma = parse_policy_params_and_rews_from_file(prev_data_dir)
+
         initial_mu, initial_sigma = policy_params_mean, policy_params_sigma
         mu, sigma = initial_mu, initial_sigma
         print('starting from updated policy - mean', policy_params_mean)
@@ -114,36 +139,47 @@ if __name__ == '__main__':
     else: # start w/ initial DMP weights from IL
         initial_wts = np.array(init_dmp_info_dict['weights'])
         f_initial = -20 # TODO: maybe update?
-        # NOTE: only using x dmp weights and z force value for policy params (not all 3 dims)
-        initial_mu = np.append(initial_wts[0,:,:], f_initial)  
-        print('initial mu', initial_mu)
-        initial_sigma = np.diag(np.repeat(0.01, initial_mu.shape[0]))
-        initial_sigma[-1,-1] = 120 # change exploration variance for force parameter
+
+        if args.use_all_dmp_dims: # use position control in dims (use all wt dims (x/y/z))
+            initial_mu = initial_wts.flatten() 
+            initial_sigma = np.diag(np.repeat(0.01, initial_mu.shape[0]))
+
+        else: # use only x wts and z-force
+            initial_mu = np.append(initial_wts[0,:,:], f_initial)  
+            initial_sigma = np.diag(np.repeat(0.01, initial_mu.shape[0]))
+            initial_sigma[-1,-1] = 120 # change exploration variance for force parameter - TODO: increase
+        
+        print('initial mu', initial_mu)        
         mu, sigma = initial_mu, initial_sigma
 
     mean_params_each_epoch = []
     mean_params_each_epoch.append(initial_mu)
     for epoch in range(args.starting_epoch_num, args.num_epochs):
-        import pdb; pdb.set_trace()
         policy_params_all_samples, rewards_all_samples =[], []
         for sample in range(args.starting_sample_num, args.num_samples):
             print('Epoch: %i Sample: %i'%(epoch,sample))
             # Sample new policy params from mu and sigma - NOTE: cap force to be [-1, -40]
-            new_params = np.random.multivariate_normal(mu, sigma)            
-            new_x_weights = new_params[0:-1]
-            new_z_force = new_params[-1]
-            print('sampled z force', new_z_force)
-    
-            # cap force value
-            new_z_force = np.clip(new_z_force, -50, -3)            
-            new_params[-1] = int(new_z_force)  
-            print('clipped sampled z force', new_z_force)         
+            new_params = np.random.multivariate_normal(mu, sigma)    
+            if args.use_all_dmp_dims:
+                #new_z_force = new_params[-1] -- not using z force!
+                new_weights = new_params.reshape(initial_wts.shape)
+                new_z_force = 'NA'
+                                
+            else:    
+                new_x_weights = new_params[0:-1]
+                new_z_force = new_params[-1]
+                print('sampled z force', new_z_force)    
+                # cap force value
+                new_z_force = np.clip(new_z_force, -40, -3)    # TODO: up force to -50N        
+                new_params[-1] = int(new_z_force)  
+                print('clipped sampled z force', new_z_force)         
 
             # save to policy params buffer
             policy_params_all_samples.append(new_params.tolist())
             
-            # concat new sampled x weights w/ old y (zero's) and z weights
-            new_weights = np.expand_dims(np.vstack((new_x_weights,initial_wts[1,:,:],initial_wts[2,:,:])),axis=1)
+            # concat new sampled x weights w/ old y (zero's) and z weights if we're only sampling x weights
+            if not args.use_all_dmp_dims: 
+                new_weights = np.expand_dims(np.vstack((new_x_weights,initial_wts[1,:,:],initial_wts[2,:,:])),axis=1)
             
             # Save new weights to dict
             data_dict = {
@@ -158,6 +194,7 @@ if __name__ == '__main__':
                 'phi_j':         init_dmp_info_dict['phi_j'],
                 'weights':       new_weights.tolist(),                
                 }
+
             # save new sampled weights to pkl file
             weight_save_file = os.path.join(work_dir + '/' + 'dmp_wts', 'weights_' + 'epoch_'+str(epoch) + '_ep_'+str(sample)+ '.pkl')
             save_weights(weight_save_file, data_dict)
@@ -191,8 +228,14 @@ if __name__ == '__main__':
             downsmpled_dmp_traject = downsample_dmp_traject(dmp_traject, 0.001, dt)
             target_poses = get_dmp_traj_poses_reformatted(downsmpled_dmp_traject, starting_rotation) # target_poses is a nx16 list of target poses at each time step
 
-            target_force = [0, 0, new_z_force, 0, 0, 0] #[0, 0, 0, 0, 0, 0]  #[0, 0, -40, 0, 0, 0]   
-            S = [1, 1, 0, 1, 1, 1] #[1, 1, 1, 1, 1, 1] 
+            if args.use_all_dmp_dims:                
+                S = [1, 1, 1, 1, 1, 1] # position control in all axes
+                target_force = [0, 0, 0, 0, 0, 0]
+
+            else: 
+                S = [1, 1, 0, 1, 1, 1] #force control in z axis
+                target_force = [0, 0, new_z_force, 0, 0, 0] 
+
             position_kps_cart = FC.DEFAULT_TRANSLATIONAL_STIFFNESSES + FC.DEFAULT_ROTATIONAL_STIFFNESSES
             force_kps_cart = [0.1] * 6
             position_kps_joint = FC.DEFAULT_K_GAINS
@@ -208,14 +251,16 @@ if __name__ == '__main__':
             dmp_num = 0 
 
             # start FP skill
-            fa.run_dynamic_force_position(duration=T *10, buffer_time = 3, S=S,
-                                            use_cartesian_gains=True,
+            fa.run_dynamic_force_position(duration=T *100000000000000, buffer_time = 3, 
+                                            force_thresholds = [60.0, 60.0, 60.0, 30.0, 30.0, 30.0],
+                                            S=S, use_cartesian_gains=True,
                                             position_kps_cart=position_kps_cart,
                                             force_kps_cart=force_kps_cart, block=False)
 
             # sample from gaussian to get dmp weights for this execution            
             dmp_num = 0            
             peak_forces_all_dmps, x_mvmt_all_dmps, forw_vs_back_x_mvmt_all_dmps = [], [], []# sum of abs (+x/-x mvmt)  
+            y_mvmt_all_dmps, peak_y_force_all_dmps, upward_z_mvmt_all_dmps = [], [], []
             total_cut_time_all_dmps = 0          
             while current_ht > 0.023:   
                 print('starting dmp', dmp_num) 
@@ -232,12 +277,14 @@ if __name__ == '__main__':
                         pose=target_poses[t],
                         force=target_force
                     )
+
                     fb_ctrlr_proto = ForcePositionControllerSensorMessage(
                         id=i, timestamp=timestamp,
                         position_kps_cart=position_kps_cart,
                         force_kps_cart=force_kps_cart,
                         selection=S
                     )
+
                     ros_msg = make_sensor_group_msg(
                         trajectory_generator_sensor_msg=sensor_proto2ros_msg(
                             traj_gen_proto_msg, SensorDataMessageType.FORCE_POSITION),
@@ -249,7 +296,7 @@ if __name__ == '__main__':
                     robot_forces = np.vstack((robot_forces, fa.get_ee_force_torque().reshape(1,6)))
                     
                     pub.publish(ros_msg)
-                    rate.sleep()       
+                    rate.sleep() 
 
                 cut_time = rospy.Time.now().to_time() - init_time
                 peak_force = np.max(np.abs(robot_forces[:,2]))
@@ -259,11 +306,22 @@ if __name__ == '__main__':
                 # difference between forward x movement and backward x movement
                 diff_forw_back_x_mvmt = np.abs(forward_x_mvmt - backward_x_mvmt)
 
+                # data only for use in 3-dim xyz position dmp reward
+                forward_y_mvmt = (np.max(np.abs(robot_positions[:,1]) - np.abs(robot_positions[0,1])))
+                backward_y_mvmt = (np.max(np.abs(robot_positions[:,1]) - np.abs(robot_positions[-1,1])))
+                total_y_mvmt = forward_y_mvmt + backward_y_mvmt
+                peak_y_force = np.max(np.abs(robot_forces[:,1]))
+                upward_z_mvmt = np.max(robot_positions[:,2]) - robot_positions[0,2]
+
                 # save to buffers 
                 total_cut_time_all_dmps += cut_time
                 peak_forces_all_dmps.append(peak_force)
                 x_mvmt_all_dmps.append(total_x_mvmt)
                 forw_vs_back_x_mvmt_all_dmps.append(diff_forw_back_x_mvmt)
+                y_mvmt_all_dmps.append(total_y_mvmt)
+                peak_y_force_all_dmps.append(peak_y_force)
+                upward_z_mvmt_all_dmps.append(upward_z_mvmt)
+
                 np.savez(work_dir + '/' + 'forces_positions/' + 'epoch_'+str(epoch) + '_ep_'+str(sample) + '_trial_info_'+str(dmp_num)+'.npz', robot_positions=robot_positions, \
                     robot_forces=robot_forces)
                 
@@ -305,29 +363,52 @@ if __name__ == '__main__':
             avg_peak_force = np.mean(peak_forces_all_dmps)
             avg_x_mvmt = np.mean(x_mvmt_all_dmps)
             avg_diff_forw_back_x_mvmt = np.mean(diff_forw_back_x_mvmt)
+
+            avg_y_mvmt = np.mean(y_mvmt_all_dmps)
+            avg_peak_y_force = np.mean(peak_y_force_all_dmps)
+            avg_upward_z_mvmt = np.mean(upward_z_mvmt_all_dmps)
             
-            reward = -0.05*avg_peak_force - 10*avg_x_mvmt - 50*avg_diff_forw_back_x_mvmt + -0.2*total_cut_time_all_dmps
+            # TODO: try adding in penalty for y mvmt, y forces, as well for 3dim position DMP exploration
+            # original reward
+            #reward = -0.05*avg_peak_force - 10*avg_x_mvmt - 50*avg_diff_forw_back_x_mvmt + -0.2*total_cut_time_all_dmps
             
+            if args.use_all_dmp_dims:  
+                import pdb; pdb.set_trace()
+                # reward = -0.05*avg_peak_force -0.1*avg_peak_y_force - 10*avg_x_mvmt -20*avg_y_mvmt -50*avg_upward_z_mvmt - 50*avg_diff_forw_back_x_mvmt + -0.2*total_cut_time_all_dmps
+                reward = -0.05*avg_peak_force -0.1*avg_peak_y_force - 10*avg_x_mvmt -100*avg_y_mvmt -100*avg_upward_z_mvmt - 50*avg_diff_forw_back_x_mvmt + -0.2*total_cut_time_all_dmps
+
+            else:
+                reward = -0.05*avg_peak_force - 10*avg_x_mvmt - 50*avg_diff_forw_back_x_mvmt + -0.2*total_cut_time_all_dmps
+            import pdb; pdb.set_trace()
+
             # save reward to buffer
             print('Epoch: %i Sample: %i Reward: '%(epoch,sample), reward)
             rewards_all_samples.append(reward)
 
-            import pdb; pdb.set_trace()
+            #import pdb; pdb.set_trace()
             # save intermediate rewards/pol params 
-            
-            np.save(os.path.join(work_dir + '/' + 'all_polParamRew_data', 'polParamsRews_' + 'epoch_'+str(epoch) + '_ep_'+str(sample) + '.npy'), \
-                np.concatenate((np.array(policy_params_all_samples), np.array([rewards_all_samples]).T), axis=1))
+            if args.starting_sample_num !=0:
+                import pdb; pdb.set_trace()
+                prev_sample_data = np.load(os.path.join(work_dir + '/' + 'all_polParamRew_data', 'polParamsRews_' + 'epoch_'+str(epoch) + '_ep_'+str(args.starting_sample_num-1) + '.npy'))
+                new_sample_data = np.concatenate((np.array(policy_params_all_samples), np.array([rewards_all_samples]).T), axis=1)
+                combined_data = np.concatenate((prev_sample_data, new_sample_data), axis=0)
+                np.save(os.path.join(work_dir + '/' + 'all_polParamRew_data', 'polParamsRews_' + 'epoch_'+str(epoch) + '_ep_'+str(sample) + '.npy'),
+                    combined_data)
+
+            else:
+                np.save(os.path.join(work_dir + '/' + 'all_polParamRew_data', 'polParamsRews_' + 'epoch_'+str(epoch) + '_ep_'+str(sample) + '.npy'), \
+                    np.concatenate((np.array(policy_params_all_samples), np.array([rewards_all_samples]).T), axis=1))
             import pdb; pdb.set_trace()
 
             # reset to starting cut position            
-            new_position = starting_position
+            new_position = copy.deepcopy(starting_position)
             new_position.translation[1] = fa.get_pose().translation[1]
             fa.goto_pose(new_position, duration=5, use_impedance=False)
 
             # move over a bit (y dir)
             move_over_slice_thickness = RigidTransform(translation=np.array([0.0, 0.005, 0.0]),
                 from_frame='world', to_frame='world') 
-            fa.goto_pose_delta(move_over_slice_thickness, duration=5, use_impedance=False)
+            fa.goto_pose_delta(move_over_slice_thickness, duration=3, use_impedance=False)
             import pdb; pdb.set_trace()
 
             # move down to contact
