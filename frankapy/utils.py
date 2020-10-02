@@ -184,6 +184,8 @@ def parse_policy_params_and_rews_from_file(work_dir, hfpc=True):
     num_prev_epochs = len(data_files)
     rews_all_epochs = np.empty((0))
     avg_rews_each_epoch = []
+    num_samples_each_epoch = []
+    num_samples = 0
     if hfpc:
         pol_params_all_epochs = np.empty((0,8))
     else:
@@ -196,9 +198,15 @@ def parse_policy_params_and_rews_from_file(work_dir, hfpc=True):
         avg_rews_each_epoch.append(np.mean(rewards))
         rews_all_epochs = np.concatenate((rews_all_epochs, rewards),axis=0)
         pol_params_all_epochs = np.concatenate((pol_params_all_epochs, pol_params),axis=0)
+        num_samples+=data.shape[0]
+        num_samples_each_epoch.append(num_samples)
+        
     
     # plot rewards
     plt.plot(np.arange(rews_all_epochs.shape[0]),rews_all_epochs,'-o')
+    # add in labels for epochs
+    plt.vlines(np.array(num_samples_each_epoch)-1,-100,0, colors = ['r','r','r'], linestyles={'dashed', 'dashed', 'dashed'})
+
     counter = 0
     if hfpc:
         for x,y in zip(np.arange(rews_all_epochs.shape[0]), pol_params_all_epochs[:,-1]):
@@ -207,7 +215,7 @@ def parse_policy_params_and_rews_from_file(work_dir, hfpc=True):
             counter += 1
     plt.xlabel('sample num')
     plt.ylabel('reward - average across all dmps for each slice')
-    plt.ylim(-60, 0)
+    plt.ylim(-90, 0)
     plt.title('reward vs. sample')
     plt.xticks(np.arange(rews_all_epochs.shape[0]))
     plt.show()

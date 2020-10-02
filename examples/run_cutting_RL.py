@@ -7,6 +7,7 @@ import os
 import subprocess
 import numpy as np
 import matplotlib.pyplot as plt
+plt.close("all")
 import math
 import rospy
 import argparse
@@ -34,6 +35,8 @@ python 04_train_dmp.py -i ~/robot_state_data_0.npz -d position -o ~/092420_norma
 
 to start script from previous data (i.e. later epoch/sample):
 python examples/run_cutting_RL.py -w /home/sony/092420_normal_cut_dmp_weights_wY.pkl -n 6 -sfp True -pd '/home/sony/Documents/cutting_RL_experiments/data/celery/exp_6/' -start_epoch 1 -s 15 --use_all_dmp_dims True
+
+ python examples/run_cutting_RL.py -w /home/sony/092420_normal_cut_dmp_weights_wY.pkl -n 6 -sfp True -pd '/home/sony/Documents/cutting_RL_experiments/data/celery/exp_6/' -start_epoch 2 -start_sample 14 -s 15 --use_all_dmp_dims True
 '''
 
 def plot_sampled_new_dmp_traject_and_original_dmp(epoch, sample, save_dir, new_z_force, traject_time, \
@@ -114,7 +117,7 @@ if __name__ == '__main__':
     
     # go to initial cutting pose
     starting_position = RigidTransform(rotation=knife_orientation, \
-        translation=np.array([0.439, -0.025, 0.1]), #z=0.05
+        translation=np.array([0.432, 0.048, 0.1]), #z=0.05
         from_frame='franka_tool', to_frame='world')    
     fa.goto_pose(starting_position, duration=5, use_impedance=False)
 
@@ -135,6 +138,12 @@ if __name__ == '__main__':
         mu, sigma = initial_mu, initial_sigma
         print('starting from updated policy - mean', policy_params_mean)
         initial_wts = np.array(init_dmp_info_dict['weights'])
+        
+        # if args.start_from_previous and args.start_epoch!=0 and args.start_sample==0:
+        #     np.savez(os.path.join(work_dir, 'REPSupdatedMean_' + 'epoch_'+str(epoch) +'.npz'), \
+        #         updated_mean = policy_params_mean, updated_cov = policy_params_sigma)
+        import pdb; pdb.set_trace()
+
 
     else: # start w/ initial DMP weights from IL
         initial_wts = np.array(init_dmp_info_dict['weights'])
@@ -251,7 +260,7 @@ if __name__ == '__main__':
             dmp_num = 0 
 
             # start FP skill
-            fa.run_dynamic_force_position(duration=T *100000000000000, buffer_time = 3, 
+            fa.run_dynamic_force_position(duration=T *100000000000000000, buffer_time = 3, 
                                             force_thresholds = [60.0, 60.0, 60.0, 30.0, 30.0, 30.0],
                                             S=S, use_cartesian_gains=True,
                                             position_kps_cart=position_kps_cart,
@@ -373,7 +382,6 @@ if __name__ == '__main__':
             #reward = -0.05*avg_peak_force - 10*avg_x_mvmt - 50*avg_diff_forw_back_x_mvmt + -0.2*total_cut_time_all_dmps
             
             if args.use_all_dmp_dims:  
-                import pdb; pdb.set_trace()
                 # reward = -0.05*avg_peak_force -0.1*avg_peak_y_force - 10*avg_x_mvmt -20*avg_y_mvmt -50*avg_upward_z_mvmt - 50*avg_diff_forw_back_x_mvmt + -0.2*total_cut_time_all_dmps
                 reward = -0.05*avg_peak_force -0.1*avg_peak_y_force - 10*avg_x_mvmt -100*avg_y_mvmt -100*avg_upward_z_mvmt - 50*avg_diff_forw_back_x_mvmt + -0.2*total_cut_time_all_dmps
 
@@ -388,7 +396,6 @@ if __name__ == '__main__':
             #import pdb; pdb.set_trace()
             # save intermediate rewards/pol params 
             if args.starting_sample_num !=0:
-                import pdb; pdb.set_trace()
                 prev_sample_data = np.load(os.path.join(work_dir + '/' + 'all_polParamRew_data', 'polParamsRews_' + 'epoch_'+str(epoch) + '_ep_'+str(args.starting_sample_num-1) + '.npy'))
                 new_sample_data = np.concatenate((np.array(policy_params_all_samples), np.array([rewards_all_samples]).T), axis=1)
                 combined_data = np.concatenate((prev_sample_data, new_sample_data), axis=0)
@@ -405,8 +412,16 @@ if __name__ == '__main__':
             new_position.translation[1] = fa.get_pose().translation[1]
             fa.goto_pose(new_position, duration=5, use_impedance=False)
 
-            # move over a bit (y dir)
-            move_over_slice_thickness = RigidTransform(translation=np.array([0.0, 0.005, 0.0]),
+            # move over a bit (y dir)          
+            y_shift = float(input('enter how far to shift in y dir (m): '))
+            move_over_slice_thickness = RigidTransform(translation=np.array([0.0, y_shift, 0.0]),
+                from_frame='world', to_frame='world') 
+            # move_over_slice_thickness = RigidTransform(translation=np.array([0.0, 0.005, 0.0]),
+            #     from_frame='world', to_frame='world') 
+            fa.goto_pose_delta(move_over_slice_thickness, duration=3, use_impedance=False)
+
+            y_shift = float(input('enter how far to shift in y dir (m): '))
+            move_over_slice_thickness = RigidTransform(translation=np.array([0.0, y_shift, 0.0]),
                 from_frame='world', to_frame='world') 
             fa.goto_pose_delta(move_over_slice_thickness, duration=3, use_impedance=False)
             import pdb; pdb.set_trace()
@@ -432,9 +447,14 @@ if __name__ == '__main__':
         print('updated policy cov')
         print(policy_params_sigma)
         import pdb; pdb.set_trace()
-        # TODO: save new policy params mean   
+        # TODO: roll out updated policy mean and evaluate
+
+        # save new policy params mean and cov   
         np.savez(os.path.join(work_dir, 'REPSupdatedMean_' + 'epoch_'+str(epoch) +'.npz'), \
             updated_mean = policy_params_mean, updated_cov = policy_params_sigma)
+
+        # after epoch is complete, reset start_sample to 0
+        args.start_sample = 0
 
     fa.goto_joints(reset_joint_positions)
 
