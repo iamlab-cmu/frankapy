@@ -1,13 +1,14 @@
 #!/bin/bash
 
-control_pc_uname=$1
-control_pc_ip_address=$2
-control_pc_franka_interface_path=$3
-control_pc_use_password=$4
-control_pc_password=$5
-franka_interface_stop_on_error=$6
+with_gripper=$1
+control_pc_uname=$2
+control_pc_ip_address=$3
+control_pc_franka_interface_path=$4
+control_pc_use_password=$5
+control_pc_password=$6
+franka_interface_stop_on_error=$7
 
-
+echo $with_gripper
 echo $control_pc_uname
 echo $control_pc_ip_address
 echo $control_pc_franka_interface_path

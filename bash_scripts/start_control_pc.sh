@@ -15,6 +15,7 @@ where:
     -d Path to franka_interface on control PC (default ~/Documents/franka-interface)
     -r Robot number (default 1)
     -s Start franka-interface on control PC (0 / 1 (default))
+    -g Robot has gripper (0 / 1 (default))
     
     ./start_control_pc.sh -i iam-space
     ./start_control_pc.sh -i iam-space -u iam-lab -p 12345678 -d ~/Documents/franka-interface -r 1 -s 0
@@ -26,6 +27,7 @@ control_pc_password=""
 control_pc_franka_interface_path="~/Documents/franka-interface"
 start_franka_interface=1
 robot_number=1
+with_gripper=1
 
 while getopts ':h:i:u:p:d:r:s:' option; do
   case "${option}" in
@@ -44,6 +46,8 @@ while getopts ':h:i:u:p:d:r:s:' option; do
     r) robot_number=$OPTARG
        ;;
     s) start_franka_interface=$OPTARG
+       ;;
+    g) with_gripper=$OPTARG
        ;;
     :) printf "missing argument for -%s\n" "$OPTARG" >&2
        echo "$usage" >&2
@@ -86,7 +90,7 @@ if [ "$start_franka_interface" -eq 1 ]; then
 # ssh to the control pc and start franka_interface in a new gnome-terminal
 start_franka_interface_on_control_pc_path="$DIR/start_franka_interface_on_control_pc.sh"
 echo "Will ssh to control PC and start iam_roblib."
-gnome-terminal -e "bash $start_franka_interface_on_control_pc_path $control_pc_uname $control_pc_ip_address $control_pc_franka_interface_path $control_pc_use_password $control_pc_password "
+gnome-terminal -e "bash $start_franka_interface_on_control_pc_path $with_gripper $control_pc_uname $control_pc_ip_address $control_pc_franka_interface_path $control_pc_use_password $control_pc_password "
 echo "Done"
 sleep 3
 else
