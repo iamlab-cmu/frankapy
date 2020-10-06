@@ -38,6 +38,7 @@ python examples/run_cutting_RL.py -w /home/sony/092420_normal_cut_dmp_weights_wY
 
  python examples/run_cutting_RL.py -w /home/sony/092420_normal_cut_dmp_weights_wY.pkl -n 6 -sfp True -pd '/home/sony/Documents/cutting_RL_experiments/data/celery/exp_6/' -start_epoch 2 -start_sample 14 -s 15 --use_all_dmp_dims True
 '''
+# TODO: use only previous epoch to update policy
 
 def plot_sampled_new_dmp_traject_and_original_dmp(epoch, sample, save_dir, new_pitch_stiffness, traject_time, \
     initial_dmp_weights_pkl_file, new_dmp_traject, y0):
@@ -79,6 +80,7 @@ if __name__ == '__main__':
     parser.add_argument('--exp_num', '-n', type=int)
     parser.add_argument('--start_from_previous', '-sfp', type=bool, default=False)
     parser.add_argument('--previous_datadir', '-pd', type=str)
+    parser.add_argument('--prev_epochs_to_calc_pol_update', '-num_prev_epochs', type=int, default = 1)
     parser.add_argument('--starting_epoch_num', '-start_epoch', type=int, default = 0)
     parser.add_argument('--starting_sample_num', '-start_sample', type=int, default = 0)
     args = parser.parse_args()
@@ -106,14 +108,19 @@ if __name__ == '__main__':
     fa.goto_joints(reset_joint_positions)    
 
 
-    # piv chop angle - 3D printed knife - TODO: sample this starting angle as well??
-    knife_orientation = np.array([[0.0,   0.9397,  -0.3420],
+    # piv chop angle - 3D printed knife (20 deg) - TODO: sample this starting angle as well??
+    # knife_orientation = np.array([[0.0,   0.9397,  -0.3420],
+    #                               [ 1.0,   0.0,  0.0],
+    #                               [ 0.0, -0.3420,  -0.9397]])
+
+    # metal knife (26 deg tilt forward)
+    knife_orientation = np.array([[0.0,   0.8988,  -0.4384],
                                   [ 1.0,   0.0,  0.0],
-                                  [ 0.0, -0.3420,  -0.9397]])
+                                  [ 0.0, -0.4384,  -0.8988]])
     
     # go to initial cutting pose
     starting_position = RigidTransform(rotation=knife_orientation, \
-        translation=np.array([0.418, 0.001, 0.109]), #z=0.05
+        translation=np.array([0.437, 0.034, 0.115]), #z=0.05
         from_frame='franka_tool', to_frame='world')    
     fa.goto_pose(starting_position, duration=5, use_impedance=False)
 
@@ -126,9 +133,9 @@ if __name__ == '__main__':
     if args.start_from_previous: # load previous data collected and start from updated policy and/or sample/epoch        
         prev_data_dir = args.previous_datadir
         if args.use_all_dmp_dims:
-            policy_params_mean, policy_params_sigma = parse_policy_params_and_rews_from_file(prev_data_dir, hfpc = False)
+            policy_params_mean, policy_params_sigma = parse_policy_params_and_rews_from_file(prev_data_dir, args.prev_epochs_to_calc_pol_update, hfpc = False)
         else:
-            policy_params_mean, policy_params_sigma = parse_policy_params_and_rews_from_file(prev_data_dir)
+            policy_params_mean, policy_params_sigma = parse_policy_params_and_rews_from_file(prev_data_dir, args.prev_epochs_to_calc_pol_update)
 
         initial_mu, initial_sigma = policy_params_mean, policy_params_sigma
         mu, sigma = initial_mu, initial_sigma
@@ -433,7 +440,7 @@ if __name__ == '__main__':
             fa.goto_pose(new_position, duration=5, use_impedance=False)
 
             # move over a bit (y dir)          
-            y_shift = 0.007 #float(input('enter how far to shift in y dir (m): '))
+            y_shift = 0.004 #float(input('enter how far to shift in y dir (m): '))
             move_over_slice_thickness = RigidTransform(translation=np.array([0.0, y_shift, 0.0]),
                 from_frame='world', to_frame='world') 
             # move_over_slice_thickness = RigidTransform(translation=np.array([0.0, 0.005, 0.0]),
@@ -474,7 +481,7 @@ if __name__ == '__main__':
             updated_mean = policy_params_mean, updated_cov = policy_params_sigma)
 
         # after epoch is complete, reset start_sample to 0
-        args.start_sample = 0
+        args.starting_sample_num = 0
 
     fa.goto_joints(reset_joint_positions)
 

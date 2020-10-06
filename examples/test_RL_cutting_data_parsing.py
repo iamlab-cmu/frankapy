@@ -1,7 +1,9 @@
 from frankapy.utils import *
 
-data_dir = '/home/sony/Documents/cutting_RL_experiments/data/celery/exp_5/'
-policy_params_mean, policy_params_sigma = parse_policy_params_and_rews_from_file(data_dir, hfpc = False)
+data_dir = '/home/sony/Documents/cutting_RL_experiments/data/celery/pivChop/exp_2/'
+#policy_params_mean, policy_params_sigma = parse_policy_params_and_rews_from_file(data_dir,prev_epochs_to_calc_pol_update, hfpc = False)
+policy_params_mean, policy_params_sigma = parse_policy_params_and_rews_from_file(data_dir, prev_epochs_to_calc_pol_update=10, hfpc = True)
+
 import pdb; pdb.set_trace()
 
 # num_epochs = 3
