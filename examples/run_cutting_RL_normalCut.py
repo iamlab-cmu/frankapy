@@ -19,7 +19,7 @@ from cv_bridge import CvBridge
 from frankapy import FrankaArm, SensorDataMessageType
 from frankapy import FrankaConstants as FC
 from frankapy.proto_utils import sensor_proto2ros_msg, make_sensor_group_msg
-from frankapy.proto import ForcePositionSensorMessage, ForcePositionControllerSensorMessage
+from frankapy.proto import ForcePositionSensorMessage, ForcePositionControllerSensorMessage, ShouldTerminateSensorMessage
 from franka_interface_msgs.msg import SensorDataGroup
 from frankapy.utils import *
 
@@ -79,6 +79,7 @@ if __name__ == '__main__':
     parser.add_argument('--exp_num', '-n', type=int)
     parser.add_argument('--start_from_previous', '-sfp', type=bool, default=False)
     parser.add_argument('--previous_datadir', '-pd', type=str)
+    parser.add_argument('--prev_epochs_to_calc_pol_update', '-num_prev_epochs', type=int, default = 1)
     parser.add_argument('--starting_epoch_num', '-start_epoch', type=int, default = 0)
     parser.add_argument('--starting_sample_num', '-start_sample', type=int, default = 0)
     args = parser.parse_args()
@@ -106,18 +107,18 @@ if __name__ == '__main__':
     fa.goto_joints(reset_joint_positions)    
 
     # more angled to sharp knife
-    # knife_orientation = np.array([[0.0,   0.9805069,  -0.19648464],
-    #                               [ 1.0,   0.0,  0.0],
-    #                               [ 0.0, -0.19648464,  -0.9805069]])
+    knife_orientation = np.array([[0.0,   0.9805069,  -0.19648464],
+                                  [ 1.0,   0.0,  0.0],
+                                  [ 0.0, -0.19648464,  -0.9805069]])
 
     # less angled for 3D printed knife
-    knife_orientation = np.array([[0.0,   0.9903,  -0.1392],
-                                  [ 1.0,   0.0,  0.0],
-                                  [ 0.0, -0.1392,  -0.9903]])
+    # knife_orientation = np.array([[0.0,   0.9903,  -0.1392],
+    #                               [ 1.0,   0.0,  0.0],
+    #                               [ 0.0, -0.1392,  -0.9903]])
     
     # go to initial cutting pose
     starting_position = RigidTransform(rotation=knife_orientation, \
-        translation=np.array([0.432, 0.048, 0.1]), #z=0.05
+        translation=np.array([0.412, 0.025, 0.1]), #z=0.05
         from_frame='franka_tool', to_frame='world')    
     fa.goto_pose(starting_position, duration=5, use_impedance=False)
 
@@ -130,9 +131,9 @@ if __name__ == '__main__':
     if args.start_from_previous: # load previous data collected and start from updated policy and/or sample/epoch        
         prev_data_dir = args.previous_datadir
         if args.use_all_dmp_dims:
-            policy_params_mean, policy_params_sigma = parse_policy_params_and_rews_from_file(prev_data_dir, hfpc = False)
+            policy_params_mean, policy_params_sigma = parse_policy_params_and_rews_from_file(prev_data_dir, args.prev_epochs_to_calc_pol_update, hfpc = False)
         else:
-            policy_params_mean, policy_params_sigma = parse_policy_params_and_rews_from_file(prev_data_dir)
+            policy_params_mean, policy_params_sigma = parse_policy_params_and_rews_from_file(prev_data_dir, args.prev_epochs_to_calc_pol_update)
 
         initial_mu, initial_sigma = policy_params_mean, policy_params_sigma
         mu, sigma = initial_mu, initial_sigma
@@ -259,19 +260,26 @@ if __name__ == '__main__':
             current_ht = fa.get_pose().translation[2]
             dmp_num = 0 
 
-            # start FP skill
-            fa.run_dynamic_force_position(duration=T *100000000000000000, buffer_time = 3, 
+            # # start FP skill
+            # fa.run_dynamic_force_position(duration=T *100000000000000000, buffer_time = 3, 
+            #                                 force_thresholds = [60.0, 60.0, 60.0, 30.0, 30.0, 30.0],
+            #                                 S=S, use_cartesian_gains=True,
+            #                                 position_kps_cart=position_kps_cart,
+            #                                 force_kps_cart=force_kps_cart, block=False)
+
+            # sample from gaussian to get dmp weights for this execution            
+            dmp_num = 0            
+            peak_z_forces_all_dmps, x_mvmt_all_dmps, forw_vs_back_x_mvmt_all_dmps = [], [], []# sum of abs (+x/-x mvmt)  
+            y_mvmt_all_dmps, peak_y_force_all_dmps, z_mvmt_all_dmps, upward_z_mvmt_all_dmps = [], [], [], []
+            total_cut_time_all_dmps = 0          
+            while current_ht > 0.023:   
+                # start FP skill
+                fa.run_dynamic_force_position(duration=T *100000000000000000, buffer_time = 3, 
                                             force_thresholds = [60.0, 60.0, 60.0, 30.0, 30.0, 30.0],
                                             S=S, use_cartesian_gains=True,
                                             position_kps_cart=position_kps_cart,
                                             force_kps_cart=force_kps_cart, block=False)
 
-            # sample from gaussian to get dmp weights for this execution            
-            dmp_num = 0            
-            peak_forces_all_dmps, x_mvmt_all_dmps, forw_vs_back_x_mvmt_all_dmps = [], [], []# sum of abs (+x/-x mvmt)  
-            y_mvmt_all_dmps, peak_y_force_all_dmps, upward_z_mvmt_all_dmps = [], [], []
-            total_cut_time_all_dmps = 0          
-            while current_ht > 0.023:   
                 print('starting dmp', dmp_num) 
                 robot_positions = np.zeros((0,3))
                 robot_forces = np.zeros((0,6))       
@@ -307,8 +315,17 @@ if __name__ == '__main__':
                     pub.publish(ros_msg)
                     rate.sleep() 
 
+                # stop skill here w/ proto msg
+                term_proto_msg = ShouldTerminateSensorMessage(timestamp=rospy.Time.now().to_time() - init_time, should_terminate=True)
+                ros_msg = make_sensor_group_msg(
+                    termination_handler_sensor_msg=sensor_proto2ros_msg(
+                        term_proto_msg, SensorDataMessageType.SHOULD_TERMINATE)
+                    )
+                pub.publish(ros_msg)
+
+                # calc stats from dmp
                 cut_time = rospy.Time.now().to_time() - init_time
-                peak_force = np.max(np.abs(robot_forces[:,2]))
+                peak_z_force = np.max(np.abs(robot_forces[:,2]))
                 forward_x_mvmt = (np.max(np.abs(robot_positions[:,0]) - np.abs(robot_positions[0,0])))
                 backward_x_mvmt = (np.max(np.abs(robot_positions[:,0]) - np.abs(robot_positions[-1,0])))
                 total_x_mvmt = forward_x_mvmt + backward_x_mvmt
@@ -322,14 +339,19 @@ if __name__ == '__main__':
                 peak_y_force = np.max(np.abs(robot_forces[:,1]))
                 upward_z_mvmt = np.max(robot_positions[:,2]) - robot_positions[0,2]
 
+                up_z_mvmt = np.abs(robot_positions[-1,2]) - np.min(np.abs(robot_positions[:,2])) 
+                down_z_mvmt = np.abs(robot_positions[0,2]) - np.min(np.abs(robot_positions[:,2]))
+                total_z_mvmt = up_z_mvmt + down_z_mvmt
+
                 # save to buffers 
                 total_cut_time_all_dmps += cut_time
-                peak_forces_all_dmps.append(peak_force)
+                peak_z_forces_all_dmps.append(peak_z_force)
                 x_mvmt_all_dmps.append(total_x_mvmt)
                 forw_vs_back_x_mvmt_all_dmps.append(diff_forw_back_x_mvmt)
                 y_mvmt_all_dmps.append(total_y_mvmt)
                 peak_y_force_all_dmps.append(peak_y_force)
                 upward_z_mvmt_all_dmps.append(upward_z_mvmt)
+                z_mvmt_all_dmps.append(total_z_mvmt)
 
                 np.savez(work_dir + '/' + 'forces_positions/' + 'epoch_'+str(epoch) + '_ep_'+str(sample) + '_trial_info_'+str(dmp_num)+'.npz', robot_positions=robot_positions, \
                     robot_forces=robot_forces)
@@ -364,36 +386,50 @@ if __name__ == '__main__':
                 
             
             # After finishing set of dmps for a full slice - calculate avg reward here
-            fa.stop_skill()
+            #fa.stop_skill()
             # pause to let skill fully stop
             time.sleep(1.5)
 
-            #   avg peak force, avg back and forth mvmt ?             
-            avg_peak_force = np.mean(peak_forces_all_dmps)
-            avg_x_mvmt = np.mean(x_mvmt_all_dmps)
-            avg_diff_forw_back_x_mvmt = np.mean(diff_forw_back_x_mvmt)
+            #   avg/max across all dmps for 1 slice           
+            # avg_peak_z_force = np.mean(peak_z_forces_all_dmps)
+            # avg_x_mvmt = np.mean(x_mvmt_all_dmps)
+            # avg_diff_forw_back_x_mvmt = np.mean(diff_forw_back_x_mvmt)
 
-            avg_y_mvmt = np.mean(y_mvmt_all_dmps)
-            avg_peak_y_force = np.mean(peak_y_force_all_dmps)
-            avg_upward_z_mvmt = np.mean(upward_z_mvmt_all_dmps)
-            
+            # avg_y_mvmt = np.mean(y_mvmt_all_dmps)
+            # avg_peak_y_force = np.mean(peak_y_force_all_dmps)
+            # avg_upward_z_mvmt = np.mean(upward_z_mvmt_all_dmps)
+
+            avg_peak_y_force = np.max(peak_y_force_all_dmps)
+            avg_peak_z_force = np.max(peak_z_forces_all_dmps)
+            avg_x_mvmt = np.max(x_mvmt_all_dmps)
+            avg_y_mvmt = np.max(y_mvmt_all_dmps)
+            avg_z_mvmt = np.max(z_mvmt_all_dmps)
+            avg_upward_z_mvmt = np.max(upward_z_mvmt_all_dmps)
+            #avg_diff_forw_back_x_mvmt = np.max(diff_forw_back_x_mvmt)                                
+                        
             # TODO: try adding in penalty for y mvmt, y forces, as well for 3dim position DMP exploration
             # original reward
             #reward = -0.05*avg_peak_force - 10*avg_x_mvmt - 50*avg_diff_forw_back_x_mvmt + -0.2*total_cut_time_all_dmps
             
             if args.use_all_dmp_dims:  
                 # reward = -0.05*avg_peak_force -0.1*avg_peak_y_force - 10*avg_x_mvmt -20*avg_y_mvmt -50*avg_upward_z_mvmt - 50*avg_diff_forw_back_x_mvmt + -0.2*total_cut_time_all_dmps
-                reward = -0.05*avg_peak_force -0.1*avg_peak_y_force - 10*avg_x_mvmt -100*avg_y_mvmt -100*avg_upward_z_mvmt - 50*avg_diff_forw_back_x_mvmt + -0.2*total_cut_time_all_dmps
+                reward = -0.05*avg_peak_z_force -0.1*avg_peak_y_force - 10*avg_x_mvmt -100*avg_y_mvmt -100*avg_upward_z_mvmt - 50*avg_diff_forw_back_x_mvmt + -0.2*total_cut_time_all_dmps
 
             else:
-                reward = -0.05*avg_peak_force - 10*avg_x_mvmt - 50*avg_diff_forw_back_x_mvmt + -0.2*total_cut_time_all_dmps
-            import pdb; pdb.set_trace()
+                # normal-cut specific reward
+                #reward = -0.05*avg_peak_force - 10*avg_x_mvmt - 50*avg_diff_forw_back_x_mvmt + -0.2*total_cut_time_all_dmps
+                
+                # trying out more generalized cutting reward function - remove not returning to start penalty:
+                avg_upward_z_penalty= avg_upward_z_mvmt  # NOTE: in normal cut, -100*avg_upward_z_penalty term = -100*avg_upward_z_mvmt (calc diff for each cut type)
+                reward = -0.1*avg_peak_y_force -0.15*avg_peak_z_force - 10*avg_x_mvmt -100*avg_y_mvmt - 10*avg_z_mvmt \
+                    -100*avg_upward_z_penalty -0.2*total_cut_time_all_dmps 
+
 
             # save reward to buffer
             print('Epoch: %i Sample: %i Reward: '%(epoch,sample), reward)
             rewards_all_samples.append(reward)
-
-            #import pdb; pdb.set_trace()
+            import pdb; pdb.set_trace()
+            
             # save intermediate rewards/pol params 
             if args.starting_sample_num !=0:
                 prev_sample_data = np.load(os.path.join(work_dir + '/' + 'all_polParamRew_data', 'polParamsRews_' + 'epoch_'+str(epoch) + '_ep_'+str(args.starting_sample_num-1) + '.npy'))
@@ -412,21 +448,30 @@ if __name__ == '__main__':
             new_position.translation[1] = fa.get_pose().translation[1]
             fa.goto_pose(new_position, duration=5, use_impedance=False)
 
-            # move over a bit (y dir)          
-            y_shift = float(input('enter how far to shift in y dir (m): '))
+            # move over a bit (y dir)       
+            y_shift = 0.004 #float(input('enter how far to shift in y dir (m): '))
             move_over_slice_thickness = RigidTransform(translation=np.array([0.0, y_shift, 0.0]),
                 from_frame='world', to_frame='world') 
             # move_over_slice_thickness = RigidTransform(translation=np.array([0.0, 0.005, 0.0]),
             #     from_frame='world', to_frame='world') 
             fa.goto_pose_delta(move_over_slice_thickness, duration=3, use_impedance=False)
 
-            y_shift = float(input('enter how far to shift in y dir (m): '))
-            move_over_slice_thickness = RigidTransform(translation=np.array([0.0, y_shift, 0.0]),
-                from_frame='world', to_frame='world') 
-            fa.goto_pose_delta(move_over_slice_thickness, duration=3, use_impedance=False)
-            import pdb; pdb.set_trace()
+               
+            # y_shift = float(input('enter how far to shift in y dir (m): '))
+            # move_over_slice_thickness = RigidTransform(translation=np.array([0.0, y_shift, 0.0]),
+            #     from_frame='world', to_frame='world') 
+            # # move_over_slice_thickness = RigidTransform(translation=np.array([0.0, 0.005, 0.0]),
+            # #     from_frame='world', to_frame='world') 
+            # fa.goto_pose_delta(move_over_slice_thickness, duration=3, use_impedance=False)
+
+            # y_shift = float(input('enter how far to shift in y dir (m): '))
+            # move_over_slice_thickness = RigidTransform(translation=np.array([0.0, y_shift, 0.0]),
+            #     from_frame='world', to_frame='world') 
+            # fa.goto_pose_delta(move_over_slice_thickness, duration=3, use_impedance=False)
+            # import pdb; pdb.set_trace()
 
             # move down to contact
+            import pdb; pdb.set_trace()
             move_down_to_contact = RigidTransform(translation=np.array([0.0, 0.0, -0.1]),
             from_frame='world', to_frame='world')   
             fa.goto_pose_delta(move_down_to_contact, duration=5, use_impedance=False, force_thresholds=[10.0, 10.0, 3.0, 10.0, 10.0, 10.0], ignore_virtual_walls=True)
@@ -454,7 +499,7 @@ if __name__ == '__main__':
             updated_mean = policy_params_mean, updated_cov = policy_params_sigma)
 
         # after epoch is complete, reset start_sample to 0
-        args.start_sample = 0
+        args.starting_sample_num = 0
 
     fa.goto_joints(reset_joint_positions)
 

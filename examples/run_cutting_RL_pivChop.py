@@ -73,7 +73,7 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--position_dmp_weights_file_path', '-w', type=str, default='/home/sony/raw_IL_trajects/100220_piv_chop_position_dmp_weights_zeroXY_2.pkl')
     parser.add_argument('--use_all_dmp_dims', type=bool, default = False)
-    parser.add_argument('--dmp_traject_time', '-t', type=int, default = 5)  
+    parser.add_argument('--dmp_traject_time', '-t', type=int, default = 6)  
     parser.add_argument('--num_epochs', '-e', type=int, default = 5)  
     parser.add_argument('--num_samples', '-s', type=int, default = 20)    
     parser.add_argument('--data_savedir', '-d', type=str, default='/home/sony/Documents/cutting_RL_experiments/data/celery/pivChop/')

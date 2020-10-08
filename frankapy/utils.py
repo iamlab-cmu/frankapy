@@ -213,13 +213,13 @@ def parse_policy_params_and_rews_from_file(work_dir, prev_epochs_to_calc_pol_upd
     counter = 0
     if hfpc:
         for x,y in zip(np.arange(rews_all_epochs.shape[0]), pol_params_all_epochs[:,-1]):
-            label = 'rStiff = %i'%np.round(y) #'f_z = %i'%np.round(y)
+            label = 'f_z = %i'%np.round(y) #'rStiff = %i'%np.round(y) 
             plt.annotate(label, (x,rews_all_epochs[counter]), textcoords = 'offset points', xytext = (0,10), ha='center')
             counter += 1
     plt.xlabel('sample num')
     plt.ylabel('reward - average across all dmps for each slice')
     plt.ylim(np.min(rews_all_epochs)-5, 0)
-    plt.title('reward vs. sample - pivChop, celery')
+    plt.title('reward vs. sample - normalCut, celery')
     plt.xticks(np.arange(rews_all_epochs.shape[0]))
     plt.show()
 
