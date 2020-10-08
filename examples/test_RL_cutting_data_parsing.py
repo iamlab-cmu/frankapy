@@ -1,6 +1,6 @@
 from frankapy.utils import *
 
-data_dir = '/home/sony/Documents/cutting_RL_experiments/data/celery/pivChop/exp_2/'
+data_dir = '/home/sony/Documents/cutting_RL_experiments/data/carrot/pivChop/exp_1/'
 #policy_params_mean, policy_params_sigma = parse_policy_params_and_rews_from_file(data_dir,prev_epochs_to_calc_pol_update, hfpc = False)
 policy_params_mean, policy_params_sigma = parse_policy_params_and_rews_from_file(data_dir, prev_epochs_to_calc_pol_update=10, hfpc = True)
 

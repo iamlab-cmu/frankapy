@@ -76,7 +76,7 @@ if __name__ == '__main__':
     parser.add_argument('--dmp_traject_time', '-t', type=int, default = 5)  
     parser.add_argument('--num_epochs', '-e', type=int, default = 5)  
     parser.add_argument('--num_samples', '-s', type=int, default = 20)    
-    parser.add_argument('--data_savedir', '-d', type=str, default='/home/sony/Documents/cutting_RL_experiments/data/celery/pivChop/')
+    parser.add_argument('--data_savedir', '-d', type=str, default='/home/sony/Documents/cutting_RL_experiments/data/carrot/pivChop/')
     parser.add_argument('--exp_num', '-n', type=int)
     parser.add_argument('--start_from_previous', '-sfp', type=bool, default=False)
     parser.add_argument('--previous_datadir', '-pd', type=str)
@@ -120,7 +120,7 @@ if __name__ == '__main__':
     
     # go to initial cutting pose
     starting_position = RigidTransform(rotation=knife_orientation, \
-        translation=np.array([0.437, 0.034, 0.115]), #z=0.05
+        translation=np.array([0.437, -0.035, 0.115]), #z=0.05
         from_frame='franka_tool', to_frame='world')    
     fa.goto_pose(starting_position, duration=5, use_impedance=False)
 
@@ -273,7 +273,7 @@ if __name__ == '__main__':
 
             # sample from gaussian to get dmp weights for this execution            
             dmp_num = 0            
-            peak_forces_all_dmps, x_mvmt_all_dmps, forw_vs_back_x_mvmt_all_dmps, diff_up_down_z_mvmt_all_dmps = [], [], [], []# sum of abs (+x/-x mvmt)  
+            peak_z_forces_all_dmps, x_mvmt_all_dmps, forw_vs_back_x_mvmt_all_dmps, diff_up_down_z_mvmt_all_dmps = [], [], [], []# sum of abs (+x/-x mvmt)  
             y_mvmt_all_dmps, peak_y_force_all_dmps, z_mvmt_all_dmps, upward_z_penalty_all_dmps = [], [], [], []
             total_cut_time_all_dmps = 0          
             while current_ht > 0.023:   
@@ -328,7 +328,7 @@ if __name__ == '__main__':
                 cut_time = rospy.Time.now().to_time() - init_time
                 peak_force = np.max(np.abs(robot_forces[:,2]))
                 if (robot_positions[-1,2]-robot_positions[0,2]) > 0.02:
-                    upward_z_penalty = (robot_positions[-1,2]-robot_positions[0,2])*100
+                    upward_z_penalty = (robot_positions[-1,2]-robot_positions[0,2])
                 else:
                     upward_z_penalty = 0                    
                 up_z_mvmt = np.abs(robot_positions[-1,2]) - np.min(np.abs(robot_positions[:,2])) 
@@ -348,7 +348,7 @@ if __name__ == '__main__':
 
                 # save to buffers 
                 total_cut_time_all_dmps += cut_time
-                peak_forces_all_dmps.append(peak_force)
+                peak_z_forces_all_dmps.append(peak_force)
                 z_mvmt_all_dmps.append(total_z_mvmt)
                 upward_z_penalty_all_dmps.append(upward_z_penalty)
                 diff_up_down_z_mvmt_all_dmps.append(diff_up_down_z_mvmt)
@@ -396,7 +396,7 @@ if __name__ == '__main__':
             time.sleep(1.5)
 
             # calc averages across all cut types - NOTE: switched to max instead of avg to handle dmps that vary as they are chained
-            avg_peak_force = np.max(peak_forces_all_dmps) #np.mean(peak_forces_all_dmps)
+            avg_peak_z_force = np.max(peak_z_forces_all_dmps) #np.mean(peak_forces_all_dmps)
             avg_z_mvmt = np.max(z_mvmt_all_dmps) #np.mean(z_mvmt_all_dmps)
             avg_diff_up_down_z_mvmt = np.max(diff_up_down_z_mvmt_all_dmps) #np.mean(diff_up_down_z_mvmt_all_dmps)
             avg_upward_z_penalty = np.max(upward_z_penalty_all_dmps)
@@ -411,10 +411,15 @@ if __name__ == '__main__':
             
             if args.use_all_dmp_dims:  
                 # reward = -0.05*avg_peak_force -0.1*avg_peak_y_force - 10*avg_x_mvmt -20*avg_y_mvmt -50*avg_upward_z_mvmt - 50*avg_diff_forw_back_x_mvmt + -0.2*total_cut_time_all_dmps
-                reward = -0.05*avg_peak_force -0.1*avg_peak_y_force - 10*avg_x_mvmt -100*avg_y_mvmt -100*avg_upward_z_mvmt - 50*avg_diff_forw_back_x_mvmt + -0.2*total_cut_time_all_dmps
+                reward = -0.05*avg_peak_z_force -0.1*avg_peak_y_force - 10*avg_x_mvmt -100*avg_y_mvmt -100*avg_upward_z_mvmt \
+                    - 50*avg_diff_forw_back_x_mvmt + -0.2*total_cut_time_all_dmps
 
             else:
-                reward = -0.15*avg_peak_force - 10*avg_z_mvmt - 200*avg_diff_up_down_z_mvmt - avg_upward_z_penalty -0.2*total_cut_time_all_dmps
+                # pivchop-specific reward
+                #reward = -0.15*avg_peak_force - 10*avg_z_mvmt - 200*avg_diff_up_down_z_mvmt - avg_upward_z_penalty -0.2*total_cut_time_all_dmps
+                # trying out more generalized cutting reward function
+                reward = -0.1*avg_peak_y_force -0.15*avg_peak_z_force - 10*avg_x_mvmt -100*avg_y_mvmt - 10*avg_z_mvmt \
+                    -100*avg_upward_z_penalty -0.2*total_cut_time_all_dmps # NOTE: in normal cut, -100*avg_upward_z_penalty term = -100*avg_upward_z_mvmt (calc diff for each cut type)
 
             # save reward to buffer
             print('Epoch: %i Sample: %i Reward: '%(epoch,sample), reward)
