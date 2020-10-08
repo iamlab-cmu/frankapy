@@ -76,7 +76,7 @@ if __name__ == '__main__':
     parser.add_argument('--dmp_traject_time', '-t', type=int, default = 5)  
     parser.add_argument('--num_epochs', '-e', type=int, default = 5)  
     parser.add_argument('--num_samples', '-s', type=int, default = 20)    
-    parser.add_argument('--data_savedir', '-d', type=str, default='/home/sony/Documents/cutting_RL_experiments/data/carrot/pivChop/')
+    parser.add_argument('--data_savedir', '-d', type=str, default='/home/sony/Documents/cutting_RL_experiments/data/celery/pivChop/')
     parser.add_argument('--exp_num', '-n', type=int)
     parser.add_argument('--start_from_previous', '-sfp', type=bool, default=False)
     parser.add_argument('--previous_datadir', '-pd', type=str)
@@ -120,7 +120,7 @@ if __name__ == '__main__':
     
     # go to initial cutting pose
     starting_position = RigidTransform(rotation=knife_orientation, \
-        translation=np.array([0.437, -0.035, 0.115]), #z=0.05
+        translation=np.array([0.437, -0.062, 0.115]), #z=0.05
         from_frame='franka_tool', to_frame='world')    
     fa.goto_pose(starting_position, duration=5, use_impedance=False)
 
@@ -326,39 +326,39 @@ if __name__ == '__main__':
                 pub.publish(ros_msg)
 
                 cut_time = rospy.Time.now().to_time() - init_time
-                peak_force = np.max(np.abs(robot_forces[:,2]))
+                peak_z_force = np.max(np.abs(robot_forces[:,2]))
                 if (robot_positions[-1,2]-robot_positions[0,2]) > 0.02:
                     upward_z_penalty = (robot_positions[-1,2]-robot_positions[0,2])
                 else:
-                    upward_z_penalty = 0                    
+                    upward_z_penalty = 0          
+
                 up_z_mvmt = np.abs(robot_positions[-1,2]) - np.min(np.abs(robot_positions[:,2])) 
                 down_z_mvmt = np.abs(robot_positions[0,2]) - np.min(np.abs(robot_positions[:,2]))
                 total_z_mvmt = up_z_mvmt + down_z_mvmt
                 diff_up_down_z_mvmt = np.abs(up_z_mvmt - down_z_mvmt)
 
                 # # data only for use in 3-dim xyz position dmp reward
-                # forward_x_mvmt = (np.max(np.abs(robot_positions[:,0]) - np.abs(robot_positions[0,0])))
-                # backward_x_mvmt = (np.max(np.abs(robot_positions[:,0]) - np.abs(robot_positions[-1,0])))
-                # total_x_mvmt = forward_x_mvmt + backward_x_mvmt
-                # diff_forw_back_x_mvmt = np.abs(forward_x_mvmt - backward_x_mvmt)
-                # forward_y_mvmt = (np.max(np.abs(robot_positions[:,1]) - np.abs(robot_positions[0,1])))
-                # backward_y_mvmt = (np.max(np.abs(robot_positions[:,1]) - np.abs(robot_positions[-1,1])))
-                # total_y_mvmt = forward_y_mvmt + backward_y_mvmt
-                # peak_y_force = np.max(np.abs(robot_forces[:,1]))
+                forward_x_mvmt = (np.max(np.abs(robot_positions[:,0]) - np.abs(robot_positions[0,0])))
+                backward_x_mvmt = (np.max(np.abs(robot_positions[:,0]) - np.abs(robot_positions[-1,0])))
+                total_x_mvmt = forward_x_mvmt + backward_x_mvmt
+                #diff_forw_back_x_mvmt = np.abs(forward_x_mvmt - backward_x_mvmt)
+                forward_y_mvmt = (np.max(np.abs(robot_positions[:,1]) - np.abs(robot_positions[0,1])))
+                backward_y_mvmt = (np.max(np.abs(robot_positions[:,1]) - np.abs(robot_positions[-1,1])))
+                total_y_mvmt = forward_y_mvmt + backward_y_mvmt
+                peak_y_force = np.max(np.abs(robot_forces[:,1]))
 
                 # save to buffers 
                 total_cut_time_all_dmps += cut_time
-                peak_z_forces_all_dmps.append(peak_force)
+                peak_z_forces_all_dmps.append(peak_z_force)
                 z_mvmt_all_dmps.append(total_z_mvmt)
                 upward_z_penalty_all_dmps.append(upward_z_penalty)
                 diff_up_down_z_mvmt_all_dmps.append(diff_up_down_z_mvmt)
 
-                # x_mvmt_all_dmps.append(total_x_mvmt)
-                # forw_vs_back_x_mvmt_all_dmps.append(diff_forw_back_x_mvmt)
-                # y_mvmt_all_dmps.append(total_y_mvmt)
-                # peak_y_force_all_dmps.append(peak_y_force)
-                # z_mvmt_all_dmps.append(upward_z_mvmt)
-                # diff_up_down_z_mvmt_all_dmps.append(diff_up_down_z_mvmt)
+                x_mvmt_all_dmps.append(total_x_mvmt)
+                #forw_vs_back_x_mvmt_all_dmps.append(diff_forw_back_x_mvmt)
+                y_mvmt_all_dmps.append(total_y_mvmt)
+                peak_y_force_all_dmps.append(peak_y_force)
+                #diff_up_down_z_mvmt_all_dmps.append(diff_up_down_z_mvmt)
 
                 np.savez(work_dir + '/' + 'forces_positions/' + 'epoch_'+str(epoch) + '_ep_'+str(sample) + '_trial_info_'+str(dmp_num)+'.npz', robot_positions=robot_positions, \
                     robot_forces=robot_forces)
@@ -395,29 +395,26 @@ if __name__ == '__main__':
             # pause to let skill fully stop
             time.sleep(1.5)
 
-            # calc averages across all cut types - NOTE: switched to max instead of avg to handle dmps that vary as they are chained
+            # calc averages/max across all cut types - NOTE: switched to max instead of avg to handle dmps that vary as they are chained
+            avg_peak_y_force = np.max(peak_y_force_all_dmps)
             avg_peak_z_force = np.max(peak_z_forces_all_dmps) #np.mean(peak_forces_all_dmps)
-            avg_z_mvmt = np.max(z_mvmt_all_dmps) #np.mean(z_mvmt_all_dmps)
-            avg_diff_up_down_z_mvmt = np.max(diff_up_down_z_mvmt_all_dmps) #np.mean(diff_up_down_z_mvmt_all_dmps)
+            avg_x_mvmt = np.max(x_mvmt_all_dmps)
+            avg_y_mvmt = np.max(y_mvmt_all_dmps)
+            avg_z_mvmt = np.max(z_mvmt_all_dmps)
+            #avg_diff_up_down_z_mvmt = np.max(diff_up_down_z_mvmt_all_dmps) #np.mean(diff_up_down_z_mvmt_all_dmps)
             avg_upward_z_penalty = np.max(upward_z_penalty_all_dmps)
-            #avg_y_mvmt = np.mean(y_mvmt_all_dmps)
-            #avg_peak_y_force = np.mean(peak_y_force_all_dmps)
             import pdb; pdb.set_trace() 
-       
-            
-            # TODO: try adding in penalty for y mvmt, y forces, as well for 3dim position DMP exploration
-            # original reward
-            #reward = -0.05*avg_peak_force - 10*avg_x_mvmt - 50*avg_diff_forw_back_x_mvmt + -0.2*total_cut_time_all_dmps
-            
+                   
             if args.use_all_dmp_dims:  
                 # reward = -0.05*avg_peak_force -0.1*avg_peak_y_force - 10*avg_x_mvmt -20*avg_y_mvmt -50*avg_upward_z_mvmt - 50*avg_diff_forw_back_x_mvmt + -0.2*total_cut_time_all_dmps
                 reward = -0.05*avg_peak_z_force -0.1*avg_peak_y_force - 10*avg_x_mvmt -100*avg_y_mvmt -100*avg_upward_z_mvmt \
                     - 50*avg_diff_forw_back_x_mvmt + -0.2*total_cut_time_all_dmps
 
             else:
-                # pivchop-specific reward
+                # pivchop-specific reward:
                 #reward = -0.15*avg_peak_force - 10*avg_z_mvmt - 200*avg_diff_up_down_z_mvmt - avg_upward_z_penalty -0.2*total_cut_time_all_dmps
-                # trying out more generalized cutting reward function
+                
+                # trying out more generalized cutting reward function - remove not returning to start penalty:
                 reward = -0.1*avg_peak_y_force -0.15*avg_peak_z_force - 10*avg_x_mvmt -100*avg_y_mvmt - 10*avg_z_mvmt \
                     -100*avg_upward_z_penalty -0.2*total_cut_time_all_dmps # NOTE: in normal cut, -100*avg_upward_z_penalty term = -100*avg_upward_z_mvmt (calc diff for each cut type)
 

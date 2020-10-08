@@ -219,7 +219,7 @@ def parse_policy_params_and_rews_from_file(work_dir, prev_epochs_to_calc_pol_upd
     plt.xlabel('sample num')
     plt.ylabel('reward - average across all dmps for each slice')
     plt.ylim(np.min(rews_all_epochs)-5, 0)
-    plt.title('reward vs. sample - pivChop, carrot')
+    plt.title('reward vs. sample - pivChop, celery')
     plt.xticks(np.arange(rews_all_epochs.shape[0]))
     plt.show()
 
