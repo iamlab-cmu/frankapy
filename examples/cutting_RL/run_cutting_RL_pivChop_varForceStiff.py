@@ -151,7 +151,7 @@ if __name__ == '__main__':
 
     else: # start w/ initial DMP weights from IL
         initial_wts = np.array(init_dmp_info_dict['weights'])
-        cart_pitch_stiffness_initial = 50 #20 # TODO: maybe update?
+        cart_pitch_stiffness_initial = 50 #20 
 
         if args.use_all_dmp_dims: # use position control in all dims (use all dmp wt dims (x/y/z))
             initial_mu = initial_wts.flatten() 

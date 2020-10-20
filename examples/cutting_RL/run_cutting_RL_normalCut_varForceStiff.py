@@ -67,6 +67,53 @@ def plot_sampled_new_dmp_traject_and_original_dmp(epoch, sample, save_dir, new_z
     # save figure to working dir
     fig.savefig(work_dir + '/' + 'dmp_traject_plots' + '/sampledDMP_' + 'epoch_'+str(epoch) + '_ep_'+str(sample)+'.png')
 
+def plot_updated_policy_mean_traject(work_dir, position_dmp_weights_file_path, epoch, dmp_traject_time, control_type_z_axis, init_dmp_info_dict, \
+    initial_wts, REPS_updated_mean):
+    if args.control_type_z_axis == 'force':                
+        new_weights = np.expand_dims(np.vstack((REPS_updated_mean[0:7],initial_wts[1,:,:],initial_wts[2,:,:])),axis=1)
+        new_z_force = REPS_updated_mean[-2]
+    elif args.control_type_z_axis == 'position':
+        new_weights = np.expand_dims(np.vstack((REPS_updated_mean[0:7],initial_wts[1,:,:],REPS_updated_mean[7:14])),axis=1)
+        new_z_force = 0
+
+    # Save new weights to dict
+    data_dict = {
+        'tau':           init_dmp_info_dict['tau'],
+        'alpha':         init_dmp_info_dict['alpha'],
+        'beta':          init_dmp_info_dict['beta'],
+        'num_dims':      init_dmp_info_dict['num_dims'],
+        'num_basis':     init_dmp_info_dict['num_basis'],
+        'num_sensors':   init_dmp_info_dict['num_sensors'],
+        'mu':            init_dmp_info_dict['mu'],
+        'h':             init_dmp_info_dict['h'],
+        'phi_j':         init_dmp_info_dict['phi_j'],
+        'weights':       new_weights.tolist(),                
+        }
+
+    # save new sampled weights to pkl file
+    weight_save_file = os.path.join(work_dir, 'meanWeightsUpdatedPol' + '.pkl')
+    save_weights(weight_save_file, data_dict)
+
+    # Calculate dmp trajectory             
+    traject_time = args.dmp_traject_time   # define length of dmp trajectory  
+    # Load dmp traject params
+    dmp_traj = DMPPositionTrajectoryGenerator(traject_time)
+    dmp_traj.load_saved_dmp_params_from_pkl_file(weight_save_file)
+    dmp_traj.parse_dmp_params_dict()
+
+    # Define starting position 
+    start_pose = fa.get_pose()
+    starting_rotation = start_pose.rotation
+    y0 = start_pose.translation 
+    # calculate dmp position trajectory - NOTE: this assumes a 0.001 dt for calc the dmp traject
+    dmp_traject, dy, _, _, _ = dmp_traj.run_dmp_with_weights(y0) # y: np array(tx3)
+    
+    # check new dmp sampled wt trajectory vs original
+    sample = 0
+    plot_sampled_new_dmp_traject_and_original_dmp(epoch, sample, work_dir, new_z_force, traject_time, \
+        position_dmp_weights_file_path, dmp_traject, y0)
+    import pdb; pdb.set_trace()
+
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--position_dmp_weights_file_path', '-w', type=str, default='/home/sony/092420_normal_cut_dmp_weights_zeroY.pkl')
@@ -75,12 +122,13 @@ if __name__ == '__main__':
     parser.add_argument('--dmp_traject_time', '-t', type=int, default = 5)  
     parser.add_argument('--dmp_wt_sampling_var', type=float, default = 0.01)
     parser.add_argument('--num_epochs', '-e', type=int, default = 5)  
-    parser.add_argument('--num_samples', '-s', type=int, default = 20)    
+    parser.add_argument('--num_samples', '-s', type=int, default = 25)    
     parser.add_argument('--data_savedir', '-d', type=str, default='/home/sony/Documents/cutting_RL_experiments/data/celery/normalCut/')
     parser.add_argument('--exp_num', '-n', type=int)
     parser.add_argument('--start_from_previous', '-sfp', type=bool, default=False)
     parser.add_argument('--previous_datadir', '-pd', type=str)
-    parser.add_argument('--prev_epochs_to_calc_pol_update', '-num_prev_epochs', type=int, default = 1)
+    parser.add_argument('--prev_epochs_to_calc_pol_update', '-num_prev_epochs', type=int, default = 1, help='num \
+        previous epochs of data to use to calculate REPS policy update')
     parser.add_argument('--starting_epoch_num', '-start_epoch', type=int, default = 0)
     parser.add_argument('--starting_sample_num', '-start_sample', type=int, default = 0)
     args = parser.parse_args()
@@ -108,18 +156,18 @@ if __name__ == '__main__':
     fa.goto_joints(reset_joint_positions)    
 
     # more angled to sharp knife
-    # knife_orientation = np.array([[0.0,   0.9805069,  -0.19648464],
-    #                               [ 1.0,   0.0,  0.0],
-    #                               [ 0.0, -0.19648464,  -0.9805069]])
+    knife_orientation = np.array([[0.0,   0.9805069,  -0.19648464],
+                                  [ 1.0,   0.0,  0.0],
+                                  [ 0.0, -0.19648464,  -0.9805069]])
 
     # less angled for 3D printed knife
-    knife_orientation = np.array([[0.0,   0.9903,  -0.1392],
-                                  [ 1.0,   0.0,  0.0],
-                                  [ 0.0, -0.1392,  -0.9903]])
+    # knife_orientation = np.array([[0.0,   0.9903,  -0.1392],
+    #                               [ 1.0,   0.0,  0.0],
+    #                               [ 0.0, -0.1392,  -0.9903]])
     
     # go to initial cutting pose
     starting_position = RigidTransform(rotation=knife_orientation, \
-        translation=np.array([0.412, -0.042, 0.1]), #z=0.05
+        translation=np.array([0.458, -0.005, 0.1]), #z=0.05
         from_frame='franka_tool', to_frame='world')    
     fa.goto_pose(starting_position, duration=5, use_impedance=False)
 
@@ -140,7 +188,12 @@ if __name__ == '__main__':
         mu, sigma = initial_mu, initial_sigma
         print('starting from updated policy - mean', policy_params_mean)
         initial_wts = np.array(init_dmp_info_dict['weights'])
-       
+        import pdb; pdb.set_trace()
+
+        # plot updated policy mean trajectory to visualize
+        plot_updated_policy_mean_traject(work_dir, args.position_dmp_weights_file_path, args.starting_epoch_num, args.dmp_traject_time, args.control_type_z_axis,\
+            init_dmp_info_dict, initial_wts, mu)
+        import pdb; pdb.set_trace()
 
     else: # start w/ initial DMP weights from IL
         initial_wts = np.array(init_dmp_info_dict['weights'])
@@ -156,6 +209,12 @@ if __name__ == '__main__':
                 initial_mu = np.append(initial_wts[0,:,:], [f_initial, cart_pitch_stiffness_initial]) 
                 initial_sigma = np.diag(np.repeat(args.dmp_wt_sampling_var, initial_mu.shape[0]))
                 initial_sigma[-2,-2] = 120 # change exploration variance for force parameter - TODO: increase
+                initial_sigma[-1,-1] = 800
+            
+            elif args.control_type_z_axis == 'position':
+                initial_mu = np.concatenate((initial_wts[0,:,:],initial_wts[2,:,:]),axis = 0)
+                initial_mu = np.append(initial_mu, cart_pitch_stiffness_initial) 
+                initial_sigma = np.diag(np.repeat(args.dmp_wt_sampling_var, initial_mu.shape[0]))
                 initial_sigma[-1,-1] = 800
 
         print('initial mu', initial_mu)        
@@ -175,26 +234,44 @@ if __name__ == '__main__':
                 new_z_force = 'NA'
                                 
             else:    
-                new_x_weights = new_params[0:-2]
-                new_z_force = new_params[-2]
-                new_cart_pitch_stiffness = new_params[-1]
-                # cap force value
-                new_z_force = np.clip(new_z_force, -40, -3)    # TODO: up force to -50N        
-                new_params[-2] = int(new_z_force)  
-                print('clipped sampled z force', new_z_force)  
+                if args.control_type_z_axis == 'force':
+                    new_x_weights = new_params[0:-2]
+                    new_z_force = new_params[-2]
+                    new_cart_pitch_stiffness = new_params[-1]
+                    # cap force value
+                    new_z_force = np.clip(new_z_force, -40, -3)    # TODO: up force to -50N        
+                    new_params[-2] = int(new_z_force)  
+                    print('clipped sampled z force', new_z_force)  
 
-                new_cart_pitch_stiffness = np.clip(new_cart_pitch_stiffness, 5, 600)           
-                new_params[-1] = int(new_cart_pitch_stiffness)  
-                print('clipped sampled new_cart_pitch_stiffness', new_cart_pitch_stiffness)         
-       
+                    new_cart_pitch_stiffness = np.clip(new_cart_pitch_stiffness, 5, 600)           
+                    new_params[-1] = int(new_cart_pitch_stiffness)  
+                    print('clipped sampled new_cart_pitch_stiffness', new_cart_pitch_stiffness)         
+                
+                elif args.control_type_z_axis == 'position':
+                    #import pdb; pdb.set_trace()
+                    num_weights = initial_wts.shape[2]
+                    new_x_weights = new_params[0:num_weights]
+                    new_z_weights = new_params[num_weights:(2*num_weights)]
+                    new_cart_pitch_stiffness = new_params[-1]
+                    # cap value                   
+                    new_cart_pitch_stiffness = np.clip(new_cart_pitch_stiffness, 5, 600)           
+                    new_params[-1] = int(new_cart_pitch_stiffness)  
+                    print('clipped sampled new_cart_pitch_stiffness', new_cart_pitch_stiffness)      
+                    new_z_force = 'NA'   
+                
 
             # save to policy params buffer
             policy_params_all_samples.append(new_params.tolist())
             
             # concat new sampled x weights w/ old y (zero's) and z weights if we're only sampling x weights
             if not args.use_all_dmp_dims: 
-                new_weights = np.expand_dims(np.vstack((new_x_weights,initial_wts[1,:,:],initial_wts[2,:,:])),axis=1)
-            
+                if args.control_type_z_axis == 'force':
+                    new_weights = np.expand_dims(np.vstack((new_x_weights,initial_wts[1,:,:],initial_wts[2,:,:])),axis=1)
+                
+                elif args.control_type_z_axis == 'position':
+                    new_weights = np.expand_dims(np.vstack((new_x_weights,initial_wts[1,:,:],new_z_weights)),axis=1)
+
+
             # Save new weights to dict
             data_dict = {
                 'tau':           init_dmp_info_dict['tau'],
@@ -247,8 +324,12 @@ if __name__ == '__main__':
                 target_force = [0, 0, 0, 0, 0, 0]
 
             else: 
-                S = [1, 1, 0, 1, 1, 1] #force control in z axis
-                target_force = [0, 0, new_z_force, 0, 0, 0] 
+                if args.control_type_z_axis == 'force':
+                    S = [1, 1, 0, 1, 1, 1] #force control in z axis
+                    target_force = [0, 0, new_z_force, 0, 0, 0] 
+                elif args.control_type_z_axis == 'position':
+                    S = [1, 1, 1, 1, 1, 1] #position control in z axis
+                    target_force = [0, 0, 0, 0, 0, 0] 
 
             position_kps_cart = FC.DEFAULT_TRANSLATIONAL_STIFFNESSES + FC.DEFAULT_ROTATIONAL_STIFFNESSES
             # set pitch axis cartesian gain to be sampled value
@@ -264,8 +345,7 @@ if __name__ == '__main__':
             rospy.loginfo('Publishing HFPC trajectory w/ cartesian gains...')
             
             current_ht = fa.get_pose().translation[2]
-            dmp_num = 0 
-            
+            dmp_num = 0             
 
             # sample from gaussian to get dmp weights for this execution       
             import pdb; pdb.set_trace()     
@@ -494,6 +574,11 @@ if __name__ == '__main__':
         print(policy_params_sigma)
         import pdb; pdb.set_trace()
         # TODO: roll out updated policy mean and evaluate
+
+        # plot updated policy mean trajectory to visualize
+        plot_updated_policy_mean_traject(work_dir, args.position_dmp_weights_file_path, epoch, args.dmp_traject_time, args.control_type_z_axis, init_dmp_info_dict,\
+            initial_wts,policy_params_mean)
+        import pdb; pdb.set_trace()
 
         # save new policy params mean and cov   
         np.savez(os.path.join(work_dir, 'REPSupdatedMean_' + 'epoch_'+str(epoch) +'.npz'), \

@@ -185,14 +185,19 @@ def parse_policy_params_and_rews_from_file(work_dir, prev_epochs_to_calc_pol_upd
     '''
     data_files = glob.glob(work_dir + "*epoch_*.npy")
     num_prev_epochs = len(data_files)
+    # get num policy params
+    first_file = np.load(data_files[0])
+    num_pol_params = first_file.shape[1]-1 # subtract 1 b/c last dim is reward
+
     rews_all_epochs = np.empty((0))
     avg_rews_each_epoch = []
     num_samples_each_epoch = []
     num_samples = 0
     if hfpc:
-        pol_params_all_epochs = np.empty((0,8))
+        #pol_params_all_epochs = np.empty((0,8))
+        pol_params_all_epochs = np.empty((0,num_pol_params))
     else:
-        pol_params_all_epochs = np.empty((0,21))
+        pol_params_all_epochs = np.empty((0,num_pol_params))
     for i in range(num_prev_epochs):
         data_file = glob.glob(work_dir + "*epoch_%s*.npy"%str(i))[0]
         data = np.load(data_file)
@@ -235,17 +240,73 @@ def parse_policy_params_and_rews_from_file(work_dir, prev_epochs_to_calc_pol_upd
     # update policy mean and cov (REPS)       
     reps_agent = reps.Reps(rel_entropy_bound=1.5,min_temperature=0.001) #Create REPS object
     if np.abs(-1-prev_epochs_to_calc_pol_update) > len(num_samples_each_epoch): # use all data from all epochs
-        import pdb; pdb.set_trace()
+        #import pdb; pdb.set_trace()
         policy_params_mean, policy_params_sigma, reps_info = reps_agent.policy_from_samples_and_rewards(pol_params_all_epochs, rews_all_epochs)
     else:
         print('using previous %i epochs to calc policy update'%prev_epochs_to_calc_pol_update)
-        import pdb; pdb.set_trace()   
+        #import pdb; pdb.set_trace()   
         pol_params_desired_epochs = pol_params_all_epochs[num_samples_each_epoch[-1-prev_epochs_to_calc_pol_update]:]
         rews_desired_epochs = rews_all_epochs[num_samples_each_epoch[-1-prev_epochs_to_calc_pol_update]:]
         print('shape of prev data is ', rews_desired_epochs.shape)
         policy_params_mean, policy_params_sigma, reps_info = reps_agent.policy_from_samples_and_rewards(pol_params_desired_epochs, rews_desired_epochs)
 
+    np.savez(os.path.join(work_dir, 'REPSupdatedMean_' + 'epoch_'+str(x) +'.npz'), \
+            updated_mean = policy_params_mean, updated_cov = policy_params_sigma)
+
     return policy_params_mean, policy_params_sigma
+
+def plot_rewards_mult_experiments(work_dirs, rews_or_avg_rews, hfpc=True):
+    for work_dir in work_dirs:
+        data_files = glob.glob(work_dir + "*epoch_*.npy")
+        num_prev_epochs = len(data_files)
+        # get num policy params
+        first_file = np.load(data_files[0])
+        num_pol_params = first_file.shape[1]-1 # subtract 1 b/c last dim is reward
+
+        rews_all_epochs = np.empty((0))
+        avg_rews_each_epoch = []
+        num_samples_each_epoch = []
+        num_samples = 0
+        if hfpc:
+            #pol_params_all_epochs = np.empty((0,8))
+            pol_params_all_epochs = np.empty((0,num_pol_params))
+        else:
+            pol_params_all_epochs = np.empty((0,num_pol_params))
+        for i in range(num_prev_epochs):
+            data_file = glob.glob(work_dir + "*epoch_%s*.npy"%str(i))[0]
+            data = np.load(data_file)
+            pol_params = data[:,0:-1]
+            rewards = data[:,-1]  
+            avg_rews_each_epoch.append(np.mean(rewards))
+            rews_all_epochs = np.concatenate((rews_all_epochs, rewards),axis=0)
+            pol_params_all_epochs = np.concatenate((pol_params_all_epochs, pol_params),axis=0)
+            num_samples+=data.shape[0]
+            num_samples_each_epoch.append(num_samples)
+        
+        #import pdb; pdb.set_trace()
+        if rews_or_avg_rews == 'rews':
+        # plot rewards
+            plt.plot(np.arange(rews_all_epochs.shape[0]),rews_all_epochs,'-o')
+            # add in labels for epochs
+            plt.vlines(np.array(num_samples_each_epoch)-1,np.min(rews_all_epochs)-5,0, colors = ['r','r','r'], linestyles={'dashed', 'dashed', 'dashed'})
+
+            plt.xlabel('sample num')
+            plt.ylabel('reward - average across all dmps for each slice')
+            #plt.ylim(np.min(rews_all_epochs)-5, 0)
+            plt.title('reward vs. sample - normalCut, celery')
+            plt.xticks(np.arange(rews_all_epochs.shape[0]))
+
+        # plot average rewards each epoch
+        elif rews_or_avg_rews == 'avg_rews':
+            plt.plot(avg_rews_each_epoch, '-o')
+            plt.xlabel('epoch')
+            plt.ylabel('avg reward each epoch - average across all dmps for each slice')
+            plt.ylim(-60, 0)
+            plt.title('avg reward vs epochs')
+            plt.xticks(np.arange(3))
+    
+    plt.legend(('exp9: posX_posZ_varStiff','exp8 :posX_forceZ_varStiff', 'exp7: posX_forceZ'))
+    plt.show()
 
 
 def plot_rewards_mult_epochs(work_dir, num_epochs):
