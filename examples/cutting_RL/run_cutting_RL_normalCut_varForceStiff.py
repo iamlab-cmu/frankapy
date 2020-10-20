@@ -24,7 +24,7 @@ from frankapy.utils import *
 
 from tqdm import trange
 from rl_utils import reps
-import time
+import time 
 import copy
 
 '''note: dmp weights trained with:
@@ -69,10 +69,10 @@ def plot_sampled_new_dmp_traject_and_original_dmp(epoch, sample, save_dir, new_z
 
 def plot_updated_policy_mean_traject(work_dir, position_dmp_weights_file_path, epoch, dmp_traject_time, control_type_z_axis, init_dmp_info_dict, \
     initial_wts, REPS_updated_mean):
-    if args.control_type_z_axis == 'force':                
+    if control_type_z_axis == 'force':                
         new_weights = np.expand_dims(np.vstack((REPS_updated_mean[0:7],initial_wts[1,:,:],initial_wts[2,:,:])),axis=1)
         new_z_force = REPS_updated_mean[-2]
-    elif args.control_type_z_axis == 'position':
+    elif control_type_z_axis == 'position':
         new_weights = np.expand_dims(np.vstack((REPS_updated_mean[0:7],initial_wts[1,:,:],REPS_updated_mean[7:14])),axis=1)
         new_z_force = 0
 
@@ -95,7 +95,7 @@ def plot_updated_policy_mean_traject(work_dir, position_dmp_weights_file_path, e
     save_weights(weight_save_file, data_dict)
 
     # Calculate dmp trajectory             
-    traject_time = args.dmp_traject_time   # define length of dmp trajectory  
+    traject_time = dmp_traject_time   # define length of dmp trajectory  
     # Load dmp traject params
     dmp_traj = DMPPositionTrajectoryGenerator(traject_time)
     dmp_traj.load_saved_dmp_params_from_pkl_file(weight_save_file)
@@ -113,6 +113,7 @@ def plot_updated_policy_mean_traject(work_dir, position_dmp_weights_file_path, e
     plot_sampled_new_dmp_traject_and_original_dmp(epoch, sample, work_dir, new_z_force, traject_time, \
         position_dmp_weights_file_path, dmp_traject, y0)
     import pdb; pdb.set_trace()
+
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
@@ -188,9 +189,9 @@ if __name__ == '__main__':
         mu, sigma = initial_mu, initial_sigma
         print('starting from updated policy - mean', policy_params_mean)
         initial_wts = np.array(init_dmp_info_dict['weights'])
-        import pdb; pdb.set_trace()
 
         # plot updated policy mean trajectory to visualize
+        print('plotting REPS updated mean trajectory')
         plot_updated_policy_mean_traject(work_dir, args.position_dmp_weights_file_path, args.starting_epoch_num, args.dmp_traject_time, args.control_type_z_axis,\
             init_dmp_info_dict, initial_wts, mu)
         import pdb; pdb.set_trace()

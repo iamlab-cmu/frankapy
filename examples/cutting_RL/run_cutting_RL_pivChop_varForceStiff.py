@@ -76,7 +76,7 @@ if __name__ == '__main__':
     parser.add_argument('--control_type_z_axis', type=str, default = 'position', help='position or force')
     parser.add_argument('--dmp_traject_time', '-t', type=int, default = 6)  
     parser.add_argument('--num_epochs', '-e', type=int, default = 5)  
-    parser.add_argument('--num_samples', '-s', type=int, default = 20)    
+    parser.add_argument('--num_samples', '-s', type=int, default = 25)    
     parser.add_argument('--data_savedir', '-d', type=str, default='/home/sony/Documents/cutting_RL_experiments/data/celery/pivChop/')
     parser.add_argument('--exp_num', '-n', type=int)
     parser.add_argument('--start_from_previous', '-sfp', type=bool, default=False)
@@ -121,7 +121,7 @@ if __name__ == '__main__':
     
     # go to initial cutting pose
     starting_position = RigidTransform(rotation=knife_orientation, \
-        translation=np.array([0.437, -0.062, 0.135]), #z=0.05
+        translation=np.array([0.424, -0.025, 0.135]), #z=0.05
         from_frame='franka_tool', to_frame='world')    
     fa.goto_pose(starting_position, duration=5, use_impedance=False)
 
@@ -151,7 +151,7 @@ if __name__ == '__main__':
 
     else: # start w/ initial DMP weights from IL
         initial_wts = np.array(init_dmp_info_dict['weights'])
-        cart_pitch_stiffness_initial = 50 #20 
+        cart_pitch_stiffness_initial = 20 #50 #20 
 
         if args.use_all_dmp_dims: # use position control in all dims (use all dmp wt dims (x/y/z))
             initial_mu = initial_wts.flatten() 
@@ -161,12 +161,12 @@ if __name__ == '__main__':
             if args.control_type_z_axis == 'position': # no force control, only z axis position control + var pitch stiffness
                 initial_mu = np.append(initial_wts[2,:,:], cart_pitch_stiffness_initial)  
                 initial_sigma = np.diag(np.repeat(0.01, initial_mu.shape[0]))
-                initial_sigma[-1,-1] = 800 # change exploration variance for force parameter - TODO: increase
+                initial_sigma[-1,-1] = 500 # change exploration variance for force parameter - TODO: increase
             
             elif args.control_type_z_axis == 'force': # no position control, only z axis force control + var pitch stiffness
                 f_initial = -20
                 initial_mu = np.append(f_initial, cart_pitch_stiffness_initial)  
-                initial_sigma = np.diag([120, 800])     
+                initial_sigma = np.diag([120, 500])     
             
         print('initial mu', initial_mu)        
         mu, sigma = initial_mu, initial_sigma

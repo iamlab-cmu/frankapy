@@ -179,8 +179,96 @@ def downsample_dmp_traject(original_dmp_traject, og_dt, new_downsampled_dt):
     
     return downsmpled_dmp_traject
 
+def plot_updated_policy_mean_traject(work_dir, position_dmp_weights_file_path, epoch, dmp_traject_time, control_type_z_axis, init_dmp_info_dict, \
+    initial_wts, REPS_updated_mean):
+    '''
+    plot updated policy mean dmp trajectories
+    '''
+    if control_type_z_axis == 'force':                
+        new_weights = np.expand_dims(np.vstack((REPS_updated_mean[0:7],initial_wts[1,:,:],initial_wts[2,:,:])),axis=1)
+        if REPS_updated_mean[-2] < 0: 
+            new_z_force = REPS_updated_mean[-2] #REPS_updated_mean[-1] #
+        else: 
+            new_z_force = REPS_updated_mean[-1]
+
+    elif control_type_z_axis == 'position':
+        new_weights = np.expand_dims(np.vstack((REPS_updated_mean[0:7],initial_wts[1,:,:],REPS_updated_mean[7:14])),axis=1)
+        new_z_force = 0
+
+    # Save new weights to dict
+    data_dict = {
+        'tau':           init_dmp_info_dict['tau'],
+        'alpha':         init_dmp_info_dict['alpha'],
+        'beta':          init_dmp_info_dict['beta'],
+        'num_dims':      init_dmp_info_dict['num_dims'],
+        'num_basis':     init_dmp_info_dict['num_basis'],
+        'num_sensors':   init_dmp_info_dict['num_sensors'],
+        'mu':            init_dmp_info_dict['mu'],
+        'h':             init_dmp_info_dict['h'],
+        'phi_j':         init_dmp_info_dict['phi_j'],
+        'weights':       new_weights.tolist(),                
+        }
+
+    # save new sampled weights to pkl file
+    weight_save_file = os.path.join(work_dir, 'meanWeightsUpdatedPol' + '.pkl')
+    save_weights(weight_save_file, data_dict)
+
+    # Calculate dmp trajectory             
+    traject_time = dmp_traject_time   # define length of dmp trajectory  
+    # Load dmp traject params
+    dmp_traj = DMPPositionTrajectoryGenerator(traject_time)
+    dmp_traj.load_saved_dmp_params_from_pkl_file(weight_save_file)
+    dmp_traj.parse_dmp_params_dict()
+
+    # Define starting position 
+    #start_pose = fa.get_pose()
+    #starting_rotation = start_pose.rotation
+    y0 = 0 #start_pose.translation 
+    # calculate dmp position trajectory - NOTE: this assumes a 0.001 dt for calc the dmp traject
+    dmp_traject, dy, _, _, _ = dmp_traj.run_dmp_with_weights(y0) # y: np array(tx3)
+    
+    # check new dmp sampled wt trajectory vs original
+    sample = 0
+    plot_sampled_new_dmp_traject_and_original_dmp(epoch, sample, work_dir, new_z_force, traject_time, \
+        position_dmp_weights_file_path, dmp_traject, y0)
+    import pdb; pdb.set_trace()
+
+def plot_sampled_new_dmp_traject_and_original_dmp(epoch, sample, save_dir, new_z_force, traject_time, \
+    initial_dmp_weights_pkl_file, new_dmp_traject, y0):
+    '''
+    plot original IL trajectory overlayed with new sampled dmp trajectory
+    '''
+    #original_dmp_wts_pkl_filepath = '/home/sony/Desktop/debug_dmp_wts.pkl'
+    dmp_traj = DMPPositionTrajectoryGenerator(traject_time)
+    dmp_traj.load_saved_dmp_params_from_pkl_file(initial_dmp_weights_pkl_file)
+    dmp_traj.parse_dmp_params_dict()
+    # calculate dmp position trajectory - NOTE: this assumes a 0.001 dt for calc the dmp traject
+    original_traject, dy, _, _, _ = dmp_traj.run_dmp_with_weights(y0) # y: np array(tx3)
+    
+    axes = ['x', 'y','z']   
+    fig, ax = plt.subplots(3,1) 
+    for i in range(3):
+        ax[i].plot(np.arange(0, traject_time, 0.001), original_traject[:,i])
+        ax[i].plot(np.arange(0, traject_time, 0.001), new_dmp_traject[:,i])           
+        if i!=0:
+            ax[i].set_title('Cartesian Position - '+str(axes[i]))
+        else:     
+            if new_z_force == 'NA':
+                ax[i].set_title('Cartesian Position - '+str(axes[i]))
+            else:
+                ax[i].set_title('Cartesian Position - '+str(axes[i]) + ' ' + 'Downward z-force (N): '+str(new_z_force))
+        ax[i].set_ylabel('Position (m)')
+        ax[i].legend((axes[i] + '-original traject', axes[i] + '-new sampled traject'))
+    
+    ax[2].set_xlabel('Time (s)')
+    plt.show()
+    # save figure to working dir
+    fig.savefig(work_dir + '/' + 'dmp_traject_plots' + '/sampledDMP_' + 'epoch_'+str(epoch) + '_ep_'+str(sample)+'.png')
+
 def parse_policy_params_and_rews_from_file(work_dir, prev_epochs_to_calc_pol_update, hfpc=True):
     '''
+    calculate updated policy from previous data and plot rewards from previous data
+
     prev_epochs_to_calc_pol_update: how many prev epochs' data to use to calculate policy update
     '''
     data_files = glob.glob(work_dir + "*epoch_*.npy")
@@ -250,12 +338,15 @@ def parse_policy_params_and_rews_from_file(work_dir, prev_epochs_to_calc_pol_upd
         print('shape of prev data is ', rews_desired_epochs.shape)
         policy_params_mean, policy_params_sigma, reps_info = reps_agent.policy_from_samples_and_rewards(pol_params_desired_epochs, rews_desired_epochs)
 
-    np.savez(os.path.join(work_dir, 'REPSupdatedMean_' + 'epoch_'+str(x) +'.npz'), \
-            updated_mean = policy_params_mean, updated_cov = policy_params_sigma)
+    # np.savez(os.path.join(work_dir, 'REPSupdatedMean_' + 'epoch_'+str(x) +'.npz'), \
+    #         updated_mean = policy_params_mean, updated_cov = policy_params_sigma)
 
     return policy_params_mean, policy_params_sigma
 
 def plot_rewards_mult_experiments(work_dirs, rews_or_avg_rews, hfpc=True):
+    '''
+    plot rewards from multiple experiments on the same plot for comparison
+    '''
     for work_dir in work_dirs:
         data_files = glob.glob(work_dir + "*epoch_*.npy")
         num_prev_epochs = len(data_files)
@@ -293,7 +384,7 @@ def plot_rewards_mult_experiments(work_dirs, rews_or_avg_rews, hfpc=True):
             plt.xlabel('sample num')
             plt.ylabel('reward - average across all dmps for each slice')
             #plt.ylim(np.min(rews_all_epochs)-5, 0)
-            plt.title('reward vs. sample - normalCut, celery')
+            plt.title('reward vs. sample - pivChop, celery')
             plt.xticks(np.arange(rews_all_epochs.shape[0]))
 
         # plot average rewards each epoch
@@ -305,7 +396,8 @@ def plot_rewards_mult_experiments(work_dirs, rews_or_avg_rews, hfpc=True):
             plt.title('avg reward vs epochs')
             plt.xticks(np.arange(3))
     
-    plt.legend(('exp9: posX_posZ_varStiff','exp8 :posX_forceZ_varStiff', 'exp7: posX_forceZ'))
+    #plt.legend(('exp9: posX_posZ_varStiff','exp8 :posX_forceZ_varStiff', 'exp7: posX_forceZ'))
+    plt.legend(('exp3: posZ_varStiff','exp4: forceZ_varStiff'))
     plt.show()
 
 
@@ -345,6 +437,34 @@ def plot_rewards_mult_epochs(work_dir, num_epochs):
     plt.title('avg reward vs epochs')
     plt.xticks(np.arange(3))
     plt.show()
+
+def viz_force_data(force_data_dir, epoch, num_samples):
+    data_files = glob.glob(force_data_dir + "epoch_" + str(epoch)+  "*.npz")
+    max_z_forces_all = []
+    for i in range(num_samples):
+        data_file = glob.glob(force_data_dir + "epoch_" + str(epoch)+ '_ep_' + str(i)+ '_' + "*.npz") 
+        if len(data_file) == 1:
+            data_file = data_file[0]
+            #import pdb; pdb.set_trace()
+            data = np.load(data_file)
+            data = data['robot_forces']
+            max_z_force = np.min(data[:,2])
+            max_z_forces_all.append(max_z_force)
+        else:
+            for j in range(len(data_file)):
+                data_file = glob.glob(force_data_dir + "epoch_" + str(epoch)+ '_ep_' + str(i) + '_trial_info_' + str(j) + "*.npz") 
+                #import pdb; pdb.set_trace()
+                data_file = data_file[0]
+                data = np.load(data_file)
+                data = data['robot_forces']
+                max_z_force = np.min(data[:,2])
+                max_z_forces_all.append(max_z_force)
+    plt.plot(max_z_forces_all)
+    plt.xlabel('sample')
+    plt.ylabel('max z forces')
+    plt.title('max z forces vs samples - final epoch')
+    plt.show()
+    return max_z_forces_all
 
 def franka_pose_to_rigid_transform(franka_pose, from_frame='franka_tool_base', to_frame='world'):
     np_franka_pose = np.array(franka_pose).reshape(4, 4).T
