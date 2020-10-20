@@ -139,12 +139,7 @@ if __name__ == '__main__':
         mu, sigma = initial_mu, initial_sigma
         print('starting from updated policy - mean', policy_params_mean)
         initial_wts = np.array(init_dmp_info_dict['weights'])
-        
-        # if args.start_from_previous and args.start_epoch!=0 and args.start_sample==0:
-        #     np.savez(os.path.join(work_dir, 'REPSupdatedMean_' + 'epoch_'+str(epoch) +'.npz'), \
-        #         updated_mean = policy_params_mean, updated_cov = policy_params_sigma)
-        import pdb; pdb.set_trace()
-
+       
 
     else: # start w/ initial DMP weights from IL
         initial_wts = np.array(init_dmp_info_dict['weights'])
