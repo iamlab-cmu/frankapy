@@ -178,6 +178,7 @@ class FrankaArm:
                   tool_pose,
                   duration=3,
                   use_impedance=True,
+                  use_lqr=False,
                   dynamic=False,
                   buffer_time=FC.DEFAULT_TERM_BUFFER_TIME,
                   force_thresholds=None,
@@ -195,6 +196,8 @@ class FrankaArm:
             duration (float) : How much time this robot motion should take
             use_impedance (boolean) : Function uses our impedance controller 
                 by default. If False, uses the Franka cartesian controller.
+            use_lqr (boolean) : Function uses our lqr controller only if
+                use_impedance is alse True. If False, uses our impedance controller.
             dynamic (boolean) : Flag that states whether the skill is dynamic.  
                 If True, it will use our joint impedance controller and sensor values.
             buffer_time (float): How much extra time the termination handler will wait
@@ -229,20 +232,33 @@ class FrankaArm:
                           skill_desc=skill_desc)
             use_impedance=True
             block = False
+            if use_lqr:
+                skill = Skill(SkillType.LqrControlSkill, 
+                                TrajectoryGeneratorType.LqrPoseTrajectoryGenerator,
+                                feedback_controller_type=FeedbackControllerType.LqrCartesianFeedbackController,
+                                termination_handler_type=TerminationHandlerType.TimeTerminationHandler, 
+                                skill_desc=skill_desc)
         else:
             if use_impedance:
-                skill = Skill(SkillType.ImpedanceControlSkill, 
-                              TrajectoryGeneratorType.MinJerkPoseTrajectoryGenerator,
-                              feedback_controller_type=FeedbackControllerType.CartesianImpedanceFeedbackController,
-                              termination_handler_type=TerminationHandlerType.FinalPoseTerminationHandler, 
-                              skill_desc=skill_desc)
+                if use_lqr:
+                    skill = Skill(SkillType.LqrControlSkill, 
+                                  TrajectoryGeneratorType.LqrPoseTrajectoryGenerator,
+                                  feedback_controller_type=FeedbackControllerType.LqrCartesianFeedbackController,
+                                  termination_handler_type=TerminationHandlerType.FinalPoseTerminationHandler, 
+                                  skill_desc=skill_desc)
+                else:
+                    skill = Skill(SkillType.ImpedanceControlSkill, 
+                                TrajectoryGeneratorType.MinJerkPoseTrajectoryGenerator,
+                                feedback_controller_type=FeedbackControllerType.CartesianImpedanceFeedbackController,
+                                termination_handler_type=TerminationHandlerType.FinalPoseTerminationHandler, 
+                                skill_desc=skill_desc)
             else:
                 skill = Skill(SkillType.CartesianPoseSkill, 
                               TrajectoryGeneratorType.MinJerkPoseTrajectoryGenerator,
                               feedback_controller_type=FeedbackControllerType.SetInternalImpedanceFeedbackController,
                               termination_handler_type=TerminationHandlerType.FinalPoseTerminationHandler, 
                               skill_desc=skill_desc)
-        
+                
         if tool_pose.from_frame != 'franka_tool' or tool_pose.to_frame != 'world':
             raise ValueError('pose has invalid frame names! Make sure pose has \
                               from_frame=franka_tool and to_frame=world')
@@ -578,7 +594,8 @@ class FrankaArm:
                          initial_sensor_values=None,
                          orientation_only = False,
                          position_only = False,
-                         use_impedance=True, 
+                         use_impedance=True,
+                         use_lqr_skill=False,
                          buffer_time=FC.DEFAULT_TERM_BUFFER_TIME,
                          force_thresholds=None,
                          torque_thresholds=None,
@@ -633,11 +650,20 @@ class FrankaArm:
                               termination_handler_type=TerminationHandlerType.TimeTerminationHandler, 
                               skill_desc=skill_desc)
             else:
-                skill = Skill(SkillType.ImpedanceControlSkill, 
+                if use_lqr_skill:
+                    skill = Skill(SkillType.LqrControlSkill, 
                               TrajectoryGeneratorType.PoseDmpTrajectoryGenerator,
                               feedback_controller_type=FeedbackControllerType.CartesianImpedanceFeedbackController,
                               termination_handler_type=TerminationHandlerType.TimeTerminationHandler, 
                               skill_desc=skill_desc)
+                    use_impedance=True
+                    block = False
+                else:
+                    skill = Skill(SkillType.ImpedanceControlSkill, 
+                                TrajectoryGeneratorType.PoseDmpTrajectoryGenerator,
+                                feedback_controller_type=FeedbackControllerType.CartesianImpedanceFeedbackController,
+                                termination_handler_type=TerminationHandlerType.TimeTerminationHandler, 
+                                skill_desc=skill_desc)
         else:
             if use_goal_formulation:
                 skill = Skill(SkillType.CartesianPoseSkill, 
@@ -670,6 +696,8 @@ class FrankaArm:
                         cb=lambda x: skill.feedback_callback(x),
                         block=block,
                         ignore_errors=ignore_errors)
+        if use_lqr_skill:
+            sleep(FC.DYNAMIC_SKILL_WAIT_TIME)
 
     def apply_effector_forces_torques(self,
                                       run_duration,

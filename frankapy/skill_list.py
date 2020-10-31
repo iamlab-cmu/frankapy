@@ -113,7 +113,7 @@ class Skill:
                 "Incorrect cartesian impedances type. Should be list."
         assert len(cartesian_impedances) == 6, \
                 "Incorrect cartesian impedances len. Should be 6."
-        assert self._skill_type == SkillType.ImpedanceControlSkill, \
+        assert self._skill_type == SkillType.ImpedanceControlSkill or self._skill_type == SkillType.LqrControlSkill, \
                 "Incorrect skill type. Should be ImpedanceControlSkill."
 
         cartesian_impedance_feedback_controller_msg_proto = \
@@ -455,7 +455,8 @@ class Skill:
                     "Incorrect weights len. Should be equal to 6 * num basis * num sensors."
 
         assert self._skill_type == SkillType.CartesianPoseSkill or \
-               self._skill_type == SkillType.ImpedanceControlSkill, \
+               self._skill_type == SkillType.ImpedanceControlSkill or \
+               self._skill_type == SkillType.LqrControlSkill, \
                 "Incorrect skill type. Should be CartesianPoseSkill or ImpedanceControlSkill."
         assert self._trajectory_generator_type == TrajectoryGeneratorType.PoseDmpTrajectoryGenerator, \
                 "Incorrect trajectory generator type. Should be PoseDmpTrajectoryGenerator"

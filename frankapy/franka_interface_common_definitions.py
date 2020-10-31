@@ -23,6 +23,7 @@ class SkillType:
     GripperSkill = _enum_auto('SkillType')
     ImpedanceControlSkill = _enum_auto('SkillType')
     JointPositionSkill = _enum_auto('SkillType')
+    LqrControlSkill = _enum_auto('SkillType')
 
 
 class MetaSkillType:
@@ -40,6 +41,7 @@ class TrajectoryGeneratorType:
     LinearForcePositionTrajectoryGenerator = _enum_auto('TrajectoryGeneratorType')
     LinearJointTrajectoryGenerator = _enum_auto('TrajectoryGeneratorType')
     LinearPoseTrajectoryGenerator = _enum_auto('TrajectoryGeneratorType')
+    LqrPoseTrajectoryGenerator = _enum_auto('TrajectoryGeneratorType')
     MinJerkJointTrajectoryGenerator = _enum_auto('TrajectoryGeneratorType')
     MinJerkPoseTrajectoryGenerator = _enum_auto('TrajectoryGeneratorType')
     PassThroughForcePositionTrajectoryGenerator = _enum_auto('TrajectoryGeneratorType')
@@ -60,6 +62,7 @@ class FeedbackControllerType:
     ForceAxisImpedenceFeedbackController = _enum_auto('FeedbackControllerType')
     ForcePositionFeedbackController = _enum_auto('FeedbackControllerType')
     JointImpedanceFeedbackController = _enum_auto('FeedbackControllerType')
+    LqrCartesianFeedbackController = _enum_auto('FeedbackControllerType')
     NoopFeedbackController = _enum_auto('FeedbackControllerType')
     PassThroughFeedbackController = _enum_auto('FeedbackControllerType')
     SetInternalImpedanceFeedbackController = _enum_auto('FeedbackControllerType')

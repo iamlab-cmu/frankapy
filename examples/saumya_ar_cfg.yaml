@@ -1,0 +1,27 @@
+rs:
+  id: 0
+  frame: k4a
+  filter_depth: True
+
+april_tag:
+  detector:
+    families: tag16h5
+    border: 1
+    nthreads: 4
+    quad_decimate: 1.0
+    quad_blur: 0.0
+    refine_edges: True
+    refine_decode: False
+    refine_pose: False
+    debug: False
+    quad_contours: True
+  tag_size: 0.0145 # 1 inch in meters  
+
+T_k4a_franka_path: calib/kinect2_overhead_to_world.tf
+
+quality: Kinect2BridgedQuality.HD
+frame: k4a
+
+#cube_size: 0.04
+
+vis_detect: 0
