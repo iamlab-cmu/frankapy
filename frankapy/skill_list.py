@@ -406,7 +406,7 @@ class Skill:
 
         self.add_trajectory_params(joint_dmp_trajectory_generator_msg_proto.SerializeToString())
 
-    def add_pose_dmp_params(self, orientation_only, position_only, run_time, pose_dmp_info, initial_sensor_values):
+    def add_pose_dmp_params(self, orientation_only, position_only, ee_frame, run_time, pose_dmp_info, initial_sensor_values):
         assert type(run_time) is float or type(run_time) is int,\
                 "Incorrect run_time type. Should be int or float."
         assert run_time >= 0, "Incorrect run_time. Should be non negative."
@@ -440,8 +440,7 @@ class Skill:
                 "Incorrect basis std dev len. Should be equal to num basis."
 
         assert type(initial_sensor_values) is list, "Incorrect initial sensor values type. Should be list."
-        assert len(initial_sensor_values) == pose_dmp_info['num_sensors'], \
-                "Incorrect initial sensor values len. Should be equal to num sensors."
+        
 
         weights = np.array(pose_dmp_info['weights']).reshape(-1).tolist()
 
@@ -449,10 +448,14 @@ class Skill:
             num_weights = 3 * int(pose_dmp_info['num_basis']) * int(pose_dmp_info['num_sensors'])
             assert len(weights) == num_weights, \
                     "Incorrect weights len. Should be equal to 3 * num basis * num sensors."
+            assert len(initial_sensor_values) == 3 * pose_dmp_info['num_sensors'], \
+                "Incorrect initial sensor values len. Should be equal to 3 * num sensors."
         else:
             num_weights = 6 * int(pose_dmp_info['num_basis']) * int(pose_dmp_info['num_sensors'])
             assert len(weights) == num_weights, \
                     "Incorrect weights len. Should be equal to 6 * num basis * num sensors."
+            assert len(initial_sensor_values) == 6 * pose_dmp_info['num_sensors'], \
+                "Incorrect initial sensor values len. Should be equal to 3 * num sensors."
 
         assert self._skill_type == SkillType.CartesianPoseSkill or \
                self._skill_type == SkillType.ImpedanceControlSkill, \
@@ -461,7 +464,7 @@ class Skill:
                 "Incorrect trajectory generator type. Should be PoseDmpTrajectoryGenerator"
 
         pose_dmp_trajectory_generator_msg_proto = PoseDMPTrajectoryGeneratorMessage(orientation_only=orientation_only,
-                                                   position_only=position_only, run_time=run_time, 
+                                                   position_only=position_only, ee_frame=ee_frame, run_time=run_time, 
                                                    tau=pose_dmp_info['tau'], alpha=pose_dmp_info['alpha'], beta=pose_dmp_info['beta'], 
                                                    num_basis=pose_dmp_info['num_basis'], num_sensor_values=pose_dmp_info['num_sensors'], 
                                                    basis_mean=pose_dmp_info['mu'], basis_std=pose_dmp_info['h'], 
