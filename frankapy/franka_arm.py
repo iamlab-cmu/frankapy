@@ -332,30 +332,20 @@ class FrankaArm:
                           termination_handler_type=TerminationHandlerType.FinalPoseTerminationHandler, 
                           skill_desc=skill_desc)
 
+        skill.add_initial_sensor_values(FC.EMPTY_SENSOR_VALUES)
+
+        skill.set_cartesian_impedances(use_impedance, cartesian_impedances, joint_impedances)
+
+        if not skill.check_for_contact_params(buffer_time, force_thresholds, torque_thresholds):
+            skill.add_pose_threshold_params(buffer_time, FC.DEFAULT_POSE_THRESHOLDS)
+
         if delta_tool_pose.from_frame == 'world' \
                 and delta_tool_pose.to_frame == 'world':
-            skill.add_initial_sensor_values(FC.EMPTY_SENSOR_VALUES)
-
-            skill.set_cartesian_impedances(use_impedance, cartesian_impedances, joint_impedances)
-            
-            if not skill.check_for_contact_params(buffer_time, force_thresholds, torque_thresholds):
-                skill.add_pose_threshold_params(buffer_time, FC.DEFAULT_POSE_THRESHOLDS)
 
             skill.add_goal_pose(duration, delta_tool_pose)
 
-            goal = skill.create_goal()
-
-            self._send_goal(goal,
-                            cb=lambda x: skill.feedback_callback(x),
-                            block=block,
-                            ignore_errors=ignore_errors)
-        elif delta_tool_pose.from_frame != 'franka_tool' \
-                or delta_tool_pose.to_frame != 'franka_tool':
-            raise ValueError('delta_pose has invalid frame names! ' \
-                             'Make sure delta_pose has from_frame=franka_tool ' \
-                             'and to_frame=franka_tool')
-
-        else:
+        elif delta_tool_pose.from_frame == 'franka_tool' \
+                and delta_tool_pose.to_frame == 'franka_tool':
             starting_pose = self.get_pose()
 
             starting_tool_base_pose = starting_pose * self._tool_delta_pose.inverse()
@@ -364,7 +354,6 @@ class FrankaArm:
 
             final_tool_base_pose = final_goal_pose * self._tool_delta_pose.inverse()
 
-            
             delta_tool_base_pose = starting_tool_base_pose.inverse() * final_tool_base_pose
 
             starting_rotation = RigidTransform(
@@ -378,28 +367,27 @@ class FrankaArm:
             actual_translation = starting_rotation * predicted_translation
             delta_tool_base_pose.translation = actual_translation.translation
 
-
             if not ignore_virtual_walls and not self._offline:
                 if np.any([
                     final_tool_base_pose.translation <= FC.WORKSPACE_WALLS[:, :3].min(axis=0),
                     final_tool_base_pose.translation >= FC.WORKSPACE_WALLS[:, :3].max(axis=0)]):
                     raise ValueError('Target pose is outside of workspace virtual walls!')
 
-            skill.add_initial_sensor_values(FC.EMPTY_SENSOR_VALUES)
-
-            skill.set_cartesian_impedances(use_impedance, cartesian_impedances, joint_impedances)
-            
-            if not skill.check_for_contact_params(buffer_time, force_thresholds, torque_thresholds):
-                skill.add_pose_threshold_params(buffer_time, FC.DEFAULT_POSE_THRESHOLDS)
-
             skill.add_goal_pose(duration, delta_tool_base_pose)
 
-            goal = skill.create_goal()
+        else:
+            raise ValueError('delta_pose has invalid frame names! ' \
+                             'Make sure delta_pose has from_frame=franka_tool ' \
+                             'and to_frame=franka_tool or from_frame=world and \
+                             to_frame=world')
 
-            self._send_goal(goal,
-                            cb=lambda x: skill.feedback_callback(x),
-                            block=block,
-                            ignore_errors=ignore_errors)
+        goal = skill.create_goal()
+
+        self._send_goal(goal,
+                        cb=lambda x: skill.feedback_callback(x),
+                        block=block,
+                        ignore_errors=ignore_errors)
+            
 
     def goto_joints(self,
                     joints,
