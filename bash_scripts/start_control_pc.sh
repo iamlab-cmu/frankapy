@@ -26,8 +26,8 @@ control_pc_use_password=0
 control_pc_password=""
 control_pc_franka_interface_path="~/Documents/franka-interface"
 start_franka_interface=1
-robot_number = 1
-with_gripper= 0 
+robot_number=1
+with_gripper=0 
 
 while getopts ':h:i:u:p:d:r:s:' option; do
   case "${option}" in

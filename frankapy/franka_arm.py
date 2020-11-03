@@ -1053,7 +1053,7 @@ class FrankaArm:
                   S=FC.DEFAULT_HFPC_S,
                   interpolate=False,
                   use_cartesian_gains=True,
-                  block=True,
+                  block=False,
                   ignore_errors=True,
                   ignore_virtual_walls=False,
                   skill_desc=''):

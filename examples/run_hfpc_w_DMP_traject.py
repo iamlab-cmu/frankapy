@@ -111,7 +111,8 @@ if __name__ == "__main__":
     fa.run_dynamic_force_position(duration=T * 10, buffer_time = 3, S=S,
                                     use_cartesian_gains=True,
                                     position_kps_cart=position_kps_cart,
-                                    force_kps_cart=force_kps_cart)
+                                    force_kps_cart=force_kps_cart,block=False)
+    print('DEBUG')
 
     while current_ht > 0.0446:
         print('starting dmp', dmp_num)        
