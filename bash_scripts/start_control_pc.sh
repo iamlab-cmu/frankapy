@@ -33,7 +33,7 @@ with_gripper=1
 log_on_franka_interface=0
 stop_on_error=0
 
-while getopts ':h:i:u:p:d:r:s:' option; do
+while getopts ':h:i:u:p:d:r:s:g:l:e' option; do
   case "${option}" in
     h) echo "$usage"
        exit
