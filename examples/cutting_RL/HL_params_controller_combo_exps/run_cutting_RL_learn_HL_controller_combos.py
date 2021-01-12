@@ -54,7 +54,8 @@ def plot_sampled_new_dmp_traject_and_original_dmp(epoch, sample, save_dir, new_z
     ax[2].set_xlabel('Time (s)')
     plt.show()
     # save figure to working dir
-    fig.savefig(work_dir + '/' + 'dmp_traject_plots' + '/sampledDMP_' + 'epoch_'+str(epoch) + '_ep_'+str(sample)+'.png')
+    if os.path.isdir(work_dir + '/' + 'dmp_traject_plots'):
+        fig.savefig(work_dir + '/' + 'dmp_traject_plots' + '/sampledDMP_' + 'epoch_'+str(epoch) + '_ep_'+str(sample)+'.png')
 
 def plot_updated_policy_mean_traject(work_dir, position_dmp_weights_file_path, epoch, dmp_traject_time, control_type_z_axis, init_dmp_info_dict, \
     initial_wts, REPS_updated_mean):
@@ -107,24 +108,33 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--cut_type', type=str, default = 'normal', help ='options are: normal, pivchop, scoring') # options: 'normal', 'pivchop', 'scoring'
     parser.add_argument('--dmp_traject_time', '-t', type=int, default = 5)  
-    parser.add_argument('--param_sampling_var', type=float, default = 0.2)
+    parser.add_argument('--param_sampling_var', type=float, default = 0.3)
     parser.add_argument('--num_epochs', '-e', type=int, default = 5)  
     parser.add_argument('--num_samples', '-s', type=int, default = 25)    
+    # parser.add_argument('--data_savedir', '-d', type=str, 
+    #     default='/home/sony/Documents/cutting_RL_experiments/data/Jan-2021-controller-combo-exps/potato/pivChop/')
+    parser.add_argument('--food_type', type=str, default = 'potato') 
     parser.add_argument('--data_savedir', '-d', type=str, 
-        default='/home/sony/Documents/cutting_RL_experiments/data/Jan-2021-controller-combo-exps/celery/normalCut/')
+        default='/home/sony/Documents/cutting_RL_experiments/data/Jan-2021-controller-combo-exps/')
     parser.add_argument('--exp_num', '-n', type=int)
     parser.add_argument('--start_from_previous', '-sfp', type=bool, default=False)
     parser.add_argument('--previous_datadir', '-pd', type=str)
     parser.add_argument('--prev_epochs_to_calc_pol_update', '-num_prev_epochs', type=int, default = 1, help='num \
-        previous epochs of data to use to calculate REPS policy update')
+        previous epochs of data to use to calculate REPS policy update')   
     parser.add_argument('--starting_epoch_num', '-start_epoch', type=int, default = 0)
     parser.add_argument('--starting_sample_num', '-start_sample', type=int, default = 0)
     args = parser.parse_args()
 
     # create folders to save data
+    if not os.path.isdir(args.data_savedir + args.food_type + '/' + args.cut_type + '/'):
+        createFolder(args.data_savedir + args.food_type + '/' + args.cut_type + '/')
+    args.data_savedir = args.data_savedir + args.food_type + '/' + args.cut_type + '/'
+
     if not os.path.isdir(args.data_savedir + 'exp_' + str(args.exp_num)):
         createFolder(args.data_savedir + 'exp_' + str(args.exp_num))
+
     work_dir = args.data_savedir + 'exp_' + str(args.exp_num)
+
     if not os.path.isdir(work_dir + '/' + 'all_polParamRew_data'):
         createFolder(work_dir + '/' + 'all_polParamRew_data')
     # if not os.path.isdir(work_dir + '/' + 'dmp_traject_plots'):
@@ -160,7 +170,7 @@ if __name__ == '__main__':
 
     # go to initial cutting pose
     starting_position = RigidTransform(rotation=knife_orientation, \
-        translation=np.array([0.458, -0.005, 0.1]), #z=0.05
+        translation=np.array([0.486, 0.035, 0.12]), #z=0.05
         from_frame='franka_tool', to_frame='world')    
     fa.goto_pose(starting_position, duration=5, use_impedance=False)
 
@@ -172,19 +182,31 @@ if __name__ == '__main__':
     
     # initialize LL params from IL - these will be fixed for this experiment (only trying to learn HL params here)
     pos_dmp_wts = np.array(init_dmp_info_dict['weights'])
-    target_force = [5, 0, -20, 0, 0, 0] # assuming zero force in y, downward force in z. TODO: how to define x axis force? 
+    
     if args.cut_type == 'normal':
-        cart_pitch_stiffness = 1000 
+        cart_pitch_stiffness = 400 
+        target_force = [5, 0, -10, 0, 0, 0] # assuming zero force in y, downward force in z. TODO: how to define x axis force? 
     elif args.cut_type == 'pivchop':
-        cart_pitch_stiffness = 50  
-
+        cart_pitch_stiffness = 50
+        target_force = [0, 0, -10, 0, 0, 0] # assuming zero force in y, downward force in z. TODO: how to define x axis force?   
+    
     # Initialize Gaussian policy HL params mean & sigma, 3 parameters to determine pos vs. force control 
-    # each axis assuming fixed LL params
-    initial_mu = np.array([0.5, 0.5, 0.5]) # assuming equal prob of force and position control in each axis
-    initial_sigma = np.diag(np.repeat(args.param_sampling_var, initial_mu.shape[0]))
+    if args.start_from_previous: # load previous data collected and start from updated policy and/or sample/epoch        
+        prev_data_dir = args.previous_datadir
+        policy_params_mean, policy_params_sigma = parse_policy_params_and_rews_from_file(prev_data_dir, args.prev_epochs_to_calc_pol_update)
 
-    print('initial mu', initial_mu)        
-    mu, sigma = initial_mu, initial_sigma
+        initial_mu, initial_sigma = policy_params_mean, policy_params_sigma
+        mu, sigma = initial_mu, initial_sigma
+        print('starting from updated policy - mean', policy_params_mean)
+        import pdb; pdb.set_trace()
+
+    else:
+        # each axis assuming fixed LL params
+        initial_mu = np.array([0.5, 0.5, 0.5]) # assuming equal prob of force and position control in each axis
+        initial_sigma = np.diag(np.repeat(args.param_sampling_var, initial_mu.shape[0]))
+
+        print('initial mu', initial_mu)        
+        mu, sigma = initial_mu, initial_sigma
 
     # begin sampling
     mean_params_each_epoch = []
@@ -198,7 +220,9 @@ if __name__ == '__main__':
             new_params = np.clip(new_params, 0, 1) # clip b/w 0 and 1
             # round sampled params to discretize and determine axis controller: 0 = force control, 1 = pos control
             force_pos_combo_xyz = [np.int(np.round(i)) for i in new_params] 
-            S = force_pos_combo_xyz + [1,1,1]                             
+            # S = force_pos_combo_xyz + [1,1,1]    
+            S = [1,1,1,1,1,1]
+            print('S ', S)                         
             
             # save to policy params buffer
             policy_params_all_samples.append(new_params.tolist())
@@ -207,7 +231,7 @@ if __name__ == '__main__':
             traject_time = args.dmp_traject_time   # define length of dmp trajectory  
             # Load dmp traject params
             dmp_traj = DMPPositionTrajectoryGenerator(traject_time)
-            dmp_traj.load_saved_dmp_params_from_pkl_file(position_dmp_pkl)
+            dmp_traj.load_saved_dmp_params_from_pkl_file(dmp_wts_file)
             dmp_traj.parse_dmp_params_dict()
 
             # Define starting position 
@@ -216,11 +240,15 @@ if __name__ == '__main__':
             y0 = start_pose.translation 
             # calculate dmp position trajectory - NOTE: this assumes a 0.001 dt for calc the dmp traject
             dmp_traject, dy, _, _, _ = dmp_traj.run_dmp_with_weights(y0) # y: np array(tx3)
-            
+
+            # if args.cut_type == 'pivchop': # scale demo trajectory in z axis to increase ampl
+            #     dmp_traject, dy, _, _, _ = dmp_traj.run_dmp_with_weights(y0, phi_j=np.array([1.5])) 
+
+            #import pdb; pdb.set_trace()
             # check new dmp sampled wt trajectory vs original
             new_z_force = 'NA'
             plot_sampled_new_dmp_traject_and_original_dmp(epoch, sample, work_dir, new_z_force, traject_time, \
-                args.position_dmp_weights_file_path, dmp_traject, y0)
+                dmp_wts_file, dmp_traject, y0)
             import pdb; pdb.set_trace()
 
             # sampling info for sending msgs via ROS
@@ -232,7 +260,8 @@ if __name__ == '__main__':
             # downsample dmp traject 
             downsmpled_dmp_traject = downsample_dmp_traject(dmp_traject, 0.001, dt)
             target_poses = get_dmp_traj_poses_reformatted(downsmpled_dmp_traject, starting_rotation) # target_poses is a nx16 list of target poses at each time step
-
+            
+            #import pdb; pdb.set_trace()
             # define controller stiffnesses
             position_kps_cart = FC.DEFAULT_TRANSLATIONAL_STIFFNESSES + FC.DEFAULT_ROTATIONAL_STIFFNESSES
             # set pitch axis cartesian gain to be sampled value
@@ -377,6 +406,9 @@ if __name__ == '__main__':
                     y0 = fa.get_pose().translation
                     # calculate dmp position trajectory - NOTE: this assumes a 0.001 dt for calc the dmp traject
                     dmp_traject, dy, _, _, _ = dmp_traj.run_dmp_with_weights(y0) # y: np array(tx3)
+                    
+                    # if args.cut_type == 'pivchop': # scale demo trajectory in z axis to increase ampl
+                    #     dmp_traject, dy, _, _, _ = dmp_traj.run_dmp_with_weights(y0, phi_j=np.array([1.5]))
                     # downsample dmp traject and reformat target_poses
                     downsmpled_dmp_traject = downsample_dmp_traject(dmp_traject, 0.001, dt)
                     target_poses = get_dmp_traj_poses_reformatted(downsmpled_dmp_traject, starting_rotation) # target_poses is a nx16 list of target poses at each time step

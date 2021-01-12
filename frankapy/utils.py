@@ -52,6 +52,7 @@ class DMPPositionTrajectoryGenerator:
                 self.h_all[i, j] = self.std
 
         self.phi_j = np.ones((self.num_sensors))
+        # self.phi_j = self.phi*np.ones((self.num_sensors))
 
         # parse list of weights and save as np array: 
         self.weights = np.zeros((self.num_dims, self.num_sensors, self.num_basis))
@@ -272,7 +273,9 @@ def parse_policy_params_and_rews_from_file(work_dir, prev_epochs_to_calc_pol_upd
     prev_epochs_to_calc_pol_update: how many prev epochs' data to use to calculate policy update
     '''
     data_files = glob.glob(work_dir + "*epoch_*.npy")
+    #import pdb; pdb.set_trace()
     num_prev_epochs = len(data_files)
+    #import pdb; pdb.set_trace()
     # get num policy params
     first_file = np.load(data_files[0])
     num_pol_params = first_file.shape[1]-1 # subtract 1 b/c last dim is reward
@@ -282,7 +285,6 @@ def parse_policy_params_and_rews_from_file(work_dir, prev_epochs_to_calc_pol_upd
     num_samples_each_epoch = []
     num_samples = 0
     if hfpc:
-        #pol_params_all_epochs = np.empty((0,8))
         pol_params_all_epochs = np.empty((0,num_pol_params))
     else:
         pol_params_all_epochs = np.empty((0,num_pol_params))

@@ -1,4 +1,6 @@
 ''' Notes: 
+TODO: add task success count/tracking, time to complete cut 
+
 adding cartesian pitch (y) stiffness as a policy param - i.e. run force control in z and add var stiffness param
 '''
 # TODO: try adding in penalty for y mvmt as well for 3dim position DMP exploration
