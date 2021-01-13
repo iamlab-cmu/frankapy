@@ -153,7 +153,8 @@ if __name__ == '__main__':
                                   [ 0.0, -0.19648464,  -0.9805069]])
 
     elif args.cut_type == 'pivchop':
-        dmp_wts_file = '/home/sony/raw_IL_trajects/100220_piv_chop_position_dmp_weights_zeroXY_2.pkl'
+        dmp_wts_file = '/home/sony/raw_IL_trajects/Jan-2021/011321_piv_chop_potato_position_weights_zeroXY.pkl' 
+        # dmp_wts_file = '/home/sony/raw_IL_trajects/100220_piv_chop_position_dmp_weights_zeroXY_2.pkl'
         # metal knife (26 deg tilt forward) - pivchop
         knife_orientation = np.array([[0.0,   0.8988,  -0.4384],
                                   [ 1.0,   0.0,  0.0],
@@ -170,7 +171,7 @@ if __name__ == '__main__':
 
     # go to initial cutting pose
     starting_position = RigidTransform(rotation=knife_orientation, \
-        translation=np.array([0.486, 0.035, 0.12]), #z=0.05
+        translation=np.array([0.486, 0.065, 0.12]), #z=0.05
         from_frame='franka_tool', to_frame='world')    
     fa.goto_pose(starting_position, duration=5, use_impedance=False)
 
@@ -185,7 +186,7 @@ if __name__ == '__main__':
     
     if args.cut_type == 'normal':
         cart_pitch_stiffness = 400 
-        target_force = [5, 0, -10, 0, 0, 0] # assuming zero force in y, downward force in z. TODO: how to define x axis force? 
+        target_force = [0, 0, -10, 0, 0, 0] # assuming zero force in y, downward force in z. TODO: how to define x axis force? 
     elif args.cut_type == 'pivchop':
         cart_pitch_stiffness = 50
         target_force = [0, 0, -10, 0, 0, 0] # assuming zero force in y, downward force in z. TODO: how to define x axis force?   
@@ -220,8 +221,8 @@ if __name__ == '__main__':
             new_params = np.clip(new_params, 0, 1) # clip b/w 0 and 1
             # round sampled params to discretize and determine axis controller: 0 = force control, 1 = pos control
             force_pos_combo_xyz = [np.int(np.round(i)) for i in new_params] 
-            # S = force_pos_combo_xyz + [1,1,1]    
-            S = [1,1,1,1,1,1]
+            S = force_pos_combo_xyz + [1,1,1]    
+            #S = [1,1,1,1,1,1] # DEBUG
             print('S ', S)                         
             
             # save to policy params buffer
@@ -430,8 +431,22 @@ if __name__ == '__main__':
             elif args.cut_type == 'pivchop':
                 avg_upward_z_penalty = np.max(upward_z_penalty_all_dmps)
 
-            reward = -0.1*avg_peak_y_force -0.15*avg_peak_z_force - 10*avg_x_mvmt -100*avg_y_mvmt - 10*avg_z_mvmt \
-                    -100*avg_upward_z_penalty -0.2*total_cut_time_all_dmps 
+            deviation_actual_vs_demo_downward_z_mvmt = np.abs((downsmpled_dmp_traject[:,2][0] - min(downsmpled_dmp_traject[:,2])) - (robot_positions[:,2][0] - min(robot_positions[:,2])))
+            deviation_actual_vs_demo_downward_x_mvmt = np.abs((downsmpled_dmp_traject[:,0][0] - min(downsmpled_dmp_traject[:,0])) - (robot_positions[:,0][0] - min(robot_positions[:,0])))
+
+            # new reward w/ added penalty for deviation from demo traject
+            if args.cut_type == 'pivchop':
+                reward = -0.1*avg_peak_y_force -0.15*avg_peak_z_force - 10*avg_x_mvmt -100*avg_y_mvmt - 10*avg_z_mvmt \
+                    -100*avg_upward_z_penalty -0.2*total_cut_time_all_dmps - 50000*np.square(deviation_actual_vs_demo_downward_z_mvmt)
+            
+            elif args.cut_type == 'scoring':
+                reward = -0.1*avg_peak_y_force -0.15*avg_peak_z_force - 10*avg_x_mvmt -100*avg_y_mvmt - 10*avg_z_mvmt \
+                    -100*avg_upward_z_penalty -0.2*total_cut_time_all_dmps - 50000*np.square(deviation_actual_vs_demo_downward_x_mvmt)
+            
+            else:
+                # original reward for LL param optimiz
+                reward = -0.1*avg_peak_y_force -0.15*avg_peak_z_force - 10*avg_x_mvmt -100*avg_y_mvmt - 10*avg_z_mvmt \
+                        -100*avg_upward_z_penalty -0.2*total_cut_time_all_dmps 
             
             # save reward to buffer
             print('Epoch: %i Sample: %i Reward: '%(epoch,sample), reward)
@@ -483,6 +498,8 @@ if __name__ == '__main__':
         print(policy_params_mean)
         print('updated policy cov')
         print(policy_params_sigma)
+
+        mu, sigma = policy_params_mean, policy_params_sigma
         import pdb; pdb.set_trace()
         # TODO: roll out updated policy mean and evaluate
 

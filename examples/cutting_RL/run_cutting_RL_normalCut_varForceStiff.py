@@ -575,6 +575,8 @@ if __name__ == '__main__':
         print(policy_params_mean)
         print('updated policy cov')
         print(policy_params_sigma)
+
+        mu, sigma = policy_params_mean, policy_params_sigma
         import pdb; pdb.set_trace()
         # TODO: roll out updated policy mean and evaluate
 
