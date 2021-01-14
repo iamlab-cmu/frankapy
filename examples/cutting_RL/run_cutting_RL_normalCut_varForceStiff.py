@@ -1,5 +1,5 @@
 ''' Notes: 
-TODO: add task success count/tracking, time to complete cut 
+TODO: add task success count/tracking, time to complete cut metrics and save
 
 adding cartesian pitch (y) stiffness as a policy param - i.e. run force control in z and add var stiffness param
 '''

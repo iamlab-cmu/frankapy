@@ -1,5 +1,5 @@
 ''' Notes: 
-TODO: add task success count/tracking, time to complete cut 
+TODO: add task success count/tracking, time to complete cut metrics and save
 
 - try w/ hard vs soft objects (carrot/celery/potato, vs. cucumber vs. tomato)
 - try w/ pivoted cut and variable cartesian gains/stiffnesses 
