@@ -77,8 +77,8 @@ def plot_updated_policy_mean_traject(work_dir, position_dmp_weights_file_path, e
         new_weights = np.expand_dims(np.vstack((REPS_updated_mean[0:7],initial_wts[1,:,:],initial_wts[2,:,:])),axis=1)
         new_z_force = REPS_updated_mean[-2]
     elif control_type_z_axis == 'position':
-        new_weights = np.expand_dims(np.vstack((REPS_updated_mean[0:7],initial_wts[1,:,:],REPS_updated_mean[7:14])),axis=1)
-        new_z_force = 0
+        new_weights = np.expand_dims(np.vstack((initial_wts[0,:,:],initial_wts[1,:,:],REPS_updated_mean[0:7])),axis=1)
+        new_z_force = REPS_updated_mean[-1] #0
 
     # Save new weights to dict
     data_dict = {
@@ -127,7 +127,7 @@ if __name__ == '__main__':
     parser.add_argument('--dmp_wt_sampling_var', type=float, default = 0.01)
     parser.add_argument('--num_epochs', '-e', type=int, default = 5)  
     parser.add_argument('--num_samples', '-s', type=int, default = 25)    
-    parser.add_argument('--data_savedir', '-d', type=str, default='/home/sony/Documents/cutting_RL_experiments/data/Jan-2021-LL-param-exps/pivchop/potato/')
+    parser.add_argument('--data_savedir', '-d', type=str, default='/home/sony/Documents/cutting_RL_experiments/data/Jan-2021-LL-param-exps/pivchop/celery/')
     parser.add_argument('--exp_num', '-n', type=int)
     parser.add_argument('--food_type', type=str, default='hard') #hard or soft
     parser.add_argument('--start_from_previous', '-sfp', type=bool, default=False)
@@ -172,7 +172,7 @@ if __name__ == '__main__':
     
     # go to initial cutting pose
     starting_position = RigidTransform(rotation=knife_orientation, \
-        translation=np.array([0.424, -0.025, 0.135]), #z=0.05
+        translation=np.array([0.457, -0.12, 0.13]), #z=0.05
         from_frame='franka_tool', to_frame='world')    
     fa.goto_pose(starting_position, duration=5, use_impedance=False)
 
@@ -197,6 +197,11 @@ if __name__ == '__main__':
         # if args.start_from_previous and args.start_epoch!=0 and args.start_sample==0:
         #     np.savez(os.path.join(work_dir, 'REPSupdatedMean_' + 'epoch_'+str(epoch) +'.npz'), \
         #         updated_mean = policy_params_mean, updated_cov = policy_params_sigma)
+
+        if args.food_type == 'hard':
+            S = [0,1,1,1,1,1]
+        elif args.food_type == 'soft':
+            S = [1,1,1,1,1,1]
         import pdb; pdb.set_trace()
 
 
@@ -319,7 +324,7 @@ if __name__ == '__main__':
             # check new dmp sampled wt trajectory vs original
             plot_sampled_new_dmp_traject_and_original_dmp(epoch, sample, work_dir, new_cart_pitch_stiffness, traject_time, \
                 args.position_dmp_weights_file_path, dmp_traject, y0)
-            import pdb; pdb.set_trace()
+            # import pdb; pdb.set_trace()
 
             # sampling info for sending msgs via ROS
             dt = 0.01 
@@ -495,7 +500,7 @@ if __name__ == '__main__':
             avg_z_mvmt = np.max(z_mvmt_all_dmps)
             #avg_diff_up_down_z_mvmt = np.max(diff_up_down_z_mvmt_all_dmps) #np.mean(diff_up_down_z_mvmt_all_dmps)
             avg_upward_z_penalty = np.max(upward_z_penalty_all_dmps)
-            import pdb; pdb.set_trace() 
+            # import pdb; pdb.set_trace() 
                    
             if args.use_all_dmp_dims:  
                 # reward = -0.05*avg_peak_force -0.1*avg_peak_y_force - 10*avg_x_mvmt -20*avg_y_mvmt -50*avg_upward_z_mvmt - 50*avg_diff_forw_back_x_mvmt + -0.2*total_cut_time_all_dmps
@@ -527,7 +532,12 @@ if __name__ == '__main__':
             else:
                 np.save(os.path.join(work_dir + '/' + 'all_polParamRew_data', 'polParamsRews_' + 'epoch_'+str(epoch) + '_ep_'+str(sample) + '.npy'), \
                     np.concatenate((np.array(policy_params_all_samples), np.array([rewards_all_samples]).T), axis=1))
+            
+            # save task success metrics           
+            np.save(os.path.join(work_dir, 'cut_times_all_samples.npy'), np.array(time_to_complete_cut))
+            np.save(os.path.join(work_dir, 'task_success_all_samples.npy'), np.array(task_success)) 
 
+            
             # reset to starting cut position            
             new_position = copy.deepcopy(starting_position)
             new_position.translation[1] = fa.get_pose().translation[1]

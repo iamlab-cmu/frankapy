@@ -126,7 +126,7 @@ if __name__ == '__main__':
     parser.add_argument('--dmp_wt_sampling_var', type=float, default = 0.01)
     parser.add_argument('--num_epochs', '-e', type=int, default = 5)  
     parser.add_argument('--num_samples', '-s', type=int, default = 25)    
-    parser.add_argument('--data_savedir', '-d', type=str, default='/home/sony/Documents/cutting_RL_experiments/data/Jan-2021-LL-param-exps/normal/tomato/')
+    parser.add_argument('--data_savedir', '-d', type=str, default='/home/sony/Documents/cutting_RL_experiments/data/Jan-2021-LL-param-exps/normal/mozz/')
     parser.add_argument('--exp_num', '-n', type=int)
     parser.add_argument('--food_type', type=str, default='hard') #hard or soft
     parser.add_argument('--start_from_previous', '-sfp', type=bool, default=False)
@@ -166,7 +166,7 @@ if __name__ == '__main__':
 
     # go to initial cutting pose
     starting_position = RigidTransform(rotation=knife_orientation, \
-        translation=np.array([0.456, 0.087, 0.14]), #z=0.05
+        translation=np.array([0.42, 0.068, 0.13]), #z=0.05
         from_frame='franka_tool', to_frame='world')    
     fa.goto_pose(starting_position, duration=5, use_impedance=False)
 
@@ -190,7 +190,7 @@ if __name__ == '__main__':
         initial_wts = np.array(init_dmp_info_dict['weights'])
 
         if args.food_type == 'hard':
-            S = [1,0,0,1,1,1]
+            S = [1,1,0,1,1,1] # [1,0,0,1,1,1]
         elif args.food_type == 'soft':
             S = [1,1,0,1,1,1]
 
@@ -217,7 +217,7 @@ if __name__ == '__main__':
                 initial_sigma[-1,-1] = 800
 
                 if args.food_type == 'hard':
-                    S = [1,0,0,1,1,1]
+                    S = [1,1,0,1,1,1] # [1,0,0,1,1,1]
                 elif args.food_type == 'soft':
                     S = [1,1,0,1,1,1]
             

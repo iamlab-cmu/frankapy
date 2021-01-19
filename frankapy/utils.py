@@ -314,7 +314,7 @@ def parse_policy_params_and_rews_from_file(work_dir, prev_epochs_to_calc_pol_upd
     plt.xlabel('sample num')
     plt.ylabel('reward - average across all dmps for each slice')
     plt.ylim(np.min(rews_all_epochs)-5, 0)
-    plt.title('reward vs. sample - normalCut, celery')
+    plt.title('reward vs. sample - normalCut, potato')
     plt.xticks(np.arange(rews_all_epochs.shape[0]))
     plt.show()
 
@@ -386,7 +386,7 @@ def plot_rewards_mult_experiments(work_dirs, rews_or_avg_rews, hfpc=True):
             plt.xlabel('sample num')
             plt.ylabel('reward - average across all dmps for each slice')
             #plt.ylim(np.min(rews_all_epochs)-5, 0)
-            plt.title('reward vs. sample - pivChop, celery')
+            plt.title('reward vs. sample - normalCut')
             plt.xticks(np.arange(rews_all_epochs.shape[0]))
 
         # plot average rewards each epoch
@@ -399,7 +399,8 @@ def plot_rewards_mult_experiments(work_dirs, rews_or_avg_rews, hfpc=True):
             plt.xticks(np.arange(3))
     
     #plt.legend(('exp9: posX_posZ_varStiff','exp8 :posX_forceZ_varStiff', 'exp7: posX_forceZ'))
-    plt.legend(('exp3: posZ_varStiff','exp4: forceZ_varStiff'))
+    # plt.legend(('exp3: posZ_varStiff','exp4: forceZ_varStiff'))
+    plt.legend(('exp4: normal-banana','exp5: normal-tomato', 'exp6: normal-mozz'))
     plt.show()
 
 
@@ -467,6 +468,52 @@ def viz_force_data(force_data_dir, epoch, num_samples):
     plt.title('max z forces vs samples - final epoch')
     plt.show()
     return max_z_forces_all
+
+def plot_mean_task_success_and_percent_success_cuts(work_dir, food_type, cut_type, perc_succ_or_avg_succ):
+    #import pdb; pdb.set_trace()
+    data = np.load(work_dir + 'task_success_all_samples.npy')
+    if type(data[0]) == np.str_:
+        data = np.array([int(i) for i in data])
+    #import pdb; pdb.set_trace()
+    num_epochs = int((data.shape[0])/25)
+    avg_task_success = []
+    percent_success_cuts = []
+    for i in range(num_epochs):
+        #import pdb; pdb.set_trace()
+        num_success_cut = 25 - np.where(data[25*i:(i+1)*25]==0)[0].shape[0]
+        perc_succes = (num_success_cut/25.0)*100
+        percent_success_cuts.append(perc_succes)
+        #import pdb; pdb.set_trace()
+        avg_task_success.append(np.mean(data[25*i:(i+1)*25]))
+    #import pdb; pdb.set_trace()
+    label = cut_type 
+    #plt.figure()
+    if perc_succ_or_avg_succ == 'perc_succ':
+        plt.plot(np.arange(num_epochs), percent_success_cuts,'-o')
+        
+        plt.title('percent successful cuts vs epochs - %s'%label)
+        plt.xlabel('epoch')
+        plt.ylim([0,100])
+        plt.ylabel('percent successful cuts out of 25 samples')
+    
+    #plt.figure()
+    elif perc_succ_or_avg_succ == 'avg_succ':
+        plt.plot(np.arange(num_epochs), avg_task_success,'-o')
+        plt.title('average task success (0,1,2) vs epochs - %s'%label)
+        plt.xlabel('epoch')
+        plt.ylabel('average task success (0,1,2)')
+        plt.ylim([0,2.5])
+        # plt.show()
+
+def plot_UCB_experiment_results(work_dir):
+    data = np.load(work_dir + 'all_polParamRew_data/avgRews.npy')
+
+    plt.plot(np.arange(0,8),data,'-o')
+    actions = ['111', '110', '101', '011', '000', '001', '010', '100']
+    plt.xticks(range(len(actions)), actions)
+    plt.xlabel('action (xyz axis controller combo)')
+    plt.ylabel('mean expected reward')
+    plt.title('UCB Sampling - Mean Expected Reward for Each High Level Action')
 
 def franka_pose_to_rigid_transform(franka_pose, from_frame='franka_tool_base', to_frame='world'):
     np_franka_pose = np.array(franka_pose).reshape(4, 4).T

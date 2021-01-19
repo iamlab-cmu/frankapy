@@ -420,7 +420,7 @@ if __name__ == '__main__':
 
     # go to initial cutting pose
     starting_position = RigidTransform(rotation=knife_orientation, \
-        translation=np.array([0.477, 0.082, 0.15]), #[0.486, 0.069, 0.12] - piv chop and normal # scoring
+        translation=np.array([0.424, 0.102, 0.10]), #[0.486, 0.069, 0.12] - piv chop and normal # scoring
         from_frame='franka_tool', to_frame='world')    
     fa.goto_pose(starting_position, duration=5, use_impedance=False)
 
@@ -443,16 +443,16 @@ if __name__ == '__main__':
     # UCB 
     possible_actions = [[1,1,1,1,1,1],[1,1,0,1,1,1],[1,0,1,1,1,1],[0,1,1,1,1,1],[0,0,0,1,1,1],[0,0,1,1,1,1],[0,1,0,1,1,1],[1,0,0,1,1,1]] # all 8 controller combos (S)
     nA = len(possible_actions)
-    #sum_of_rews = [0]*nA
-    #sum_of_rews = [-506.4866300053399, -219.6683314377931, -514.8699682403017, -499.7262556897119, -220.24938975969138, -490.8619989056853, -211.84252000492535, -229.38319953627598] 
-    sum_of_rews = [-47.25635824363701, -24.03374382396453, -7.854946712435094, -584.0831711901849, -585.2340694087594, -584.0571884622798, -585.1668721948885, 0]
+    # sum_of_rews = [0]*nA
+    sum_of_rews = [-43.83788647, -19.49408992, -43.50244964, -41.31678253,-41.57258393, -41.20517035, -41.599086  , -19.84945856] 
+    #sum_of_rews = [-47.25635824363701, -24.03374382396453, -7.854946712435094, -584.0831711901849, -585.2340694087594, -584.0571884622798, -585.1668721948885, 0]
     total_rew = 0
     
     T = args.num_samples #40
     actions_selected = []    
-    #num_selections = [0]*nA
-    #num_selections = [1,1,1,1,1,1,1,1] # initialize to 1 to avoid numerical issues
-    num_selections = [2, 2, 2, 2, 2, 2, 2, 1]
+    # num_selections = [0]*nA
+    # num_selections = [1,1,1,1,1,1,1,1] # initialize to 1 to avoid numerical issues
+    num_selections = [2, 5, 2, 2, 2, 2, 2, 5]
 
     # sampling 
     for t in range(0, T):
