@@ -244,11 +244,31 @@ if __name__ == '__main__':
     
     # track success metrics
     time_to_complete_cut, task_success = [], [] # task_success defined as 0 (unsuccessful cut), 1 (average cut), 2 (good cut)
+    # track: cut through (0/1), cut through except for small tag (0/1), housing bumped into food/pushed out of gripper (0/1)
+    task_success_more_granular = [] 
+    # save reward features (for easier data post-processing)
+    reward_features_all_samples = []
+
     if args.starting_sample_num !=0 or args.starting_epoch_num!=0:
         prev_data_time = np.load(os.path.join(work_dir, 'cut_times_all_samples.npy'))
         prev_data_task_succ = np.load(os.path.join(work_dir, 'task_success_all_samples.npy'))
         time_to_complete_cut = prev_data_time.tolist()
         task_success = prev_data_task_succ.tolist()
+        
+        # load previous sample granular task success and reward features
+        if os.path.isfile(os.path.join(work_dir, 'task_success_more_granular_all_samples.npy')):
+            prev_data_task_succ_more_granular = np.load(os.path.join(work_dir, 'task_success_more_granular_all_samples.npy'))
+            task_success_more_granular = prev_data_task_succ_more_granular.tolist() 
+        else:
+            for i in range(len(task_success)):
+                task_success_more_granular.append([np.inf, np.inf, np.inf])
+
+        if os.path.isfile(os.path.join(work_dir, 'reward_features_all_samples.npy')):
+            prev_data_reward_feats_all_samples = np.load(os.path.join(work_dir, 'reward_features_all_samples.npy'))        
+            reward_features_all_samples = prev_data_reward_feats_all_samples.tolist()
+        else: 
+            for i in range(len(task_success)):
+                reward_features_all_samples.append([np.inf]*7)
         import pdb; pdb.set_trace()
 
     for epoch in range(args.starting_epoch_num, args.num_epochs):
@@ -492,6 +512,13 @@ if __name__ == '__main__':
                     success = input('enter task success - 1 (average cut) or 2 (good cut): ')
             task_success.append(int(success))
 
+            # track more granular success metrics
+            detailed_success = input('enter: cut through? (0/1), cut through w/ small tag (0/1)?, housing bumped into food/pushed out of gripper? (0/1): ')
+            while detailed_success not in ['000','001','010','100','110','101','011','111']:
+                detailed_success = input('enter: cut through? (0/1), cut through w/ small tag (0/1)?, housing bumped into food/pushed out of gripper? (0/1): ')
+            split_str = [int(char) for char in detailed_success]
+            task_success_more_granular.append(split_str) 
+
             # calc averages/max across all cut types - NOTE: switched to max instead of avg to handle dmps that vary as they are chained
             avg_peak_y_force = np.max(peak_y_force_all_dmps)
             avg_peak_z_force = np.max(peak_z_forces_all_dmps) #np.mean(peak_forces_all_dmps)
@@ -518,6 +545,8 @@ if __name__ == '__main__':
             # save reward to buffer
             print('Epoch: %i Sample: %i Reward: '%(epoch,sample), reward)
             rewards_all_samples.append(reward)
+            reward_features = [avg_peak_y_force, avg_peak_z_force, avg_x_mvmt, avg_y_mvmt, avg_z_mvmt, avg_upward_z_penalty, total_cut_time_all_dmps]
+            reward_features_all_samples.append(reward_features)
             import pdb; pdb.set_trace()
 
             #import pdb; pdb.set_trace()
@@ -536,8 +565,10 @@ if __name__ == '__main__':
             # save task success metrics           
             np.save(os.path.join(work_dir, 'cut_times_all_samples.npy'), np.array(time_to_complete_cut))
             np.save(os.path.join(work_dir, 'task_success_all_samples.npy'), np.array(task_success)) 
-
-            
+            np.save(os.path.join(work_dir, 'task_success_more_granular_all_samples.npy'), np.array(task_success_more_granular))
+            # save reward features each samples
+            np.save(os.path.join(work_dir, 'reward_features_all_samples.npy'), np.array(reward_features_all_samples))
+                        
             # reset to starting cut position            
             new_position = copy.deepcopy(starting_position)
             new_position.translation[1] = fa.get_pose().translation[1]

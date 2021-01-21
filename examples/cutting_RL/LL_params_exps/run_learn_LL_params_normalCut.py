@@ -126,7 +126,7 @@ if __name__ == '__main__':
     parser.add_argument('--dmp_wt_sampling_var', type=float, default = 0.01)
     parser.add_argument('--num_epochs', '-e', type=int, default = 5)  
     parser.add_argument('--num_samples', '-s', type=int, default = 25)    
-    parser.add_argument('--data_savedir', '-d', type=str, default='/home/sony/Documents/cutting_RL_experiments/data/Jan-2021-LL-param-exps/normal/mozz/')
+    parser.add_argument('--data_savedir', '-d', type=str, default='/home/sony/Documents/cutting_RL_experiments/data/Jan-2021-LL-param-exps/normal/tomato/')
     parser.add_argument('--exp_num', '-n', type=int)
     parser.add_argument('--food_type', type=str, default='hard') #hard or soft
     parser.add_argument('--start_from_previous', '-sfp', type=bool, default=False)
@@ -166,7 +166,7 @@ if __name__ == '__main__':
 
     # go to initial cutting pose
     starting_position = RigidTransform(rotation=knife_orientation, \
-        translation=np.array([0.42, 0.068, 0.13]), #z=0.05
+        translation=np.array([0.44, 0.105, 0.13]), #z=0.05
         from_frame='franka_tool', to_frame='world')    
     fa.goto_pose(starting_position, duration=5, use_impedance=False)
 
@@ -174,7 +174,7 @@ if __name__ == '__main__':
     move_down_to_contact = RigidTransform(translation=np.array([0.0, 0.0, -0.1]),
     from_frame='world', to_frame='world')   
     fa.goto_pose_delta(move_down_to_contact, duration=5, use_impedance=False, force_thresholds=[10.0, 10.0, 3.0, 10.0, 10.0, 10.0], ignore_virtual_walls=True)
-    # fa.goto_pose_delta(move_down_to_contact, duration=5, use_impedance=False, force_thresholds=[10.0, 10.0, 1.5, 10.0, 10.0, 10.0], ignore_virtual_walls=True)
+    #fa.goto_pose_delta(move_down_to_contact, duration=5, use_impedance=False, force_thresholds=[10.0, 10.0, 2.0, 10.0, 10.0, 10.0], ignore_virtual_walls=True)
     
     # Initialize Gaussian policy params (DMP weights) - mean and sigma
     if args.start_from_previous: # load previous data collected and start from updated policy and/or sample/epoch        
@@ -242,13 +242,32 @@ if __name__ == '__main__':
 
     # track success metrics
     time_to_complete_cut, task_success = [], [] # task_success defined as 0 (unsuccessful cut), 1 (average cut), 2 (good cut)
+    # track: cut through (0/1), cut through except for small tag (0/1), housing bumped into food/pushed out of gripper (0/1)
+    task_success_more_granular = [] 
+    # save reward features (for easier data post-processing)
+    reward_features_all_samples = []
+
     if args.starting_sample_num !=0 or args.starting_epoch_num!=0:
         prev_data_time = np.load(os.path.join(work_dir, 'cut_times_all_samples.npy'))
         prev_data_task_succ = np.load(os.path.join(work_dir, 'task_success_all_samples.npy'))
         time_to_complete_cut = prev_data_time.tolist()
         task_success = prev_data_task_succ.tolist()
-        #combined_time = np.concatenate((prev_data_time, np.array(time_to_complete_cut)), axis=0)
-        #combined_task_succ = np.concatenate((prev_data_task_succ, np.array(task_success)), axis=0)
+        
+        # load previous sample granular task success and reward features
+        if os.path.isfile(os.path.join(work_dir, 'task_success_more_granular_all_samples.npy')):
+            prev_data_task_succ_more_granular = np.load(os.path.join(work_dir, 'task_success_more_granular_all_samples.npy'))
+            task_success_more_granular = prev_data_task_succ_more_granular.tolist() 
+        else:
+            for i in range(len(task_success)):
+                task_success_more_granular.append([np.inf, np.inf, np.inf])
+
+        if os.path.isfile(os.path.join(work_dir, 'reward_features_all_samples.npy')):
+            prev_data_reward_feats_all_samples = np.load(os.path.join(work_dir, 'reward_features_all_samples.npy'))        
+            reward_features_all_samples = prev_data_reward_feats_all_samples.tolist()
+        else: 
+            for i in range(len(task_success)):
+                reward_features_all_samples.append([np.inf]*7)
+
         import pdb; pdb.set_trace()
 
     for epoch in range(args.starting_epoch_num, args.num_epochs):
@@ -378,7 +397,7 @@ if __name__ == '__main__':
             dmp_num = 0             
 
             # sample from gaussian to get dmp weights for this execution       
-            import pdb; pdb.set_trace()     
+            #import pdb; pdb.set_trace()     
             dmp_num = 0            
             peak_z_forces_all_dmps, x_mvmt_all_dmps, forw_vs_back_x_mvmt_all_dmps = [], [], []# sum of abs (+x/-x mvmt)  
             y_mvmt_all_dmps, peak_y_force_all_dmps, z_mvmt_all_dmps, upward_z_mvmt_all_dmps = [], [], [], []
@@ -511,6 +530,13 @@ if __name__ == '__main__':
                     success = input('enter task success - 1 (average cut) or 2 (good cut): ')
             task_success.append(int(success))
 
+            # track more granular success metrics
+            detailed_success = input('enter: cut through? (0/1), cut through w/ small tag (0/1)?, housing bumped into food/pushed out of gripper? (0/1): ')
+            while detailed_success not in ['000','001','010','100','110','101','011','111']:
+                detailed_success = input('enter: cut through? (0/1), cut through w/ small tag (0/1)?, housing bumped into food/pushed out of gripper? (0/1): ')
+            split_str = [int(char) for char in detailed_success]
+            task_success_more_granular.append(split_str) 
+
             #   avg/max across all dmps for 1 slice           
             # avg_peak_z_force = np.mean(peak_z_forces_all_dmps)
             # avg_x_mvmt = np.mean(x_mvmt_all_dmps)
@@ -549,6 +575,8 @@ if __name__ == '__main__':
             # save reward to buffer
             print('Epoch: %i Sample: %i Reward: '%(epoch,sample), reward)
             rewards_all_samples.append(reward)
+            reward_features = [avg_peak_y_force, avg_peak_z_force, avg_x_mvmt, avg_y_mvmt, avg_z_mvmt, avg_upward_z_penalty, total_cut_time_all_dmps]
+            reward_features_all_samples.append(reward_features)
             import pdb; pdb.set_trace()
             
             # save intermediate rewards/pol params 
@@ -567,6 +595,9 @@ if __name__ == '__main__':
             # save task success metrics           
             np.save(os.path.join(work_dir, 'cut_times_all_samples.npy'), np.array(time_to_complete_cut))
             np.save(os.path.join(work_dir, 'task_success_all_samples.npy'), np.array(task_success)) 
+            np.save(os.path.join(work_dir, 'task_success_more_granular_all_samples.npy'), np.array(task_success_more_granular))
+            # save reward features each samples
+            np.save(os.path.join(work_dir, 'reward_features_all_samples.npy'), np.array(reward_features_all_samples))
 
             # reset to starting cut position            
             new_position = copy.deepcopy(starting_position)
@@ -600,7 +631,7 @@ if __name__ == '__main__':
             move_down_to_contact = RigidTransform(translation=np.array([0.0, 0.0, -0.1]),
             from_frame='world', to_frame='world')   
             fa.goto_pose_delta(move_down_to_contact, duration=5, use_impedance=False, force_thresholds=[10.0, 10.0, 3.0, 10.0, 10.0, 10.0], ignore_virtual_walls=True)
-            #fa.goto_pose_delta(move_down_to_contact, duration=5, use_impedance=False, force_thresholds=[10.0, 10.0, 1.5, 10.0, 10.0, 10.0], ignore_virtual_walls=True)
+            #fa.goto_pose_delta(move_down_to_contact, duration=5, use_impedance=False, force_thresholds=[10.0, 10.0, 2.0, 10.0, 10.0, 10.0], ignore_virtual_walls=True)
 
         
         # save reward 
