@@ -1,7 +1,7 @@
 from frankapy.utils import *
 
 #####################3########### load previous data and calculate updated policy and plot rewards
-data_dir = '/home/sony/Documents/cutting_RL_experiments/data/Jan-2021-LL-param-exps/pivchop/carrot/exp_9/'
+data_dir = '/home/sony/Documents/cutting_RL_experiments/data/Jan-2021-LL-param-exps/pivchop/mozz/exp_12/'
 #policy_params_mean, policy_params_sigma = parse_policy_params_and_rews_from_file(data_dir,prev_epochs_to_calc_pol_update, hfpc = False)
 policy_params_mean, policy_params_sigma = parse_policy_params_and_rews_from_file(data_dir, prev_epochs_to_calc_pol_update=10, hfpc = True)
 import pdb; pdb.set_trace()
