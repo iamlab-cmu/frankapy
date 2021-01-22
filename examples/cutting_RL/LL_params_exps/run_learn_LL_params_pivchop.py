@@ -127,7 +127,7 @@ if __name__ == '__main__':
     parser.add_argument('--dmp_wt_sampling_var', type=float, default = 0.01)
     parser.add_argument('--num_epochs', '-e', type=int, default = 5)  
     parser.add_argument('--num_samples', '-s', type=int, default = 25)    
-    parser.add_argument('--data_savedir', '-d', type=str, default='/home/sony/Documents/cutting_RL_experiments/data/Jan-2021-LL-param-exps/pivchop/celery/')
+    parser.add_argument('--data_savedir', '-d', type=str, default='/home/sony/Documents/cutting_RL_experiments/data/Jan-2021-LL-param-exps/pivchop/carrot/')
     parser.add_argument('--exp_num', '-n', type=int)
     parser.add_argument('--food_type', type=str, default='hard') #hard or soft
     parser.add_argument('--start_from_previous', '-sfp', type=bool, default=False)
@@ -172,7 +172,7 @@ if __name__ == '__main__':
     
     # go to initial cutting pose
     starting_position = RigidTransform(rotation=knife_orientation, \
-        translation=np.array([0.457, -0.12, 0.13]), #z=0.05
+        translation=np.array([0.46, 0.005, 0.145]), #z=0.05
         from_frame='franka_tool', to_frame='world')    
     fa.goto_pose(starting_position, duration=5, use_impedance=False)
 
