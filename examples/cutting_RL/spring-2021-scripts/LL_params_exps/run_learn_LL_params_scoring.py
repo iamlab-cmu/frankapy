@@ -1,6 +1,10 @@
 ''' Notes: 
 added task success count/tracking, time to complete cut metrics and save
 added cartesian pitch (y) stiffness as a policy param - i.e. run force control in z and add var stiffness param
+
+example CL:
+python run_learn_LL_params_scoring.py --exp_num 18 --food_type soft --start_from_previous True --previous_datadir /home/sony/Documents/cutting_RL_experiments/data/Jan-2021-LL-param-exps/scoring/tomato/exp_18/ --starting_epoch_num 4 --num_samples 20 --prev_epochs_to_calc_pol_update 1 
+
 '''
 
 # TODO: try adding in penalty for y mvmt as well for 3dim position DMP exploration
