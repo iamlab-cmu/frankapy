@@ -345,7 +345,7 @@ def parse_policy_params_and_rews_from_file(work_dir, prev_epochs_to_calc_pol_upd
 
     return policy_params_mean, policy_params_sigma
 
-def plot_rewards_mult_experiments(work_dirs, rews_or_avg_rews, hfpc=True):
+def plot_rewards_mult_experiments(work_dirs, rews_or_avg_rews, cut_type, hfpc=True):
     '''
     plot rewards from multiple experiments on the same plot for comparison
     '''
@@ -377,6 +377,7 @@ def plot_rewards_mult_experiments(work_dirs, rews_or_avg_rews, hfpc=True):
             num_samples_each_epoch.append(num_samples)
         
         #import pdb; pdb.set_trace()
+        
         if rews_or_avg_rews == 'rews':
         # plot rewards
             plt.plot(np.arange(rews_all_epochs.shape[0]),rews_all_epochs,'-o')
@@ -386,21 +387,25 @@ def plot_rewards_mult_experiments(work_dirs, rews_or_avg_rews, hfpc=True):
             plt.xlabel('sample num')
             plt.ylabel('reward - average across all dmps for each slice')
             #plt.ylim(np.min(rews_all_epochs)-5, 0)
-            plt.title('reward vs. sample - normalCut')
+            plt.title('reward vs. sample - %s'%cut_type)
             plt.xticks(np.arange(rews_all_epochs.shape[0]))
 
         # plot average rewards each epoch
         elif rews_or_avg_rews == 'avg_rews':
             plt.plot(avg_rews_each_epoch, '-o')
             plt.xlabel('epoch')
-            plt.ylabel('avg reward each epoch - average across all dmps for each slice')
+            plt.ylabel('avg reward each epoch - average across all dmps for each slice - %s'%cut_type)
             plt.ylim(-60, 0)
             plt.title('avg reward vs epochs')
             plt.xticks(np.arange(3))
     
     #plt.legend(('exp9: posX_posZ_varStiff','exp8 :posX_forceZ_varStiff', 'exp7: posX_forceZ'))
     # plt.legend(('exp3: posZ_varStiff','exp4: forceZ_varStiff'))
-    plt.legend(('exp4: normal-banana','exp5: normal-tomato', 'exp6: normal-mozz'))
+    #plt.legend(('exp4: normal-banana','exp5: normal-tomato', 'exp6: normal-mozz'))
+    #plt.legend(('exp1: normal-potato','exp2: normal-celery', 'exp3: normal-carrot','exp4: normal-banana','exp5: normal-tomato', 'exp6: normal-mozz'))
+    # plt.legend(('exp1: pivchop-potato','exp2: pivchop-celery', 'exp3: pivchop-carrot','exp4: pivchop-banana','exp5: pivchop-tomato', 'exp6: pivchop-mozz'))
+    # leg_str = 'exp1: %s-potato, exp2: %s-celery, exp3: %s-carrot, exp4: %s-banana, exp5: %s-tomato, exp6: %s-mozz'%(cut_type,cut_type,cut_type,cut_type,cut_type,cut_type)
+    plt.legend(('exp1: %s-potato'%cut_type,'exp2: %s-celery'%cut_type, 'exp3: %s-carrot'%cut_type,'exp4: %s-banana'%cut_type,'exp5: %s-tomato'%cut_type, 'exp6: %s-mozz'%cut_type))
     plt.show()
 
 
@@ -475,13 +480,21 @@ def plot_mean_task_success_and_percent_success_cuts(work_dir, food_type, cut_typ
     if type(data[0]) == np.str_:
         data = np.array([int(i) for i in data])
     #import pdb; pdb.set_trace()
-    num_epochs = int((data.shape[0])/25)
+    num_epochs = 5 #int((data.shape[0])/25)
     avg_task_success = []
     percent_success_cuts = []
     for i in range(num_epochs):
         #import pdb; pdb.set_trace()
-        num_success_cut = 25 - np.where(data[25*i:(i+1)*25]==0)[0].shape[0]
-        perc_succes = (num_success_cut/25.0)*100
+        if i == 0 or i == 1 or i == 2:
+            num_success_cut = 25 - np.where(data[25*i:(i+1)*25]==0)[0].shape[0]
+            perc_succes = (num_success_cut/25.0)*100
+        elif i == 3:
+            num_success_cut = 20 - np.where(data[75:95]==0)[0].shape[0]
+            perc_succes = (num_success_cut/20.0)*100
+        elif i == 4:
+            num_success_cut = 20 - np.where(data[95:]==0)[0].shape[0]
+            perc_succes = (num_success_cut/20.0)*100
+
         percent_success_cuts.append(perc_succes)
         #import pdb; pdb.set_trace()
         avg_task_success.append(np.mean(data[25*i:(i+1)*25]))
@@ -493,7 +506,7 @@ def plot_mean_task_success_and_percent_success_cuts(work_dir, food_type, cut_typ
         
         plt.title('percent successful cuts vs epochs - %s'%label)
         plt.xlabel('epoch')
-        plt.ylim([0,100])
+        plt.ylim([0,105])
         plt.ylabel('percent successful cuts out of 25 samples')
     
     #plt.figure()
@@ -502,7 +515,7 @@ def plot_mean_task_success_and_percent_success_cuts(work_dir, food_type, cut_typ
         plt.title('average task success (0,1,2) vs epochs - %s'%label)
         plt.xlabel('epoch')
         plt.ylabel('average task success (0,1,2)')
-        plt.ylim([0,2.5])
+        plt.ylim([0,2.05])
         # plt.show()
 
 def plot_UCB_experiment_results(work_dir):

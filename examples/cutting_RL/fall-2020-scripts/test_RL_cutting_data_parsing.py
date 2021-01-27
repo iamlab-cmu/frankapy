@@ -1,10 +1,10 @@
 from frankapy.utils import *
 
 #####################3########### load previous data and calculate updated policy and plot rewards
-data_dir = '/home/sony/Documents/cutting_RL_experiments/data/Jan-2021-LL-param-exps/pivchop/mozz/exp_12/'
-#policy_params_mean, policy_params_sigma = parse_policy_params_and_rews_from_file(data_dir,prev_epochs_to_calc_pol_update, hfpc = False)
-policy_params_mean, policy_params_sigma = parse_policy_params_and_rews_from_file(data_dir, prev_epochs_to_calc_pol_update=10, hfpc = True)
-import pdb; pdb.set_trace()
+# data_dir = '/home/sony/Documents/cutting_RL_experiments/data/Jan-2021-LL-param-exps/scoring/tomato/exp_18/'
+# #policy_params_mean, policy_params_sigma = parse_policy_params_and_rews_from_file(data_dir,prev_epochs_to_calc_pol_update, hfpc = False)
+# policy_params_mean, policy_params_sigma = parse_policy_params_and_rews_from_file(data_dir, prev_epochs_to_calc_pol_update=10, hfpc = True)
+# import pdb; pdb.set_trace()
 ################################### plot multiple experiment rewards together on same plots
 # normal cut
 # work_dirs = ['/home/sony/Documents/cutting_RL_experiments/data/celery/normalCut/exp_9_posXZ_varStiff/',\
@@ -14,24 +14,47 @@ import pdb; pdb.set_trace()
 #     '/home/sony/Documents/cutting_RL_experiments/data/Jan-2021-LL-param-exps/normal/celery/exp_2/',\
 #         '/home/sony/Documents/cutting_RL_experiments/data/Jan-2021-LL-param-exps/normal/carrot/exp_3/']
 
-# work_dirs = ['/home/sony/Documents/cutting_RL_experiments/data/Jan-2021-LL-param-exps/normal/banana/exp_4/',\
+# normal cut
+# work_dirs = ['/home/sony/Documents/cutting_RL_experiments/data/Jan-2021-LL-param-exps/normal/potato/exp_1/',\
+#     '/home/sony/Documents/cutting_RL_experiments/data/Jan-2021-LL-param-exps/normal/celery/exp_2/',\
+#         '/home/sony/Documents/cutting_RL_experiments/data/Jan-2021-LL-param-exps/normal/carrot/exp_3/',
+#         '/home/sony/Documents/cutting_RL_experiments/data/Jan-2021-LL-param-exps/normal/banana/exp_4/',\
 #     '/home/sony/Documents/cutting_RL_experiments/data/Jan-2021-LL-param-exps/normal/tomato/exp_5/',\
 #         '/home/sony/Documents/cutting_RL_experiments/data/Jan-2021-LL-param-exps/normal/mozz/exp_6/']
+#cut_type = 'normal'
+
+# pivchop
+# work_dirs = ['/home/sony/Documents/cutting_RL_experiments/data/Jan-2021-LL-param-exps/pivchop/potato/exp_7/',\
+#     '/home/sony/Documents/cutting_RL_experiments/data/Jan-2021-LL-param-exps/pivchop/celery/exp_8/',\
+#         '/home/sony/Documents/cutting_RL_experiments/data/Jan-2021-LL-param-exps/pivchop/carrot/exp_9/',
+#         '/home/sony/Documents/cutting_RL_experiments/data/Jan-2021-LL-param-exps/pivchop/banana/exp_10/',\
+#     '/home/sony/Documents/cutting_RL_experiments/data/Jan-2021-LL-param-exps/pivchop/tomato/exp_11/',\
+#         '/home/sony/Documents/cutting_RL_experiments/data/Jan-2021-LL-param-exps/pivchop/mozz/exp_12/']
+#cut_type = 'pivchop'
+
+# scoring
+# work_dirs = ['/home/sony/Documents/cutting_RL_experiments/data/Jan-2021-LL-param-exps/scoring/potato/exp_13/',\
+#     '/home/sony/Documents/cutting_RL_experiments/data/Jan-2021-LL-param-exps/scoring/celery/exp_14/',\
+#         '/home/sony/Documents/cutting_RL_experiments/data/Jan-2021-LL-param-exps/scoring/carrot/exp_15/',
+#         '/home/sony/Documents/cutting_RL_experiments/data/Jan-2021-LL-param-exps/scoring/banana/exp_16/',\
+#     '/home/sony/Documents/cutting_RL_experiments/data/Jan-2021-LL-param-exps/scoring/tomato/exp_18/',\
+#         '/home/sony/Documents/cutting_RL_experiments/data/Jan-2021-LL-param-exps/scoring/mozz/exp_19/']
+# cut_type = 'scoring'
 
 # rews_or_avg_rews = 'rews'
-# plot_rewards_mult_experiments(work_dirs, rews_or_avg_rews)
+# plot_rewards_mult_experiments(work_dirs, rews_or_avg_rews, cut_type)
 
 # rews_or_avg_rews = 'avg_rews'
-# plot_rewards_mult_experiments(work_dirs, rews_or_avg_rews)
+# plot_rewards_mult_experiments(work_dirs, rews_or_avg_rews, cut_type)
 
-# # piv chop
+# # piv chop ---- old (fall 2020)
 # work_dirs = ['/home/sony/Documents/cutting_RL_experiments/data/celery/pivChop/exp_3_genericRF/',\
 #     '/home/sony/Documents/cutting_RL_experiments/data/celery/pivChop/exp_4_forceZ_varStiff/']
 # rews_or_avg_rews = 'rews'
-# plot_rewards_mult_experiments(work_dirs, rews_or_avg_rews)
+# plot_rewards_mult_experiments(work_dirs, rews_or_avg_rews, cut_type)
 
 # rews_or_avg_rews = 'avg_rews'
-# plot_rewards_mult_experiments(work_dirs, rews_or_avg_rews)
+# plot_rewards_mult_experiments(work_dirs, rews_or_avg_rews, cut_type)
 
 #################################### plot mean policy dmp trajectories from diff experiments
 # work_dir = '/home/sony/Documents/cutting_RL_experiments/data/celery/normalCut/exp_9_posX_posZ_varStiff/'
@@ -91,29 +114,49 @@ import pdb; pdb.set_trace()
 #     '/home/sony/Documents/cutting_RL_experiments/data/Jan-2021-LL-param-exps/normal/tomato/exp_5/',\
 #         '/home/sony/Documents/cutting_RL_experiments/data/Jan-2021-LL-param-exps/normal/mozz/exp_6/']
 
-# food_types = ['potato', 'celery', 'carrot', 'banana', 'tomato','mozz']
-# cut_types = ['normal']*6
-# perc_succ_or_avg_succ = 'avg_succ' #'perc_succ'
-# for i in range(len(food_types)):
-#     work_dir = work_dirs[i]
-#     food_type = food_types[i]
-#     cut_type = cut_types[i]
-#     print(food_type)
-#     plot_mean_task_success_and_percent_success_cuts(work_dir, food_type, cut_type,perc_succ_or_avg_succ)
-# plt.legend((food_types))
-# plt.show()
+# work_dirs = ['/home/sony/Documents/cutting_RL_experiments/data/Jan-2021-LL-param-exps/pivchop/potato/exp_7/',\
+#     '/home/sony/Documents/cutting_RL_experiments/data/Jan-2021-LL-param-exps/pivchop/celery/exp_8/',\
+#         '/home/sony/Documents/cutting_RL_experiments/data/Jan-2021-LL-param-exps/pivchop/carrot/exp_9/',
+#         '/home/sony/Documents/cutting_RL_experiments/data/Jan-2021-LL-param-exps/pivchop/banana/exp_10/',\
+#     '/home/sony/Documents/cutting_RL_experiments/data/Jan-2021-LL-param-exps/pivchop/tomato/exp_11/',\
+#         '/home/sony/Documents/cutting_RL_experiments/data/Jan-2021-LL-param-exps/pivchop/mozz/exp_12/']
+
+work_dirs = ['/home/sony/Documents/cutting_RL_experiments/data/Jan-2021-LL-param-exps/scoring/potato/exp_13/',\
+    '/home/sony/Documents/cutting_RL_experiments/data/Jan-2021-LL-param-exps/scoring/celery/exp_14/',\
+        '/home/sony/Documents/cutting_RL_experiments/data/Jan-2021-LL-param-exps/scoring/carrot/exp_15/',
+        '/home/sony/Documents/cutting_RL_experiments/data/Jan-2021-LL-param-exps/scoring/banana/exp_16/',\
+    '/home/sony/Documents/cutting_RL_experiments/data/Jan-2021-LL-param-exps/scoring/tomato/exp_18/',\
+        '/home/sony/Documents/cutting_RL_experiments/data/Jan-2021-LL-param-exps/scoring/mozz/exp_19/']
+
+# #cut_types = ['normal']*6
+# cut_types = ['pivchop']*6
+cut_types = ['scoring']*6
+
+food_types = ['potato', 'celery', 'carrot', 'banana', 'tomato','mozz']
+perc_succ_or_avg_succ_all = ['perc_succ','avg_succ'] # 'avg_succ'
+# perc_succ_or_avg_succ = 'avg_succ'
+for analysis_type in perc_succ_or_avg_succ_all:
+    perc_succ_or_avg_succ = analysis_type
+    for i in range(len(food_types)):
+        work_dir = work_dirs[i]
+        food_type = food_types[i]
+        cut_type = cut_types[i]
+        print(food_type)
+        plot_mean_task_success_and_percent_success_cuts(work_dir, food_type, cut_type,perc_succ_or_avg_succ)
+    plt.legend((food_types))
+    plt.show()
 
 ############# plot UCB data for HL params
-work_dirs = ['/home/sony/Documents/cutting_RL_experiments/data/Jan-2021-controller-combo-exps/potato/normal/exp_8/',
-    '/home/sony/Documents/cutting_RL_experiments/data/Jan-2021-controller-combo-exps/potato/pivchop/exp_3/',
-    '/home/sony/Documents/cutting_RL_experiments/data/Jan-2021-controller-combo-exps/potato/scoring/exp_4/',
-    '/home/sony/Documents/cutting_RL_experiments/data/Jan-2021-controller-combo-exps/tomato/normal/exp_5/',
-    '/home/sony/Documents/cutting_RL_experiments/data/Jan-2021-controller-combo-exps/tomato/pivchop/exp_6/',
-    '/home/sony/Documents/cutting_RL_experiments/data/Jan-2021-controller-combo-exps/tomato/scoring/exp_7/',
-    ]
-desc = ['potato-normal','potato-pivchop','potato-scoring','tomato-normal','tomato-pivchop','tomato-scoring']
-for work_dir in work_dirs:
-    plot_UCB_experiment_results(work_dir)
-plt.legend((desc))
-plt.show()
+# work_dirs = ['/home/sony/Documents/cutting_RL_experiments/data/Jan-2021-controller-combo-exps/potato/normal/exp_8/',
+#     '/home/sony/Documents/cutting_RL_experiments/data/Jan-2021-controller-combo-exps/potato/pivchop/exp_3/',
+#     '/home/sony/Documents/cutting_RL_experiments/data/Jan-2021-controller-combo-exps/potato/scoring/exp_4/',
+#     '/home/sony/Documents/cutting_RL_experiments/data/Jan-2021-controller-combo-exps/tomato/normal/exp_5/',
+#     '/home/sony/Documents/cutting_RL_experiments/data/Jan-2021-controller-combo-exps/tomato/pivchop/exp_6/',
+#     '/home/sony/Documents/cutting_RL_experiments/data/Jan-2021-controller-combo-exps/tomato/scoring/exp_7/',
+#     ]
+# desc = ['potato-normal','potato-pivchop','potato-scoring','tomato-normal','tomato-pivchop','tomato-scoring']
+# for work_dir in work_dirs:
+#     plot_UCB_experiment_results(work_dir)
+# plt.legend((desc))
+# plt.show()
 import pdb; pdb.set_trace()
