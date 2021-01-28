@@ -22,6 +22,8 @@ Workflow:
 
 
 UPDATE: refactored lower level parameter experiment scripts (prev separate script for each cut type) to support all 3 cut types in 1 script
+
+TODO: add in function to prescale and/or standardize reward features before inputting to GP model
 '''
 import argparse
 
@@ -34,6 +36,7 @@ from autolab_core import YamlConfig, RigidTransform
 
 from reward_learner import RewardLearner
 from policy_learner import REPSPolicyLearner
+from data_utils import *
 
 def query_expert_for_reward(samples_to_query):
     print('querying expert for rewards')
@@ -156,12 +159,16 @@ if __name__ == "__main__":
         previous epochs of data to use to calculate REPS policy update')
     parser.add_argument('--starting_epoch_num', '-start_epoch', type=int, default = 0)
     parser.add_argument('--starting_sample_num', '-start_sample', type=int, default = 0)
+    
     # GP reward model-related args
     parser.add_argument('--kappa', type=int, default=5)
     parser.add_argument('--rel_entropy_bound', type=float, default = 1.2)
     parser.add_argument('--num_EPD_epochs', type=int, default = 5)
     parser.add_argument('--GP_training_epochs_initial', type=int, default = 120)
     parser.add_argument('--GP_training_epochs_later', type=int, default = 11)
+    parser.add_argument('--desired_cutting_behavior', type=str, default = 'fast_vs_slow') # options: fast_or_slow, quality_cut
+    parser.add_argument('--standardize_reward_feats', type=bool, default = False)
+
     args = parser.parse_args()
 
     kappa = args.kappa   
@@ -172,6 +179,11 @@ if __name__ == "__main__":
     num_EPD_epochs = args.num_EPD_epochs
     GP_training_epochs_initial = args.GP_training_epochs_initial
     GP_training_epochs_later = args.GP_training_epochs_later
+
+    if args.desired_cutting_behavior == 'fast_vs_slow':
+        num_expert_rews_each_sample = 2
+    elif args.desired_cutting_behavior == 'quality_cut':
+        num_expert_rews_each_sample = 1
 
     # Instantiate Policy Learner (agent)
     agent = REPSPolicyLearner()
@@ -383,17 +395,31 @@ if __name__ == "__main__":
                 reward_features_all_samples.append([np.inf]*7)
         import pdb; pdb.set_trace()
 
+    # buffers for GP reward model learning
+    total_queried_samples_each_epoch, mean_expert_rewards_all_epochs, mean_reward_model_rewards_all_epochs = [], [], [] #track number of queries to expert for rewards and average rewards for each epoch
+    training_data_list, queried_samples_all = [], []
+    GP_training_data_x_all = np.empty([0,7])
+    GP_training_data_y_all =  np.empty([0])
+    queried_outcomes, queried_expert_rewards, policy_params_all_epochs, block_poses_all_epochs = [], [], [], []
+    reward_model_rewards_all_mean_buffer = []
+    expert_rewards_all_epochs = []
+    total_samples = 0
     for epoch in range(args.starting_epoch_num, args.num_epochs):
-        policy_params_all_samples, rewards_all_samples =[], []
+        #Initialize lists to save epoch's data                 
+        expert_rewards_all_samples, reward_model_mean_rewards_all_samples, reward_model_rewards_all_cov, \
+            policy_params_all_samples, outcomes_all = [],[],[],[],[]
+        analytical_rewards_all_samples = []
+
         for sample in range(args.starting_sample_num, args.num_samples):
             print('Epoch: %i Sample: %i'%(epoch,sample))
+            total_samples += 1
+
             # Sample new policy params from mu and sigma - NOTE: cap force to be [-1, -40]
             new_params = np.random.multivariate_normal(mu, sigma)    
             if args.use_all_dmp_dims:
                 #new_z_force = new_params[-1] -- not using z force!
                 new_weights = new_params.reshape(initial_wts.shape)
-                new_z_force = 'NA'
-                                
+                new_z_force = 'NA'                                
             else:    
                 if args.cut_type == 'normal' or args.cut_type == 'scoring':
                     if S[2] == 0:
@@ -440,12 +466,11 @@ if __name__ == "__main__":
                         # cap value
                         new_cart_pitch_stiffness = np.clip(new_cart_pitch_stiffness, 5, 600)           
                         new_params[-1] = int(new_cart_pitch_stiffness)  
-                        print('clipped sampled new_cart_pitch_stiffness', new_cart_pitch_stiffness)  
-
-                
+                        print('clipped sampled new_cart_pitch_stiffness', new_cart_pitch_stiffness)                 
 
             # save to policy params buffer
             policy_params_all_samples.append(new_params.tolist())
+            policy_params_all_epochs.append(new_params) 
             
             # concat new sampled x weights w/ old y (zero's) and z weights if we're only sampling x weights
             if not args.use_all_dmp_dims: 
@@ -458,8 +483,6 @@ if __name__ == "__main__":
                 
                 elif args.cut_type == 'pivchop':     
                     new_weights = np.expand_dims(np.vstack((initial_wts[0,:,:],initial_wts[1,:,:], new_z_weights)),axis=1)
-
-
 
             # Save new weights to dict
             data_dict = {
@@ -713,6 +736,28 @@ if __name__ == "__main__":
             split_str = [int(char) for char in detailed_success]
             task_success_more_granular.append(split_str) 
 
+            # query human for continuous reward: between -2 to 2
+            if args.desired_cutting_behavior == 'fast_vs_slow':
+                expert_reward_slow = input('enter human-reward - desired behavior = slow: -2 to 2 ')
+                expert_reward_fast = input('enter human-reward - desired behavior = fast: -2 to 2 ')
+                
+                while expert_reward_slow not in ['-2', '-1', '0', '1', '2']:
+                    expert_reward_slow = input('enter human-reward - desired behavior = slow: -2 to 2 ')
+
+                while expert_reward_fast not in ['-2', '-1', '0', '1', '2']:
+                    expert_reward_fast = input('enter human-reward - desired behavior = fast: -2 to 2 ')
+                
+                expert_rewards_all_samples.append([int(expert_reward_slow), int(expert_reward_fast)])
+                expert_rewards_all_epochs.append([int(expert_reward_slow), int(expert_reward_fast)])
+
+            elif args.desired_cutting_behavior == 'quality_cut':
+                expert_reward = input('enter human-reward - desired behavior = quality cut: -2 to 2 ')
+                while expert_reward not in ['-2', '-1', '0', '1', '2']:
+                    expert_reward = input('enter human-reward - desired behavior = quality cut: -2 to 2 ')
+
+                expert_rewards_all_samples.append(int(expert_reward))
+                expert_rewards_all_epochs.append(int(expert_reward))
+
             # calc averages/max across all cut types - NOTE: switched to max instead of avg to handle dmps that vary as they are chained
             avg_peak_y_force = np.max(peak_y_force_all_dmps)
             avg_peak_z_force = np.max(peak_z_forces_all_dmps)
@@ -729,28 +774,70 @@ if __name__ == "__main__":
                 avg_upward_z_penalty = np.max(upward_z_penalty_all_dmps)
                 
             # trying out more generalized cutting reward function - remove not returning to start penalty:
-            reward = -0.1*avg_peak_y_force -0.15*avg_peak_z_force - 10*avg_x_mvmt -100*avg_y_mvmt - 10*avg_z_mvmt \
+            analytical_reward = -0.1*avg_peak_y_force -0.15*avg_peak_z_force - 10*avg_x_mvmt -100*avg_y_mvmt - 10*avg_z_mvmt \
                 -100*avg_upward_z_penalty -0.2*total_cut_time_all_dmps 
 
             # save reward to buffer
             print('Epoch: %i Sample: %i Reward: '%(epoch,sample), reward)
-            rewards_all_samples.append(reward)
+            analytical_rewards_all_samples.append(analytical_reward)
             reward_features = [avg_peak_y_force, avg_peak_z_force, avg_x_mvmt, avg_y_mvmt, avg_z_mvmt, avg_upward_z_penalty, total_cut_time_all_dmps]
             reward_features_all_samples.append(reward_features)
+            
+            # save reward features as sample outcome 
+            outcomes_from_sample = np.array(reward_features)
+            # if standardizing reward features:
+            if args.standardize_reward_feats:
+                import pdb; pdb.set_trace()
+                outcomes_from_sample = standardize_reward_feature(args.cut_type, np.array(reward_features))
+            outcomes_all.append(outcomes_from_sample)     
             import pdb; pdb.set_trace()
+
+            if epoch == 0: #if epoch = 0, GP model hasn't been trained so mean = 0
+                '''
+                might not need to add these since we don't have reward model rewards in first epoch
+                since GP model hasn't been trained yet
+                '''
+                reward_model_mean_rewards_all_samples.append(0)
+                reward_model_rewards_all_cov.append(0)
+                reward_model_rewards_all_mean_buffer.append(0)
+
+                training_data_list.append([outcomes_from_sample, 0, 0, new_params])
+
+            elif epoch != 0: 
+                mean_expected_reward, var_expected_reward = reward_learner.calc_expected_reward_for_observed_outcome_w_GPmodel(gpr_reward_model, \
+                    likelihood, outcomes_from_sample)
+                print('reward model reward = ', mean_expected_reward)
+                
+                #Save expected reward mean and var to lists and add to training_data_list of all training data
+                reward_model_mean_rewards_all_samples.append(mean_expected_reward[0])
+                print('GP model rewards mean all eps', reward_model_mean_rewards_all_samples)
+                reward_model_rewards_all_cov.append(var_expected_reward[0])
+                print('GP model rewards var all eps', reward_model_rewards_all_cov)
+                reward_model_rewards_all_mean_buffer.append(mean_expected_reward[0])
+                training_data_list.append([outcomes_from_sample, mean_expected_reward[0], var_expected_reward[0],\
+                new_params])           
             
             # save intermediate rewards/pol params 
+            '''NOTE: saving these in format: [polParams, GP_reward_model_mean, expert_reward],
+            where expert_reward can be 1 or 2-element list depending on type of desired behavior
+            '''
             if args.starting_sample_num !=0:
+                import pdb; pdb.set_trace()
+                # policy param data
                 prev_sample_data = np.load(os.path.join(work_dir + '/' + 'all_polParamRew_data', 'polParamsRews_' + 'epoch_'+str(epoch) + '_ep_'+str(args.starting_sample_num-1) + '.npy'))
-                new_sample_data = np.concatenate((np.array(policy_params_all_samples), np.array([rewards_all_samples]).T), axis=1)
+                new_GP_model_expected_rews_and_expert_rews = np.concatenate((np.array([reward_model_mean_rewards_all_samples]).T, np.array([expert_rewards_all_samples]).T),axis=1)
+                new_sample_data = np.concatenate((np.array(policy_params_all_samples), np.array([new_GP_model_expected_rews_and_expert_rews]).T), axis=1)
                 combined_data = np.concatenate((prev_sample_data, new_sample_data), axis=0)
                 np.save(os.path.join(work_dir + '/' + 'all_polParamRew_data', 'polParamsRews_' + 'epoch_'+str(epoch) + '_ep_'+str(sample) + '.npy'),
                     combined_data)
+                import pdb; pdb.set_trace()
 
             else:
+                GP_model_expected_rews_and_expert_rews = np.concatenate((np.array([reward_model_mean_rewards_all_samples]).T, np.array([expert_rewards_all_samples]).T),axis=1)
                 np.save(os.path.join(work_dir + '/' + 'all_polParamRew_data', 'polParamsRews_' + 'epoch_'+str(epoch) + '_ep_'+str(sample) + '.npy'), \
-                    np.concatenate((np.array(policy_params_all_samples), np.array([rewards_all_samples]).T), axis=1))
-            #import pdb; pdb.set_trace()
+                    np.concatenate((np.array(policy_params_all_samples), GP_model_expected_rews_and_expert_rews), axis=1))
+                import pdb; pdb.set_trace()
+            import pdb; pdb.set_trace()
 
             # save task success metrics           
             np.save(os.path.join(work_dir, 'cut_times_all_samples.npy'), np.array(time_to_complete_cut))
@@ -779,38 +866,134 @@ if __name__ == "__main__":
         
         # save reward 
         import pdb; pdb.set_trace()
+        GP_model_expected_rews_and_expert_rews = np.concatenate((np.array([reward_model_mean_rewards_all_samples]).T, np.array([expert_rewards_all_samples]).T),axis=1)
         np.save(os.path.join(work_dir, 'polParamsRews_' + 'epoch_'+str(epoch) +'.npy'), \
-            np.concatenate((np.array(policy_params_all_samples), np.array([rewards_all_samples]).T), axis=1))
+            np.concatenate((np.array(policy_params_all_samples), np.array([GP_model_expected_rews_and_expert_rews]).T), axis=1))
 
-        # update policy mean and cov (REPS)   
+        #Save mean expert rewards and reward model reward from this rollout of 15 episodes        
+        mean_reward_model_rewards_all_epochs.append(np.mean(reward_model_mean_rewards_all_samples))
+
+        # current policy pi_current (before updating)
+        pi_current_mean = u
+        pi_current_cov = sigma
+
+        # load al samples from this epoch 
         if args.starting_sample_num !=0:
             all_data = work_dir + '/all_polParamRew_data/' +'polParamsRews_epoch_' + str(epoch) + '_ep_'+ str(sample) + '.npy'
-            policy_params_all_samples = (np.load(all_data)[:,0:-1]).tolist()
-            rewards_all_samples = (np.load(all_data)[:,-1]).tolist()
-             
-        reps_agent = reps.Reps(rel_entropy_bound=1.5,min_temperature=0.001) #Create REPS object
-        policy_params_mean, policy_params_sigma, reps_info = \
-            reps_agent.policy_from_samples_and_rewards(policy_params_all_samples, rewards_all_samples)
+            if num_expert_rews_each_sample == 1:
+                import pdb; pdb.set_trace()
+                policy_params_all_samples = (np.load(all_data)[:,0:-2]).tolist()
+                reward_model_mean_rewards_all_samples = (np.load(all_data)[:,-2]).tolist()
+                expert_rewards_all_samples = (np.load(all_data)[:,-1]).tolist()
+
+            elif num_expert_rews_each_sample == 2:
+                import pdb; pdb.set_trace()
+                policy_params_all_samples = (np.load(all_data)[:,0:-3]).tolist()
+                reward_model_mean_rewards_all_samples = (np.load(all_data)[:,-3]).tolist()
+                expert_rewards_all_samples = (np.load(all_data)[:,-2:]).tolist()  # 2 expert reward values (desired fast and slow rewards)         
+                    
+        # update policy mean and cov (REPS) if not 1st epoch (1st epoch is just collecting training data)
+        if epoch!=0:
+            reps_agent = reps.Reps(rel_entropy_bound=1.5,min_temperature=0.001) #Create REPS object
+            import pdb; pdb.set_trace()
+            policy_params_mean, policy_params_sigma, reps_info = \
+                reps_agent.policy_from_samples_and_rewards(policy_params_all_samples, reward_model_mean_rewards_all_samples)
+            
+            print('updated policy params mean')
+            print(policy_params_mean)
+            print('updated policy cov')
+            print(policy_params_sigma)
+
+            # pi_tilda is the new policy under the current reward model 
+            pi_tilda_mean = u
+            pi_tilda_cov = sigma
+
+            mu, sigma = policy_params_mean, policy_params_sigma
+            mean_params_each_epoch.append(policy_params_mean)
+            cov_each_epoch.append(policy_params_sigma)
+            np.save(os.path.join(work_dir, 'policy_mean_each_epoch.npy'),np.array(mean_params_each_epoch))
+            np.save(os.path.join(work_dir, 'policy_cov_each_epoch.npy'),np.array(cov_each_epoch))
+
+            # plot updated policy mean trajectory to visualize
+            plot_updated_policy_mean_traject(work_dir, args.cut_typ, args.position_dmp_weights_file_path, epoch, args.dmp_traject_time, control_type_z_axis, init_dmp_info_dict,\
+                initial_wts,policy_params_mean)
+            import pdb; pdb.set_trace()
+
+            # save new policy params mean and cov   
+            np.savez(os.path.join(work_dir, 'REPSupdatedMean_' + 'epoch_'+str(epoch) +'.npz'), \
+                updated_mean = policy_params_mean, updated_cov = policy_params_sigma)
         
-        print('updated policy params mean')
-        print(policy_params_mean)
-        print('updated policy cov')
-        print(policy_params_sigma)
+        # #Reward model: Evaluate sample outcomes from above set of iterations and determine outcomes to query from expert        
+        # only compute EPD if epoch!=0 (i.e. reward model has been trained on initial set of data)
+        if epoch == 0:
+            import pdb; pdb.set_trace()
+            # query all samples if epoch = 0
+            samples_to_query = np.arange(args.num_samples).tolist() # query all samples
+            queried_outcomes = np.squeeze(np.array(outcomes_all)) # use all outcomes
 
-        mu, sigma = policy_params_mean, policy_params_sigma
-        mean_params_each_epoch.append(policy_params_mean)
-        cov_each_epoch.append(policy_params_sigma)
-        np.save(os.path.join(work_dir, 'policy_mean_each_epoch.npy'),np.array(mean_params_each_epoch))
-        np.save(os.path.join(work_dir, 'policy_cov_each_epoch.npy'),np.array(cov_each_epoch))
+        else: # compute EPD if not 1st epoch
+            import pdb; pdb.set_trace()
+            #num_EPD_epochs = 5 # define in CL args
+            samples_to_query, queried_outcomes  = reward_learner.compute_EPD_for_each_sample_updated(num_EPD_epochs, optimizer, \
+                gpr_reward_model, likelihood, mll, agent, pi_tilda_mean, pi_tilda_cov, pi_current_mean, pi_current_cov, \
+                    training_data_list, queried_samples_all, GP_training_data_x_all, GP_training_data_y_all, beta) 
+            
+        if samples_to_query!=[]:
+            import pdb; pdb.set_trace()       
+            # queried_expert_rewards = query_expert_for_reward(scene, agent, franka, num_dims, block, samples_to_query, \
+            #     block0_poses, reset_block1_poses, policy_params_all_epochs)
+            queried_expert_rewards = expert_rewards_all_epochs[samples_to_query]
+            import pdb; pdb.set_trace()
+        
+        # save all queried outcomes and queried rewards in buffer to send to GPytorch model as training data everytime it get updated:
+        #   train_x is queried_outcomes ((nxD) arr), train_y is queried_expert_rewards ((n,) arr)
+        GP_training_data_x_all = np.vstack((GP_training_data_x_all, queried_outcomes))
+        GP_training_data_y_all = np.concatenate((GP_training_data_y_all, queried_expert_rewards))
+        import pdb; pdb.set_trace()       
 
-        # plot updated policy mean trajectory to visualize
-        plot_updated_policy_mean_traject(work_dir, args.cut_typ, args.position_dmp_weights_file_path, epoch, args.dmp_traject_time, control_type_z_axis, init_dmp_info_dict,\
-            initial_wts,policy_params_mean)
-        import pdb; pdb.set_trace()
+        # Add samples to query to running list of queried_samples
+        queried_samples_all = queried_samples_all + samples_to_query # running list of queried samples
 
-        # save new policy params mean and cov   
-        np.savez(os.path.join(work_dir, 'REPSupdatedMean_' + 'epoch_'+str(epoch) +'.npz'), \
-            updated_mean = policy_params_mean, updated_cov = policy_params_sigma)
+        # #Keep track of number of queried samples 
+        #import pdb; pdb.set_trace()
+        if epoch > 0:
+            num_prev_queried = total_queried_samples_each_epoch[epoch-1]
+            total_queried_samples_each_epoch.append(num_prev_queried + len(samples_to_query))    
+        else:
+            total_queried_samples_each_epoch.append(len(samples_to_query)) 
+
+        # initialize reward GP model 
+        if epoch == 0:
+            likelihood = gpytorch.likelihoods.GaussianLikelihood()            
+            train_x = torch.from_numpy(queried_outcomes)
+            train_x = train_x.float()
+            train_y = torch.from_numpy(queried_expert_rewards)
+            train_y = train_y.float()
+            print('train_y variance', train_y.var())
+            # add white noise 
+            #likelihood = gpytorch.likelihoods.FixedNoiseGaussianLikelihood(torch.ones(train_x.shape[0]) * beta)
+
+            gpr_reward_model = GPRegressionModel(train_x, train_y, likelihood) 
+            optimizer = torch.optim.Adam([                
+                {'params': gpr_reward_model.covar_module.parameters()},
+                {'params': gpr_reward_model.mean_module.parameters()},
+                {'params': gpr_reward_model.likelihood.parameters()},
+            ], lr=0.01) # lr = 0.01 originally 
+            mll = gpytorch.mlls.ExactMarginalLogLikelihood(likelihood, gpr_reward_model)
+            # train reward GP model given initial train_x and train_y data (voxel_data, queried human rewards)
+            reward_learner.train_GPmodel(GP_training_epochs_initial, optimizer, gpr_reward_model, likelihood, mll, train_x, train_y)
+            import pdb; pdb.set_trace()            
+
+        #Update Reward model GP if there are any outcomes to query [outcome/s, expert reward/s]
+        else: # update reward model with new training data
+            if queried_outcomes.size!=0:  
+                print('updating reward model')
+                updated_train_x = GP_training_data_x_all
+                updated_train_y = GP_training_data_y_all                
+                #GP_training_epochs_later = 11 #100  # how long to train during updates?? # now define in CL args
+                reward_learner.update_reward_GPmodel(GP_training_epochs_later, optimizer, gpr_reward_model, likelihood, mll, updated_train_x, updated_train_y)                                       
+                import pdb; pdb.set_trace()
+        import pdb; pdb.set_trace()           
 
         # after epoch is complete, reset start_sample to 0
         args.starting_sample_num = 0
@@ -825,5 +1008,18 @@ if __name__ == "__main__":
         plt.xlabel('samples')
         plt.ylabel('task_success')
         plt.show()
+    
+    print('total samples', total_samples)
+    # last epoch did not query samples (if policy converged), so add 0 to queried samples list
+    total_queried_samples_each_epoch.append(total_queried_samples_each_epoch[-1])
+    # total_queried_samples_each_epoch is CUMULATIVE queries samples
+    print('cumulative queried samples', total_queried_samples_each_epoch)
+    import pdb; pdb.set_trace()
+    plt.plot(np.arange(epoch+1), total_queried_samples_each_epoch)
+    plt.xlabel('epochs')
+    plt.xticks(np.arange((epoch+1)))
+    plt.ylabel('cumulative human queried samples')
+    plt.title('human queries vs epochs, total samples = %i'%total_samples)
+    plt.show()  
 
     fa.goto_joints(reset_joint_positions)
