@@ -22,12 +22,6 @@ import copy
 from tqdm import tqdm
 from sklearn.metrics import f1_score
 
-from action_relation.trainer.train_voxels_online_contrastive import create_model_with_checkpoint
-from action_relation.trainer.train_voxels_online_contrastive import create_voxel_trainer_with_checkpoint
-
-from vae.config.base_config import BaseVAEConfig
-from vae.trainer.base_train import BaseVAETrainer
-
                                   
 # define the GPR model
 class GPRegressionModel(gpytorch.models.ExactGP):
@@ -57,46 +51,46 @@ class GPRegressionModel(gpytorch.models.ExactGP):
         print('exiting forward method of GPRModel')
         return gpytorch.distributions.MultivariateNormal(mean_x, covar_x)
     
-def train(num_epochs, model):
-    print('begin training')  
-    # Use adam optimizer
-    optimizer = torch.optim.Adam([           
-        {'params': model.covar_module.parameters()},
-        {'params': model.mean_module.parameters()},
-        {'params': model.likelihood.parameters()},
-    ], lr=0.01)
+# def train(num_epochs, model):
+#     print('begin training')  
+#     # Use adam optimizer
+#     optimizer = torch.optim.Adam([           
+#         {'params': model.covar_module.parameters()},
+#         {'params': model.mean_module.parameters()},
+#         {'params': model.likelihood.parameters()},
+#     ], lr=0.01)
 
-    # # "Loss" for GPs - the marginal log likelihood
-    mll = gpytorch.mlls.ExactMarginalLogLikelihood(model.likelihood, model)
+#     # # "Loss" for GPs - the marginal log likelihood
+#     mll = gpytorch.mlls.ExactMarginalLogLikelihood(model.likelihood, model)
         
-    for epoch in range(num_epochs):
-        print('epoch', epoch)
-        # Zero backprop gradients
-        optimizer.zero_grad()
-        # Get output from model
-        output = model(train_x) #output.mean and output.variance returns mean and var of model
-        # Calc loss and backprop derivatives
-        loss = -mll(output, train_y)    
-        print('loss', loss)
-        loss.backward()
-        print('Epoch%d, Loss:%.3f, lengthscale:%.3f, scale:%.3f' % (epoch, loss.item(),model.covar_module.base_kernel.lengthscale.item(),model.covar_module.outputscale.item()))
-        optimizer.step() #updates lengthscale, signal variance, AND g NN weights
-    print('done training')
+#     for epoch in range(num_epochs):
+#         print('epoch', epoch)
+#         # Zero backprop gradients
+#         optimizer.zero_grad()
+#         # Get output from model
+#         output = model(train_x) #output.mean and output.variance returns mean and var of model
+#         # Calc loss and backprop derivatives
+#         loss = -mll(output, train_y)    
+#         print('loss', loss)
+#         loss.backward()
+#         print('Epoch%d, Loss:%.3f, lengthscale:%.3f, scale:%.3f' % (epoch, loss.item(),model.covar_module.base_kernel.lengthscale.item(),model.covar_module.outputscale.item()))
+#         optimizer.step() #updates lengthscale, signal variance, AND g NN weights
+#     print('done training')
 
-    return model
+#     return model
 
-def evaluate(model, test_x):
-    model.eval()
-    model.likelihood.eval()
-    print('evaluating model')
-    with torch.no_grad(), gpytorch.settings.use_toeplitz(False):  
-        preds = model(test_x)
-        observed_pred = model.likelihood(model(test_x))
+# def evaluate(model, test_x):
+#     model.eval()
+#     model.likelihood.eval()
+#     print('evaluating model')
+#     with torch.no_grad(), gpytorch.settings.use_toeplitz(False):  
+#         preds = model(test_x)
+#         observed_pred = model.likelihood(model(test_x))
     
-    print('pred mean', preds.mean)
-    print('pred var', preds.variance)
+#     print('pred mean', preds.mean)
+#     print('pred var', preds.variance)
 
-    return preds.mean, preds.variance
+#     return preds.mean, preds.variance
 
 
 

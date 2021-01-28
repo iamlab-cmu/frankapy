@@ -164,7 +164,7 @@ def execute_sampled_action_and_get_reward(sample, starting_position, traject_tim
         peak_y_force_all_dmps.append(peak_y_force)           
         z_mvmt_all_dmps.append(total_z_mvmt)
 
-        if args.cut_type == 'normal' or cut_type =='scoring':
+        if args.cut_type == 'normal' or args.cut_type =='scoring':
             upward_z_mvmt_all_dmps.append(upward_z_mvmt)
 
         elif args.cut_type == 'pivchop':
