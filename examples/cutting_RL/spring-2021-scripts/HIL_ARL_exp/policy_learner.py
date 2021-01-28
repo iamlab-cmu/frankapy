@@ -2,6 +2,9 @@ import gym
 from rl_utils import reps
 import numpy as np 
 import matplotlib.pyplot as plt 
+from frankapy.utils import *
+
+from tqdm import trange
 
 class REPSPolicyLearner: 
     '''REPS policy learner for ARL 
@@ -14,17 +17,109 @@ class REPSPolicyLearner:
         self.training_samples_all = []
         self.outcomes_all = []     
 
-    # def initialize_linear_policy_params(self, num_params, initial_var, scaling_factor): #Initialize using a single Gaussian with random mean
-    #     '''
-    #     not using anymore - only used for randomly initializing policy params 
-    #     '''
-    #     #import pdb; pdb.set_trace()
-    #     initial_pol_mean = [(np.random.rand()*2-1) * scaling_factor, (np.random.rand()*2-1) * scaling_factor, \
-    #         np.abs((np.random.rand()*2-1) *scaling_factor)]
+    def initialize_gaussian_policy(self, cut_type, food_type, dmp_wt_sampling_var, start_from_previous, previous_datadir, prev_epochs_to_calc_pol_update, \
+            init_dmp_info_dict, work_dir, position_dmp_weights_file_path, starting_epoch_num, dmp_traject_time):
 
-    #     initial_var = np.repeat(initial_var, num_params)         
-    #     initial_pol_cov = np.diag(initial_var)
-    #     return initial_pol_mean, initial_pol_cov
+        use_all_dmp_dims = False
+        if start_from_previous: # load previous data collected and start from updated policy and/or sample/epoch        
+            prev_data_dir = previous_datadir
+            if use_all_dmp_dims:
+                policy_params_mean, policy_params_sigma = parse_policy_params_and_rews_from_file(prev_data_dir, prev_epochs_to_calc_pol_update, hfpc = False)
+            else:
+                policy_params_mean, policy_params_sigma = parse_policy_params_and_rews_from_file(prev_data_dir, prev_epochs_to_calc_pol_update)
+
+            initial_mu, initial_sigma = policy_params_mean, policy_params_sigma
+            mu, sigma = initial_mu, initial_sigma
+            print('starting from updated policy - mean', policy_params_mean)
+            initial_wts = np.array(init_dmp_info_dict['weights'])
+
+            if cut_type == 'normal':
+                if food_type == 'hard':
+                    S = [1,1,0,1,1,1] 
+                elif food_type == 'soft':
+                    S = [1,1,0,1,1,1]
+            
+            elif cut_type == 'pivchop':
+                if food_type == 'hard':
+                    S = [0,1,1,1,1,1]
+                elif food_type == 'soft':
+                    S = [1,1,1,1,1,1]
+
+            elif cut_type == 'scoring':
+                if food_type == 'hard':
+                    S = [1,0,0,1,1,1] 
+                elif food_type == 'soft':
+                    S = [1,1,0,1,1,1]
+            
+            if S[2] == 0:
+                control_type_z_axis = 'force'
+            elif S[2] == 1:
+                control_type_z_axis = 'position'
+
+            # plot updated policy mean trajectory to visualize
+            print('plotting REPS updated mean trajectory')
+            plot_updated_policy_mean_traject(work_dir, cut_type, position_dmp_weights_file_path, starting_epoch_num, dmp_traject_time, control_type_z_axis,\
+                init_dmp_info_dict, initial_wts, mu)
+            import pdb; pdb.set_trace()
+
+        else: # start w/ initial DMP weights from IL
+            initial_wts = np.array(init_dmp_info_dict['weights'])
+            if cut_type == 'normal' or cut_type == 'scoring':
+                f_initial = -10
+                cart_pitch_stiffness_initial = 200  
+                
+            elif cut_type == 'pivchop':
+                cart_pitch_stiffness_initial = 20 
+
+            if use_all_dmp_dims: # use position control in dims (use all wt dims (x/y/z))
+                initial_mu = initial_wts.flatten() 
+                initial_sigma = np.diag(np.repeat(dmp_wt_sampling_var, initial_mu.shape[0]))
+
+            else: # use only x wts, z-force, cart pitch stiffness 
+                if cut_type == 'normal':
+                    if food_type == 'hard':
+                        S = [1,1,0,1,1,1] 
+                    elif food_type == 'soft':
+                        S = [1,1,0,1,1,1]
+                    
+                elif cut_type == 'pivchop':
+                    if food_type == 'hard':
+                        S = [0,1,1,1,1,1]
+                    elif food_type == 'soft':
+                        S = [1,1,1,1,1,1]
+
+                elif cut_type == 'scoring':
+                    if food_type == 'hard':
+                        S = [1,0,0,1,1,1] 
+                    elif food_type == 'soft':
+                        S = [1,1,0,1,1,1]
+
+                if cut_type == 'normal' or cut_type == 'scoring':
+                    if S[0] == 1 and S[2] == 0: # position control x axis, force control z axis
+                        initial_mu = np.append(initial_wts[0,:,:], [f_initial, cart_pitch_stiffness_initial]) 
+                        initial_sigma = np.diag(np.repeat(dmp_wt_sampling_var, initial_mu.shape[0]))
+                        initial_sigma[-2,-2] = 120 # change exploration variance for force parameter 
+                        initial_sigma[-1,-1] = 800
+                    
+                    elif S[0] == 1 and S[2] == 1: # position control x axis, position control z axis
+                        initial_mu = np.concatenate((initial_wts[0,:,:],initial_wts[2,:,:]),axis = 0)
+                        initial_mu = np.append(initial_mu, cart_pitch_stiffness_initial) 
+                        initial_sigma = np.diag(np.repeat(dmp_wt_sampling_var, initial_mu.shape[0]))
+                        initial_sigma[-1,-1] = 800            
+                
+                elif cut_type == 'pivchop': 
+                    if S[2] == 1: # z axis position control + var pitch stiffness
+                        initial_mu = np.append(initial_wts[2,:,:], cart_pitch_stiffness_initial)  
+                        initial_sigma = np.diag(np.repeat(dmp_wt_sampling_var, initial_mu.shape[0]))
+                        initial_sigma[-1,-1] = 500 # change exploration variance for force parameter - TODO: increase
+    
+                    elif S[2] == 0: # no position control, only z axis force control + var pitch stiffness
+                        f_initial = -10
+                        initial_mu = np.append(f_initial, cart_pitch_stiffness_initial)  
+                        initial_sigma = np.diag([120, 500])   
+                        S = [1,1,0,1,1,1]
+
+        return initial_mu, initial_sigma, S, control_type_z_axis
 
     def sample_params_from_policy(self, u, sigma):
         #import pdb; pdb.set_trace()
@@ -46,5 +141,6 @@ class REPSPolicyLearner:
     def calculate_REPS_wts(self, rewards_all, rel_entropy_bound, min_temperature):
         reps_wts, temp = reps.reps_weights_from_rewards(rewards_all, rel_entropy_bound, min_temperature)
         return reps_wts
+
     
     

@@ -180,21 +180,102 @@ def downsample_dmp_traject(original_dmp_traject, og_dt, new_downsampled_dt):
     
     return downsmpled_dmp_traject
 
-def plot_updated_policy_mean_traject(work_dir, position_dmp_weights_file_path, epoch, dmp_traject_time, control_type_z_axis, init_dmp_info_dict, \
-    initial_wts, REPS_updated_mean):
-    '''
-    plot updated policy mean dmp trajectories
-    '''
-    if control_type_z_axis == 'force':                
-        new_weights = np.expand_dims(np.vstack((REPS_updated_mean[0:7],initial_wts[1,:,:],initial_wts[2,:,:])),axis=1)
-        if REPS_updated_mean[-2] < 0: 
-            new_z_force = REPS_updated_mean[-2] #REPS_updated_mean[-1] #
-        else: 
-            new_z_force = REPS_updated_mean[-1]
+# def plot_updated_policy_mean_traject(work_dir, position_dmp_weights_file_path, epoch, dmp_traject_time, control_type_z_axis, init_dmp_info_dict, \
+#     initial_wts, REPS_updated_mean):
+#     '''
+#     plot updated policy mean dmp trajectories
+#     '''
+#     if control_type_z_axis == 'force':                
+#         new_weights = np.expand_dims(np.vstack((REPS_updated_mean[0:7],initial_wts[1,:,:],initial_wts[2,:,:])),axis=1)
+#         if REPS_updated_mean[-2] < 0: 
+#             new_z_force = REPS_updated_mean[-2] #REPS_updated_mean[-1] #
+#         else: 
+#             new_z_force = REPS_updated_mean[-1]
 
-    elif control_type_z_axis == 'position':
-        new_weights = np.expand_dims(np.vstack((REPS_updated_mean[0:7],initial_wts[1,:,:],REPS_updated_mean[7:14])),axis=1)
-        new_z_force = 0
+#     elif control_type_z_axis == 'position':
+#         new_weights = np.expand_dims(np.vstack((REPS_updated_mean[0:7],initial_wts[1,:,:],REPS_updated_mean[7:14])),axis=1)
+#         new_z_force = 0
+
+#     # Save new weights to dict
+#     data_dict = {
+#         'tau':           init_dmp_info_dict['tau'],
+#         'alpha':         init_dmp_info_dict['alpha'],
+#         'beta':          init_dmp_info_dict['beta'],
+#         'num_dims':      init_dmp_info_dict['num_dims'],
+#         'num_basis':     init_dmp_info_dict['num_basis'],
+#         'num_sensors':   init_dmp_info_dict['num_sensors'],
+#         'mu':            init_dmp_info_dict['mu'],
+#         'h':             init_dmp_info_dict['h'],
+#         'phi_j':         init_dmp_info_dict['phi_j'],
+#         'weights':       new_weights.tolist(),                
+#         }
+
+#     # save new sampled weights to pkl file
+#     weight_save_file = os.path.join(work_dir, 'meanWeightsUpdatedPol' + '.pkl')
+#     save_weights(weight_save_file, data_dict)
+
+#     # Calculate dmp trajectory             
+#     traject_time = dmp_traject_time   # define length of dmp trajectory  
+#     # Load dmp traject params
+#     dmp_traj = DMPPositionTrajectoryGenerator(traject_time)
+#     dmp_traj.load_saved_dmp_params_from_pkl_file(weight_save_file)
+#     dmp_traj.parse_dmp_params_dict()
+
+#     # Define starting position 
+#     #start_pose = fa.get_pose()
+#     #starting_rotation = start_pose.rotation
+#     y0 = 0 #start_pose.translation 
+#     # calculate dmp position trajectory - NOTE: this assumes a 0.001 dt for calc the dmp traject
+#     dmp_traject, dy, _, _, _ = dmp_traj.run_dmp_with_weights(y0) # y: np array(tx3)
+    
+#     # check new dmp sampled wt trajectory vs original
+#     sample = 0
+#     plot_sampled_new_dmp_traject_and_original_dmp(epoch, sample, work_dir, new_z_force, traject_time, \
+#         position_dmp_weights_file_path, dmp_traject, y0)
+#     import pdb; pdb.set_trace()
+
+def load_dmp_wts_and_knife_orientation(cut_type):
+    # load dmp weights
+    if args.cut_type == 'normal':
+        dmp_wts_file = '/home/sony/092420_normal_cut_dmp_weights_zeroY.pkl'
+        # more angled to sharp knife - normal cut
+        knife_orientation = np.array([[0.0,   0.9805069,  -0.19648464],
+                                  [ 1.0,   0.0,  0.0],
+                                  [ 0.0, -0.19648464,  -0.9805069]])
+
+    elif args.cut_type == 'pivchop':
+        dmp_wts_file = '/home/sony/raw_IL_trajects/Jan-2021/011321_piv_chop_potato_position_weights_zeroXY.pkl' 
+        # dmp_wts_file = '/home/sony/raw_IL_trajects/100220_piv_chop_position_dmp_weights_zeroXY_2.pkl'
+        # metal knife (26 deg tilt forward) - pivchop
+        knife_orientation = np.array([[0.0,   0.8988,  -0.4384],
+                                  [ 1.0,   0.0,  0.0],
+                                  [ 0.0, -0.4384,  -0.8988]])
+
+    elif args.cut_type == 'scoring':
+        dmp_wts_file = '/home/sony/raw_IL_trajects/Jan-2021/011321_scoring_potato_position_weights_zeroYZ.pkl' 
+        # metal knife (26 deg tilt forward) - pivchop
+        knife_orientation = np.array([[0.0,   0.8988,  -0.4384],
+                                  [ 1.0,   0.0,  0.0],
+                                  [ 0.0, -0.4384,  -0.8988]])    
+    return dmp_wts_file, knife_orientation
+
+def plot_updated_policy_mean_traject(work_dir, cut_type, position_dmp_weights_file_path, epoch, dmp_traject_time, control_type_z_axis, init_dmp_info_dict, \
+    initial_wts, REPS_updated_mean):
+    if cut_type == 'normal' or 'scoring':
+        if control_type_z_axis == 'force':                
+            new_weights = np.expand_dims(np.vstack((REPS_updated_mean[0:7],initial_wts[1,:,:],initial_wts[2,:,:])),axis=1)
+            new_z_force = REPS_updated_mean[-2]
+        elif control_type_z_axis == 'position':
+            new_weights = np.expand_dims(np.vstack((REPS_updated_mean[0:7],initial_wts[1,:,:],REPS_updated_mean[7:14])),axis=1)
+            new_z_force = 0
+    
+    elif cut_time == 'pivchop':
+        if control_type_z_axis == 'force':                
+            new_weights = np.expand_dims(np.vstack((REPS_updated_mean[0:7],initial_wts[1,:,:],initial_wts[2,:,:])),axis=1)
+            new_z_force = REPS_updated_mean[-2]
+        elif control_type_z_axis == 'position':
+            new_weights = np.expand_dims(np.vstack((initial_wts[0,:,:],initial_wts[1,:,:],REPS_updated_mean[0:7])),axis=1)
+            new_z_force = REPS_updated_mean[-1] #0
 
     # Save new weights to dict
     data_dict = {
@@ -222,9 +303,9 @@ def plot_updated_policy_mean_traject(work_dir, position_dmp_weights_file_path, e
     dmp_traj.parse_dmp_params_dict()
 
     # Define starting position 
-    #start_pose = fa.get_pose()
-    #starting_rotation = start_pose.rotation
-    y0 = 0 #start_pose.translation 
+    start_pose = fa.get_pose()
+    starting_rotation = start_pose.rotation
+    y0 = start_pose.translation 
     # calculate dmp position trajectory - NOTE: this assumes a 0.001 dt for calc the dmp traject
     dmp_traject, dy, _, _, _ = dmp_traj.run_dmp_with_weights(y0) # y: np array(tx3)
     
@@ -622,6 +703,7 @@ def createFolder(directory, delete_previous=False):
             os.makedirs(directory)
     except OSError:
         print ('Error: Creating directory. ' +  directory)
+
 
 def get_object_center_point_in_world(object_image_center_x, object_image_center_y, depth_image, intrinsics, transform):    
     

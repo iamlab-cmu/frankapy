@@ -20,10 +20,9 @@ Workflow:
         - Add samples to query to running list of queried_samples, Keep track of number of queried samples 
         - Update Reward model GP if there are any outcomes to query
 
-
-UPDATE: refactored lower level parameter experiment scripts (prev separate script for each cut type) to support all 3 cut types in 1 script
-
-TODO: add in function to prescale and/or standardize reward features before inputting to GP model
+UPDATES: 
+-- refactored lower level parameter experiment scripts (prev separate script for each cut type) to support all 3 cut types in 1 script
+-- added in option to standardize reward features before inputting to GP model
 '''
 import argparse
 
@@ -38,21 +37,26 @@ from reward_learner import RewardLearner
 from policy_learner import REPSPolicyLearner
 from data_utils import *
 
-def query_expert_for_reward(samples_to_query):
-    print('querying expert for rewards')
-    expert_rewards_for_samples = []
-    for sample in samples_to_query:         
-        while True: 
-            try:
-                expert_reward=input('enter expert reward for this execution: ')
-                expert_reward = float(expert_reward)
-                break
-            except ValueError:
-                print("enter valid reward (float)")
+from frankapy.utils import *
 
-        expert_rewards_for_samples.append(expert_reward)
-    expert_rewards_for_samples= np.array(expert_rewards_for_samples)
-    return expert_rewards_for_samples
+from tqdm import trange
+from rl_utils import reps
+
+# def query_expert_for_reward(samples_to_query):
+#     print('querying expert for rewards')
+#     expert_rewards_for_samples = []
+#     for sample in samples_to_query:         
+#         while True: 
+#             try:
+#                 expert_reward=input('enter expert reward for this execution: ')
+#                 expert_reward = float(expert_reward)
+#                 break
+#             except ValueError:
+#                 print("enter valid reward (float)")
+
+#         expert_rewards_for_samples.append(expert_reward)
+#     expert_rewards_for_samples= np.array(expert_rewards_for_samples)
+#     return expert_rewards_for_samples
 
 def plot_sampled_new_dmp_traject_and_original_dmp(epoch, sample, save_dir, new_z_force, traject_time, \
     initial_dmp_weights_pkl_file, new_dmp_traject, y0):
@@ -83,76 +87,74 @@ def plot_sampled_new_dmp_traject_and_original_dmp(epoch, sample, save_dir, new_z
     # save figure to working dir
     fig.savefig(work_dir + '/' + 'dmp_traject_plots' + '/sampledDMP_' + 'epoch_'+str(epoch) + '_ep_'+str(sample)+'.png')
 
-def plot_updated_policy_mean_traject(work_dir, cut_type, position_dmp_weights_file_path, epoch, dmp_traject_time, control_type_z_axis, init_dmp_info_dict, \
-    initial_wts, REPS_updated_mean):
-    if cut_type == 'normal' or 'scoring':
-        if control_type_z_axis == 'force':                
-            new_weights = np.expand_dims(np.vstack((REPS_updated_mean[0:7],initial_wts[1,:,:],initial_wts[2,:,:])),axis=1)
-            new_z_force = REPS_updated_mean[-2]
-        elif control_type_z_axis == 'position':
-            new_weights = np.expand_dims(np.vstack((REPS_updated_mean[0:7],initial_wts[1,:,:],REPS_updated_mean[7:14])),axis=1)
-            new_z_force = 0
+# def plot_updated_policy_mean_traject(work_dir, cut_type, position_dmp_weights_file_path, epoch, dmp_traject_time, control_type_z_axis, init_dmp_info_dict, \
+#     initial_wts, REPS_updated_mean):
+#     if cut_type == 'normal' or 'scoring':
+#         if control_type_z_axis == 'force':                
+#             new_weights = np.expand_dims(np.vstack((REPS_updated_mean[0:7],initial_wts[1,:,:],initial_wts[2,:,:])),axis=1)
+#             new_z_force = REPS_updated_mean[-2]
+#         elif control_type_z_axis == 'position':
+#             new_weights = np.expand_dims(np.vstack((REPS_updated_mean[0:7],initial_wts[1,:,:],REPS_updated_mean[7:14])),axis=1)
+#             new_z_force = 0
     
-    elif cut_time == 'pivchop':
-        if control_type_z_axis == 'force':                
-            new_weights = np.expand_dims(np.vstack((REPS_updated_mean[0:7],initial_wts[1,:,:],initial_wts[2,:,:])),axis=1)
-            new_z_force = REPS_updated_mean[-2]
-        elif control_type_z_axis == 'position':
-            new_weights = np.expand_dims(np.vstack((initial_wts[0,:,:],initial_wts[1,:,:],REPS_updated_mean[0:7])),axis=1)
-            new_z_force = REPS_updated_mean[-1] #0
+#     elif cut_time == 'pivchop':
+#         if control_type_z_axis == 'force':                
+#             new_weights = np.expand_dims(np.vstack((REPS_updated_mean[0:7],initial_wts[1,:,:],initial_wts[2,:,:])),axis=1)
+#             new_z_force = REPS_updated_mean[-2]
+#         elif control_type_z_axis == 'position':
+#             new_weights = np.expand_dims(np.vstack((initial_wts[0,:,:],initial_wts[1,:,:],REPS_updated_mean[0:7])),axis=1)
+#             new_z_force = REPS_updated_mean[-1] #0
 
-    # Save new weights to dict
-    data_dict = {
-        'tau':           init_dmp_info_dict['tau'],
-        'alpha':         init_dmp_info_dict['alpha'],
-        'beta':          init_dmp_info_dict['beta'],
-        'num_dims':      init_dmp_info_dict['num_dims'],
-        'num_basis':     init_dmp_info_dict['num_basis'],
-        'num_sensors':   init_dmp_info_dict['num_sensors'],
-        'mu':            init_dmp_info_dict['mu'],
-        'h':             init_dmp_info_dict['h'],
-        'phi_j':         init_dmp_info_dict['phi_j'],
-        'weights':       new_weights.tolist(),                
-        }
+#     # Save new weights to dict
+#     data_dict = {
+#         'tau':           init_dmp_info_dict['tau'],
+#         'alpha':         init_dmp_info_dict['alpha'],
+#         'beta':          init_dmp_info_dict['beta'],
+#         'num_dims':      init_dmp_info_dict['num_dims'],
+#         'num_basis':     init_dmp_info_dict['num_basis'],
+#         'num_sensors':   init_dmp_info_dict['num_sensors'],
+#         'mu':            init_dmp_info_dict['mu'],
+#         'h':             init_dmp_info_dict['h'],
+#         'phi_j':         init_dmp_info_dict['phi_j'],
+#         'weights':       new_weights.tolist(),                
+#         }
 
-    # save new sampled weights to pkl file
-    weight_save_file = os.path.join(work_dir, 'meanWeightsUpdatedPol' + '.pkl')
-    save_weights(weight_save_file, data_dict)
+#     # save new sampled weights to pkl file
+#     weight_save_file = os.path.join(work_dir, 'meanWeightsUpdatedPol' + '.pkl')
+#     save_weights(weight_save_file, data_dict)
 
-    # Calculate dmp trajectory             
-    traject_time = dmp_traject_time   # define length of dmp trajectory  
-    # Load dmp traject params
-    dmp_traj = DMPPositionTrajectoryGenerator(traject_time)
-    dmp_traj.load_saved_dmp_params_from_pkl_file(weight_save_file)
-    dmp_traj.parse_dmp_params_dict()
+#     # Calculate dmp trajectory             
+#     traject_time = dmp_traject_time   # define length of dmp trajectory  
+#     # Load dmp traject params
+#     dmp_traj = DMPPositionTrajectoryGenerator(traject_time)
+#     dmp_traj.load_saved_dmp_params_from_pkl_file(weight_save_file)
+#     dmp_traj.parse_dmp_params_dict()
 
-    # Define starting position 
-    start_pose = fa.get_pose()
-    starting_rotation = start_pose.rotation
-    y0 = start_pose.translation 
-    # calculate dmp position trajectory - NOTE: this assumes a 0.001 dt for calc the dmp traject
-    dmp_traject, dy, _, _, _ = dmp_traj.run_dmp_with_weights(y0) # y: np array(tx3)
+#     # Define starting position 
+#     start_pose = fa.get_pose()
+#     starting_rotation = start_pose.rotation
+#     y0 = start_pose.translation 
+#     # calculate dmp position trajectory - NOTE: this assumes a 0.001 dt for calc the dmp traject
+#     dmp_traject, dy, _, _, _ = dmp_traj.run_dmp_with_weights(y0) # y: np array(tx3)
     
-    # check new dmp sampled wt trajectory vs original
-    sample = 0
-    plot_sampled_new_dmp_traject_and_original_dmp(epoch, sample, work_dir, new_z_force, traject_time, \
-        position_dmp_weights_file_path, dmp_traject, y0)
-    import pdb; pdb.set_trace()
+#     # check new dmp sampled wt trajectory vs original
+#     sample = 0
+#     plot_sampled_new_dmp_traject_and_original_dmp(epoch, sample, work_dir, new_z_force, traject_time, \
+#         position_dmp_weights_file_path, dmp_traject, y0)
+#     import pdb; pdb.set_trace()
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    #parser.add_argument('--position_dmp_weights_file_path', '-w', type=str, default='/home/sony/092420_normal_cut_dmp_weights_zeroY.pkl')
     parser.add_argument('--use_all_dmp_dims', type=bool, default = False)
-    # parser.add_argument('--control_type_z_axis', type=str, default = 'force', help='position or force')
     parser.add_argument('--dmp_traject_time', '-t', type=int, default = 5)  
     parser.add_argument('--dmp_wt_sampling_var', type=float, default = 0.01)
     parser.add_argument('--num_epochs', '-e', type=int, default = 5)  
     parser.add_argument('--num_samples', '-s', type=int, default = 25)    
-    parser.add_argument('--data_savedir', '-d', type=str, default='/home/sony/Documents/cutting_RL_experiments/data/Jan-2021-LL-param-exps/normal/tomato/')
-    # parser.add_argument('--data_savedir', '-d', type=str, default='/home/sony/Documents/cutting_RL_experiments/data/Jan-2021-LL-param-exps/')
+    parser.add_argument('--data_savedir', '-d', type=str, default='/home/sony/Documents/cutting_RL_experiments/data/Jan-2021-HIL-ARL-exps/')
     parser.add_argument('--exp_num', '-n', type=int)
     parser.add_argument('--food_type', type=str, default='hard') #hard or soft
-    parser.add_argument('--cut_type', type=str, default = 'normal', help ='options are: normal, pivchop, scoring') # options: 'normal', 'pivchop', 'scoring'
+    parser.add_argument('--food_name', type=str, help = 'potato, carrot, celery, tomator, banana, mozz') #potato, carrot, celery, tomato, banana, mozz
+    parser.add_argument('--cut_type', type=str, default = 'normal', help ='options: normal, pivchop, scoring') # options: 'normal', 'pivchop', 'scoring'
     parser.add_argument('--start_from_previous', '-sfp', type=bool, default=False)
     parser.add_argument('--previous_datadir', '-pd', type=str)
     parser.add_argument('--prev_epochs_to_calc_pol_update', '-num_prev_epochs', type=int, default = 1, help='num \
@@ -161,14 +163,13 @@ if __name__ == "__main__":
     parser.add_argument('--starting_sample_num', '-start_sample', type=int, default = 0)
     
     # GP reward model-related args
-    parser.add_argument('--kappa', type=int, default=5)
+    parser.add_argument('--kappa', type=int, default = 5)
     parser.add_argument('--rel_entropy_bound', type=float, default = 1.2)
     parser.add_argument('--num_EPD_epochs', type=int, default = 5)
     parser.add_argument('--GP_training_epochs_initial', type=int, default = 120)
     parser.add_argument('--GP_training_epochs_later', type=int, default = 11)
-    parser.add_argument('--desired_cutting_behavior', type=str, default = 'fast_vs_slow') # options: fast_or_slow, quality_cut
-    parser.add_argument('--standardize_reward_feats', type=bool, default = False)
-
+    parser.add_argument('--desired_cutting_behavior', type=str, default = 'fast_vs_slow', help='options: fast_or_slow, quality_cut') # options: fast_or_slow, quality_cut
+    parser.add_argument('--standardize_reward_feats', type=bool, default = False, help='True or False')
     args = parser.parse_args()
 
     kappa = args.kappa   
@@ -193,9 +194,14 @@ if __name__ == "__main__":
     beta = 0.001 # fixed gaussian noise likelihood
 
     # create folders to save data
+    if not os.path.isdir(args.data_savedir + args.cut_type + '/' + args.food_name + '/'):
+        createFolder(args.data_savedir + args.cut_type + '/' + args.food_name + '/')
+    args.data_savedir = args.data_savedir + args.cut_type + '/' + args.food_name + '/'
     if not os.path.isdir(args.data_savedir + 'exp_' + str(args.exp_num)):
         createFolder(args.data_savedir + 'exp_' + str(args.exp_num))
+
     work_dir = args.data_savedir + 'exp_' + str(args.exp_num)
+    
     if not os.path.isdir(work_dir + '/' + 'all_polParamRew_data'):
         createFolder(work_dir + '/' + 'all_polParamRew_data')
     if not os.path.isdir(work_dir + '/' + 'dmp_traject_plots'):
@@ -204,29 +210,9 @@ if __name__ == "__main__":
         createFolder(work_dir + '/' + 'dmp_wts')
     if not os.path.isdir(work_dir + '/' + 'forces_positions'):
         createFolder(work_dir + '/' + 'forces_positions')
-
-    # load dmp weights
-    if args.cut_type == 'normal':
-        dmp_wts_file = '/home/sony/092420_normal_cut_dmp_weights_zeroY.pkl'
-        # more angled to sharp knife - normal cut
-        knife_orientation = np.array([[0.0,   0.9805069,  -0.19648464],
-                                  [ 1.0,   0.0,  0.0],
-                                  [ 0.0, -0.19648464,  -0.9805069]])
-
-    elif args.cut_type == 'pivchop':
-        dmp_wts_file = '/home/sony/raw_IL_trajects/Jan-2021/011321_piv_chop_potato_position_weights_zeroXY.pkl' 
-        # dmp_wts_file = '/home/sony/raw_IL_trajects/100220_piv_chop_position_dmp_weights_zeroXY_2.pkl'
-        # metal knife (26 deg tilt forward) - pivchop
-        knife_orientation = np.array([[0.0,   0.8988,  -0.4384],
-                                  [ 1.0,   0.0,  0.0],
-                                  [ 0.0, -0.4384,  -0.8988]])
-
-    elif args.cut_type == 'scoring':
-        dmp_wts_file = '/home/sony/raw_IL_trajects/Jan-2021/011321_scoring_potato_position_weights_zeroYZ.pkl' 
-        # metal knife (26 deg tilt forward) - pivchop
-        knife_orientation = np.array([[0.0,   0.8988,  -0.4384],
-                                  [ 1.0,   0.0,  0.0],
-                                  [ 0.0, -0.4384,  -0.8988]])    
+ 
+    # load dmp weights and starting knife orientation
+    dmp_wts_file, knife_orientation = load_dmp_wts_and_knife_orientation(args.cut_type)
 
     
     position_dmp_pkl = open(dmp_wts_file,"rb")
@@ -238,11 +224,6 @@ if __name__ == "__main__":
     reset_joint_positions = [ 0.02846037, -0.51649966, -0.12048514, -2.86642333, -0.05060268,  2.30209197, 0.7744833 ]
     fa.goto_joints(reset_joint_positions)    
 
-    # # more angled to sharp knife
-    # knife_orientation = np.array([[0.0,   0.9805069,  -0.19648464],
-    #                               [ 1.0,   0.0,  0.0],
-    #                               [ 0.0, -0.19648464,  -0.9805069]])
-
     # go to initial cutting pose
     starting_position = RigidTransform(rotation=knife_orientation, \
         translation=np.array([0.44, 0.105, 0.13]), #z=0.05
@@ -252,110 +233,111 @@ if __name__ == "__main__":
     # move down to contact
     move_down_to_contact = RigidTransform(translation=np.array([0.0, 0.0, -0.1]),
     from_frame='world', to_frame='world')   
-    fa.goto_pose_delta(move_down_to_contact, duration=5, use_impedance=False, force_thresholds=[10.0, 10.0, 3.0, 10.0, 10.0, 10.0], ignore_virtual_walls=True)
-    #fa.goto_pose_delta(move_down_to_contact, duration=5, use_impedance=False, force_thresholds=[10.0, 10.0, 2.0, 10.0, 10.0, 10.0], ignore_virtual_walls=True)
+    if args.food_name == 'banana': 
+        fa.goto_pose_delta(move_down_to_contact, duration=5, use_impedance=False, force_thresholds=[10.0, 10.0, 2.0, 10.0, 10.0, 10.0], ignore_virtual_walls=True)
+    else:
+        fa.goto_pose_delta(move_down_to_contact, duration=5, use_impedance=False, force_thresholds=[10.0, 10.0, 3.0, 10.0, 10.0, 10.0], ignore_virtual_walls=True)
     
     # Initialize Gaussian policy params (DMP weights) - mean and sigma
-    if args.start_from_previous: # load previous data collected and start from updated policy and/or sample/epoch        
-        prev_data_dir = args.previous_datadir
-        if args.use_all_dmp_dims:
-            policy_params_mean, policy_params_sigma = parse_policy_params_and_rews_from_file(prev_data_dir, args.prev_epochs_to_calc_pol_update, hfpc = False)
-        else:
-            policy_params_mean, policy_params_sigma = parse_policy_params_and_rews_from_file(prev_data_dir, args.prev_epochs_to_calc_pol_update)
+    # if args.start_from_previous: # load previous data collected and start from updated policy and/or sample/epoch        
+    #     prev_data_dir = args.previous_datadir
+    #     if args.use_all_dmp_dims:
+    #         policy_params_mean, policy_params_sigma = parse_policy_params_and_rews_from_file(prev_data_dir, args.prev_epochs_to_calc_pol_update, hfpc = False)
+    #     else:
+    #         policy_params_mean, policy_params_sigma = parse_policy_params_and_rews_from_file(prev_data_dir, args.prev_epochs_to_calc_pol_update)
 
-        initial_mu, initial_sigma = policy_params_mean, policy_params_sigma
-        mu, sigma = initial_mu, initial_sigma
-        print('starting from updated policy - mean', policy_params_mean)
-        initial_wts = np.array(init_dmp_info_dict['weights'])
+    #     initial_mu, initial_sigma = policy_params_mean, policy_params_sigma
+    #     mu, sigma = initial_mu, initial_sigma
+    #     print('starting from updated policy - mean', policy_params_mean)
+    #     initial_wts = np.array(init_dmp_info_dict['weights'])
 
-        if args.cut_type == 'normal':
-            if args.food_type == 'hard':
-                S = [1,1,0,1,1,1] 
-            elif args.food_type == 'soft':
-                S = [1,1,0,1,1,1]
+    #     if args.cut_type == 'normal':
+    #         if args.food_type == 'hard':
+    #             S = [1,1,0,1,1,1] 
+    #         elif args.food_type == 'soft':
+    #             S = [1,1,0,1,1,1]
         
-        elif args.cut_type == 'pivchop':
-            if args.food_type == 'hard':
-                S = [0,1,1,1,1,1]
-            elif args.food_type == 'soft':
-                S = [1,1,1,1,1,1]
+    #     elif args.cut_type == 'pivchop':
+    #         if args.food_type == 'hard':
+    #             S = [0,1,1,1,1,1]
+    #         elif args.food_type == 'soft':
+    #             S = [1,1,1,1,1,1]
 
-        elif args.cut_type == 'scoring':
-            if args.food_type == 'hard':
-                S = [1,0,0,1,1,1] 
-            elif args.food_type == 'soft':
-                S = [1,1,0,1,1,1]
+    #     elif args.cut_type == 'scoring':
+    #         if args.food_type == 'hard':
+    #             S = [1,0,0,1,1,1] 
+    #         elif args.food_type == 'soft':
+    #             S = [1,1,0,1,1,1]
 
-        # plot updated policy mean trajectory to visualize
-        print('plotting REPS updated mean trajectory')
-        plot_updated_policy_mean_traject(work_dir, args.cut_type, args.position_dmp_weights_file_path, args.starting_epoch_num, args.dmp_traject_time, control_type_z_axis,\
-            init_dmp_info_dict, initial_wts, mu)
-        import pdb; pdb.set_trace()
+    #     # plot updated policy mean trajectory to visualize
+    #     print('plotting REPS updated mean trajectory')
+    #     plot_updated_policy_mean_traject(work_dir, args.cut_type, args.position_dmp_weights_file_path, args.starting_epoch_num, args.dmp_traject_time, control_type_z_axis,\
+    #         init_dmp_info_dict, initial_wts, mu)
+    #     import pdb; pdb.set_trace()
 
-    else: # start w/ initial DMP weights from IL
-        initial_wts = np.array(init_dmp_info_dict['weights'])
-        if args.cut_type == 'normal' or args.cut_type == 'scoring':
-            f_initial = -10
-            cart_pitch_stiffness_initial = 200  
+    # else: # start w/ initial DMP weights from IL
+    #     initial_wts = np.array(init_dmp_info_dict['weights'])
+    #     if args.cut_type == 'normal' or args.cut_type == 'scoring':
+    #         f_initial = -10
+    #         cart_pitch_stiffness_initial = 200  
             
-        elif args.cut_type == 'pivchop':
-            cart_pitch_stiffness_initial = 20 
+    #     elif args.cut_type == 'pivchop':
+    #         cart_pitch_stiffness_initial = 20 
 
-        if args.use_all_dmp_dims: # use position control in dims (use all wt dims (x/y/z))
-            initial_mu = initial_wts.flatten() 
-            initial_sigma = np.diag(np.repeat(args.dmp_wt_sampling_var, initial_mu.shape[0]))
+    #     if args.use_all_dmp_dims: # use position control in dims (use all wt dims (x/y/z))
+    #         initial_mu = initial_wts.flatten() 
+    #         initial_sigma = np.diag(np.repeat(args.dmp_wt_sampling_var, initial_mu.shape[0]))
 
-        else: # use only x wts, z-force, cart pitch stiffness 
-            if args.cut_type == 'normal':
-                if args.food_type == 'hard':
-                    S = [1,1,0,1,1,1] 
-                elif args.food_type == 'soft':
-                    S = [1,1,0,1,1,1]
+    #     else: # use only x wts, z-force, cart pitch stiffness 
+    #         if args.cut_type == 'normal':
+    #             if args.food_type == 'hard':
+    #                 S = [1,1,0,1,1,1] 
+    #             elif args.food_type == 'soft':
+    #                 S = [1,1,0,1,1,1]
                 
-            elif args.cut_type == 'pivchop':
-                if args.food_type == 'hard':
-                    S = [0,1,1,1,1,1]
-                elif args.food_type == 'soft':
-                    S = [1,1,1,1,1,1]
+    #         elif args.cut_type == 'pivchop':
+    #             if args.food_type == 'hard':
+    #                 S = [0,1,1,1,1,1]
+    #             elif args.food_type == 'soft':
+    #                 S = [1,1,1,1,1,1]
 
-            elif args.cut_type == 'scoring':
-                if args.food_type == 'hard':
-                    S = [1,0,0,1,1,1] 
-                elif args.food_type == 'soft':
-                    S = [1,1,0,1,1,1]
+    #         elif args.cut_type == 'scoring':
+    #             if args.food_type == 'hard':
+    #                 S = [1,0,0,1,1,1] 
+    #             elif args.food_type == 'soft':
+    #                 S = [1,1,0,1,1,1]
 
-            if args.cut_type == 'normal' or args.cut_type == 'scoring':
-                if S[0] == 1 and S[2] == 0: # position control x axis, force control z axis
-                    initial_mu = np.append(initial_wts[0,:,:], [f_initial, cart_pitch_stiffness_initial]) 
-                    initial_sigma = np.diag(np.repeat(args.dmp_wt_sampling_var, initial_mu.shape[0]))
-                    initial_sigma[-2,-2] = 120 # change exploration variance for force parameter 
-                    initial_sigma[-1,-1] = 800
+    #         if args.cut_type == 'normal' or args.cut_type == 'scoring':
+    #             if S[0] == 1 and S[2] == 0: # position control x axis, force control z axis
+    #                 initial_mu = np.append(initial_wts[0,:,:], [f_initial, cart_pitch_stiffness_initial]) 
+    #                 initial_sigma = np.diag(np.repeat(args.dmp_wt_sampling_var, initial_mu.shape[0]))
+    #                 initial_sigma[-2,-2] = 120 # change exploration variance for force parameter 
+    #                 initial_sigma[-1,-1] = 800
                 
-                elif S[0] == 1 and S[2] == 1: # position control x axis, position control z axis
-                    initial_mu = np.concatenate((initial_wts[0,:,:],initial_wts[2,:,:]),axis = 0)
-                    initial_mu = np.append(initial_mu, cart_pitch_stiffness_initial) 
-                    initial_sigma = np.diag(np.repeat(args.dmp_wt_sampling_var, initial_mu.shape[0]))
-                    initial_sigma[-1,-1] = 800            
+    #             elif S[0] == 1 and S[2] == 1: # position control x axis, position control z axis
+    #                 initial_mu = np.concatenate((initial_wts[0,:,:],initial_wts[2,:,:]),axis = 0)
+    #                 initial_mu = np.append(initial_mu, cart_pitch_stiffness_initial) 
+    #                 initial_sigma = np.diag(np.repeat(args.dmp_wt_sampling_var, initial_mu.shape[0]))
+    #                 initial_sigma[-1,-1] = 800            
             
-            elif args.cut_type == 'pivchop': 
-                if S[2] == 1: # z axis position control + var pitch stiffness
-                    initial_mu = np.append(initial_wts[2,:,:], cart_pitch_stiffness_initial)  
-                    initial_sigma = np.diag(np.repeat(args.dmp_wt_sampling_var, initial_mu.shape[0]))
-                    initial_sigma[-1,-1] = 500 # change exploration variance for force parameter - TODO: increase
+    #         elif args.cut_type == 'pivchop': 
+    #             if S[2] == 1: # z axis position control + var pitch stiffness
+    #                 initial_mu = np.append(initial_wts[2,:,:], cart_pitch_stiffness_initial)  
+    #                 initial_sigma = np.diag(np.repeat(args.dmp_wt_sampling_var, initial_mu.shape[0]))
+    #                 initial_sigma[-1,-1] = 500 # change exploration variance for force parameter - TODO: increase
  
-                elif S[2] == 0: # no position control, only z axis force control + var pitch stiffness
-                    f_initial = -10
-                    initial_mu = np.append(f_initial, cart_pitch_stiffness_initial)  
-                    initial_sigma = np.diag([120, 500])   
-                    S = [1,1,0,1,1,1]                             
-         
-        print('initial mu', initial_mu)        
-        mu, sigma = initial_mu, initial_sigma
+    #             elif S[2] == 0: # no position control, only z axis force control + var pitch stiffness
+    #                 f_initial = -10
+    #                 initial_mu = np.append(f_initial, cart_pitch_stiffness_initial)  
+    #                 initial_sigma = np.diag([120, 500])   
+    #                 S = [1,1,0,1,1,1]                             
 
-    if S[2] == 0:
-        control_type_z_axis == 'force'
-    elif S[2] == 1:
-        control_type_z_axis == 'position'
+    # Initialize Gaussian policy params (DMP weights) - mean and sigma
+    initial_mu, initial_sigma, S, control_type_z_axis = agent.initialize_gaussian_policy(args.cut_type, args.food_type, args.dmp_wt_sampling_var, args.start_from_previous, \
+        args.previous_datadir, args.prev_epochs_to_calc_pol_update, init_dmp_info_dict, work_dir, dmp_wts_file, args.starting_epoch_num, args.dmp_traject_time)
+    print('initial mu', initial_mu)        
+    mu, sigma = initial_mu, initial_sigma
+
 
     mean_params_each_epoch, cov_each_epoch = [], []
     # if we're starting from a later epoch: load previous data
@@ -367,9 +349,11 @@ if __name__ == "__main__":
         cov_each_epoch.append(initial_sigma) 
 
     # track success metrics
-    time_to_complete_cut, task_success = [], [] # task_success defined as 0 (unsuccessful cut), 1 (average cut), 2 (good cut)
-    # track: cut through (0/1), cut through except for small tag (0/1), housing bumped into food/pushed out of gripper (0/1)
-    task_success_more_granular = [] 
+    '''
+    task_success: 0 (unsuccessful cut), 1 (average cut), 2 (good cut)
+    task_success_more_granular: cut through (0/1), cut through except for small tag (0/1), housing bumped into food/pushed out of gripper (0/1)
+    '''
+    time_to_complete_cut, task_success, task_success_more_granular = [], [], []    
     # save reward features (for easier data post-processing)
     reward_features_all_samples = []
 
@@ -396,13 +380,12 @@ if __name__ == "__main__":
         import pdb; pdb.set_trace()
 
     # buffers for GP reward model learning
-    total_queried_samples_each_epoch, mean_expert_rewards_all_epochs, mean_reward_model_rewards_all_epochs = [], [], [] #track number of queries to expert for rewards and average rewards for each epoch
+    total_queried_samples_each_epoch, mean_reward_model_rewards_all_epochs = [], [] #track number of queries to expert for rewards and average rewards for each epoch
     training_data_list, queried_samples_all = [], []
     GP_training_data_x_all = np.empty([0,7])
     GP_training_data_y_all =  np.empty([0])
     queried_outcomes, queried_expert_rewards, policy_params_all_epochs, block_poses_all_epochs = [], [], [], []
-    reward_model_rewards_all_mean_buffer = []
-    expert_rewards_all_epochs = []
+    reward_model_rewards_all_mean_buffer, expert_rewards_all_epochs = [], []
     total_samples = 0
     for epoch in range(args.starting_epoch_num, args.num_epochs):
         #Initialize lists to save epoch's data                 
@@ -778,7 +761,7 @@ if __name__ == "__main__":
                 -100*avg_upward_z_penalty -0.2*total_cut_time_all_dmps 
 
             # save reward to buffer
-            print('Epoch: %i Sample: %i Reward: '%(epoch,sample), reward)
+            print('Epoch: %i Sample: %i Analytical Reward: '%(epoch,sample), analytical_reward)
             analytical_rewards_all_samples.append(analytical_reward)
             reward_features = [avg_peak_y_force, avg_peak_z_force, avg_x_mvmt, avg_y_mvmt, avg_z_mvmt, avg_upward_z_penalty, total_cut_time_all_dmps]
             reward_features_all_samples.append(reward_features)
@@ -818,24 +801,24 @@ if __name__ == "__main__":
                 new_params])           
             
             # save intermediate rewards/pol params 
-            '''NOTE: saving these in format: [polParams, GP_reward_model_mean, expert_reward],
+            '''NOTE: saving these in format: [polParams, analytical_reward, GP_reward_model_mean, expert_reward],
             where expert_reward can be 1 or 2-element list depending on type of desired behavior
             '''
             if args.starting_sample_num !=0:
                 import pdb; pdb.set_trace()
                 # policy param data
                 prev_sample_data = np.load(os.path.join(work_dir + '/' + 'all_polParamRew_data', 'polParamsRews_' + 'epoch_'+str(epoch) + '_ep_'+str(args.starting_sample_num-1) + '.npy'))
-                new_GP_model_expected_rews_and_expert_rews = np.concatenate((np.array([reward_model_mean_rewards_all_samples]).T, np.array([expert_rewards_all_samples]).T),axis=1)
-                new_sample_data = np.concatenate((np.array(policy_params_all_samples), np.array([new_GP_model_expected_rews_and_expert_rews]).T), axis=1)
+                new_analytRew_GPmodelRew_ExpertRew = np.concatenate((np.array([analytical_rewards_all_samples]).T, np.array([reward_model_mean_rewards_all_samples]).T, np.array([expert_rewards_all_samples]).T),axis=1)
+                new_sample_data = np.concatenate((np.array(policy_params_all_samples), np.array([new_analytRew_GPmodelRew_ExpertRew]).T), axis=1)
                 combined_data = np.concatenate((prev_sample_data, new_sample_data), axis=0)
                 np.save(os.path.join(work_dir + '/' + 'all_polParamRew_data', 'polParamsRews_' + 'epoch_'+str(epoch) + '_ep_'+str(sample) + '.npy'),
                     combined_data)
                 import pdb; pdb.set_trace()
 
             else:
-                GP_model_expected_rews_and_expert_rews = np.concatenate((np.array([reward_model_mean_rewards_all_samples]).T, np.array([expert_rewards_all_samples]).T),axis=1)
+                new_analytRew_GPmodelRew_ExpertRew = np.concatenate((np.array([analytical_rewards_all_samples]).T, np.array([reward_model_mean_rewards_all_samples]).T, np.array([expert_rewards_all_samples]).T),axis=1)
                 np.save(os.path.join(work_dir + '/' + 'all_polParamRew_data', 'polParamsRews_' + 'epoch_'+str(epoch) + '_ep_'+str(sample) + '.npy'), \
-                    np.concatenate((np.array(policy_params_all_samples), GP_model_expected_rews_and_expert_rews), axis=1))
+                    np.concatenate((np.array(policy_params_all_samples), new_analytRew_GPmodelRew_ExpertRew), axis=1))
                 import pdb; pdb.set_trace()
             import pdb; pdb.set_trace()
 
@@ -861,14 +844,17 @@ if __name__ == "__main__":
             import pdb; pdb.set_trace()
             move_down_to_contact = RigidTransform(translation=np.array([0.0, 0.0, -0.1]),
             from_frame='world', to_frame='world')   
-            fa.goto_pose_delta(move_down_to_contact, duration=5, use_impedance=False, force_thresholds=[10.0, 10.0, 3.0, 10.0, 10.0, 10.0], ignore_virtual_walls=True)
-            #fa.goto_pose_delta(move_down_to_contact, duration=5, use_impedance=False, force_thresholds=[10.0, 10.0, 2.0, 10.0, 10.0, 10.0], ignore_virtual_walls=True)
+            if args.food_name == 'banana': 
+                fa.goto_pose_delta(move_down_to_contact, duration=5, use_impedance=False, force_thresholds=[10.0, 10.0, 2.0, 10.0, 10.0, 10.0], ignore_virtual_walls=True)
+            else:
+                fa.goto_pose_delta(move_down_to_contact, duration=5, use_impedance=False, force_thresholds=[10.0, 10.0, 3.0, 10.0, 10.0, 10.0], ignore_virtual_walls=True)
+            
         
         # save reward 
         import pdb; pdb.set_trace()
-        GP_model_expected_rews_and_expert_rews = np.concatenate((np.array([reward_model_mean_rewards_all_samples]).T, np.array([expert_rewards_all_samples]).T),axis=1)
+        new_analytRew_GPmodelRew_ExpertRew = np.concatenate((np.array([analytical_rewards_all_samples]).T, np.array([reward_model_mean_rewards_all_samples]).T, np.array([expert_rewards_all_samples]).T),axis=1)
         np.save(os.path.join(work_dir, 'polParamsRews_' + 'epoch_'+str(epoch) +'.npy'), \
-            np.concatenate((np.array(policy_params_all_samples), np.array([GP_model_expected_rews_and_expert_rews]).T), axis=1))
+            np.concatenate((np.array(policy_params_all_samples), np.array([new_analytRew_GPmodelRew_ExpertRew]).T), axis=1))
 
         #Save mean expert rewards and reward model reward from this rollout of 15 episodes        
         mean_reward_model_rewards_all_epochs.append(np.mean(reward_model_mean_rewards_all_samples))
@@ -877,18 +863,21 @@ if __name__ == "__main__":
         pi_current_mean = u
         pi_current_cov = sigma
 
-        # load al samples from this epoch 
+        # load all samples from this epoch 
+        '''
+        saved in format: [polParams, analytical_reward, GP_reward_model_mean, expert_reward]
+        '''
         if args.starting_sample_num !=0:
             all_data = work_dir + '/all_polParamRew_data/' +'polParamsRews_epoch_' + str(epoch) + '_ep_'+ str(sample) + '.npy'
             if num_expert_rews_each_sample == 1:
                 import pdb; pdb.set_trace()
-                policy_params_all_samples = (np.load(all_data)[:,0:-2]).tolist()
+                policy_params_all_samples = (np.load(all_data)[:,0:-3]).tolist()
                 reward_model_mean_rewards_all_samples = (np.load(all_data)[:,-2]).tolist()
                 expert_rewards_all_samples = (np.load(all_data)[:,-1]).tolist()
 
             elif num_expert_rews_each_sample == 2:
                 import pdb; pdb.set_trace()
-                policy_params_all_samples = (np.load(all_data)[:,0:-3]).tolist()
+                policy_params_all_samples = (np.load(all_data)[:,0:-4]).tolist()
                 reward_model_mean_rewards_all_samples = (np.load(all_data)[:,-3]).tolist()
                 expert_rewards_all_samples = (np.load(all_data)[:,-2:]).tolist()  # 2 expert reward values (desired fast and slow rewards)         
                     
