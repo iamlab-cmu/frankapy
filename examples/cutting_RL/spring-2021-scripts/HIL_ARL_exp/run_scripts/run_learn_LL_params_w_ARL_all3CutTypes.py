@@ -724,14 +724,13 @@ if __name__ == "__main__":
             if cut_type == 'normal' or cut_type == 'scoring':
                 avg_upward_z_mvmt = np.max(upward_z_mvmt_all_dmps)
                 avg_upward_z_penalty = avg_upward_z_mvmt
+            
             elif cut_type == 'pivchop':
                 avg_upward_z_penalty = np.max(upward_z_penalty_all_dmps)
                 
             # trying out more generalized cutting reward function - remove not returning to start penalty:
-            avg_upward_z_penalty= avg_upward_z_mvmt  # NOTE: in normal cut, -100*avg_upward_z_penalty term = -100*avg_upward_z_mvmt (calc diff for each cut type)
             reward = -0.1*avg_peak_y_force -0.15*avg_peak_z_force - 10*avg_x_mvmt -100*avg_y_mvmt - 10*avg_z_mvmt \
                 -100*avg_upward_z_penalty -0.2*total_cut_time_all_dmps 
-
 
             # save reward to buffer
             print('Epoch: %i Sample: %i Reward: '%(epoch,sample), reward)
