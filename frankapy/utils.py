@@ -236,14 +236,14 @@ def downsample_dmp_traject(original_dmp_traject, og_dt, new_downsampled_dt):
 
 def load_dmp_wts_and_knife_orientation(cut_type):
     # load dmp weights
-    if args.cut_type == 'normal':
+    if cut_type == 'normal':
         dmp_wts_file = '/home/sony/092420_normal_cut_dmp_weights_zeroY.pkl'
         # more angled to sharp knife - normal cut
         knife_orientation = np.array([[0.0,   0.9805069,  -0.19648464],
                                   [ 1.0,   0.0,  0.0],
                                   [ 0.0, -0.19648464,  -0.9805069]])
 
-    elif args.cut_type == 'pivchop':
+    elif cut_type == 'pivchop':
         dmp_wts_file = '/home/sony/raw_IL_trajects/Jan-2021/011321_piv_chop_potato_position_weights_zeroXY.pkl' 
         # dmp_wts_file = '/home/sony/raw_IL_trajects/100220_piv_chop_position_dmp_weights_zeroXY_2.pkl'
         # metal knife (26 deg tilt forward) - pivchop
@@ -251,13 +251,36 @@ def load_dmp_wts_and_knife_orientation(cut_type):
                                   [ 1.0,   0.0,  0.0],
                                   [ 0.0, -0.4384,  -0.8988]])
 
-    elif args.cut_type == 'scoring':
+    elif cut_type == 'scoring':
         dmp_wts_file = '/home/sony/raw_IL_trajects/Jan-2021/011321_scoring_potato_position_weights_zeroYZ.pkl' 
         # metal knife (26 deg tilt forward) - pivchop
         knife_orientation = np.array([[0.0,   0.8988,  -0.4384],
                                   [ 1.0,   0.0,  0.0],
                                   [ 0.0, -0.4384,  -0.8988]])    
     return dmp_wts_file, knife_orientation
+
+def load_prev_task_success_data(work_dir):
+    prev_data_time = np.load(os.path.join(work_dir, 'cut_times_all_samples.npy'))
+    prev_data_task_succ = np.load(os.path.join(work_dir, 'task_success_all_samples.npy'))
+    time_to_complete_cut = prev_data_time.tolist()
+    task_success = prev_data_task_succ.tolist()
+    
+    # load previous sample granular task success and reward features
+    if os.path.isfile(os.path.join(work_dir, 'task_success_more_granular_all_samples.npy')):
+        prev_data_task_succ_more_granular = np.load(os.path.join(work_dir, 'task_success_more_granular_all_samples.npy'))
+        task_success_more_granular = prev_data_task_succ_more_granular.tolist() 
+    else:
+        for i in range(len(task_success)):
+            task_success_more_granular.append([np.inf, np.inf, np.inf])
+
+    if os.path.isfile(os.path.join(work_dir, 'reward_features_all_samples.npy')):
+        prev_data_reward_feats_all_samples = np.load(os.path.join(work_dir, 'reward_features_all_samples.npy'))        
+        reward_features_all_samples = prev_data_reward_feats_all_samples.tolist()
+    else: 
+        for i in range(len(task_success)):
+            reward_features_all_samples.append([np.inf]*7)
+    
+    return reward_features_all_samples, time_to_complete_cut, task_success, task_success_more_granular
 
 def plot_updated_policy_mean_traject(work_dir, cut_type, position_dmp_weights_file_path, epoch, dmp_traject_time, control_type_z_axis, init_dmp_info_dict, \
     initial_wts, REPS_updated_mean):

@@ -340,7 +340,8 @@ if __name__ == "__main__":
 
 
     mean_params_each_epoch, cov_each_epoch = [], []
-    # if we're starting from a later epoch: load previous data
+    # if starting from a later epoch: load previous data
+    # TODO: load GP reward model too if not starting from 0th epoch
     if os.path.isfile(os.path.join(work_dir, 'policy_mean_each_epoch.npy')):
         mean_params_each_epoch = np.load(os.path.join(work_dir, 'policy_mean_each_epoch.npy')).tolist()
         cov_each_epoch = np.load(os.path.join(work_dir, 'policy_cov_each_epoch.npy')).tolist()
@@ -348,7 +349,7 @@ if __name__ == "__main__":
         mean_params_each_epoch.append(initial_mu)   
         cov_each_epoch.append(initial_sigma) 
 
-    # track success metrics
+    # Track success metrics
     '''
     task_success: 0 (unsuccessful cut), 1 (average cut), 2 (good cut)
     task_success_more_granular: cut through (0/1), cut through except for small tag (0/1), housing bumped into food/pushed out of gripper (0/1)
@@ -358,25 +359,28 @@ if __name__ == "__main__":
     reward_features_all_samples = []
 
     if args.starting_sample_num !=0 or args.starting_epoch_num!=0:
-        prev_data_time = np.load(os.path.join(work_dir, 'cut_times_all_samples.npy'))
-        prev_data_task_succ = np.load(os.path.join(work_dir, 'task_success_all_samples.npy'))
-        time_to_complete_cut = prev_data_time.tolist()
-        task_success = prev_data_task_succ.tolist()
+        reward_features_all_samples, time_to_complete_cut, task_success, task_success_more_granular = load_prev_task_success_data(work_dir)
         
-        # load previous sample granular task success and reward features
-        if os.path.isfile(os.path.join(work_dir, 'task_success_more_granular_all_samples.npy')):
-            prev_data_task_succ_more_granular = np.load(os.path.join(work_dir, 'task_success_more_granular_all_samples.npy'))
-            task_success_more_granular = prev_data_task_succ_more_granular.tolist() 
-        else:
-            for i in range(len(task_success)):
-                task_success_more_granular.append([np.inf, np.inf, np.inf])
+        #------- OLD CODE - moved out to separate function
+        # prev_data_time = np.load(os.path.join(work_dir, 'cut_times_all_samples.npy'))
+        # prev_data_task_succ = np.load(os.path.join(work_dir, 'task_success_all_samples.npy'))
+        # time_to_complete_cut = prev_data_time.tolist()
+        # task_success = prev_data_task_succ.tolist()
+        
+        # # load previous sample granular task success and reward features
+        # if os.path.isfile(os.path.join(work_dir, 'task_success_more_granular_all_samples.npy')):
+        #     prev_data_task_succ_more_granular = np.load(os.path.join(work_dir, 'task_success_more_granular_all_samples.npy'))
+        #     task_success_more_granular = prev_data_task_succ_more_granular.tolist() 
+        # else:
+        #     for i in range(len(task_success)):
+        #         task_success_more_granular.append([np.inf, np.inf, np.inf])
 
-        if os.path.isfile(os.path.join(work_dir, 'reward_features_all_samples.npy')):
-            prev_data_reward_feats_all_samples = np.load(os.path.join(work_dir, 'reward_features_all_samples.npy'))        
-            reward_features_all_samples = prev_data_reward_feats_all_samples.tolist()
-        else: 
-            for i in range(len(task_success)):
-                reward_features_all_samples.append([np.inf]*7)
+        # if os.path.isfile(os.path.join(work_dir, 'reward_features_all_samples.npy')):
+        #     prev_data_reward_feats_all_samples = np.load(os.path.join(work_dir, 'reward_features_all_samples.npy'))        
+        #     reward_features_all_samples = prev_data_reward_feats_all_samples.tolist()
+        # else: 
+        #     for i in range(len(task_success)):
+        #         reward_features_all_samples.append([np.inf]*7)
         import pdb; pdb.set_trace()
 
     # buffers for GP reward model learning
@@ -593,26 +597,6 @@ if __name__ == "__main__":
                     )
                 pub.publish(ros_msg)
 
-                # calc stats from dmp - OLD
-                # cut_time = rospy.Time.now().to_time() - init_time
-                # peak_z_force = np.max(np.abs(robot_forces[:,2]))
-                # forward_x_mvmt = (np.max(np.abs(robot_positions[:,0]) - np.abs(robot_positions[0,0])))
-                # backward_x_mvmt = (np.max(np.abs(robot_positions[:,0]) - np.abs(robot_positions[-1,0])))
-                # total_x_mvmt = forward_x_mvmt + backward_x_mvmt
-                # # difference between forward x movement and backward x movement
-                # diff_forw_back_x_mvmt = np.abs(forward_x_mvmt - backward_x_mvmt)
-
-                # # data only for use in 3-dim xyz position dmp reward
-                # forward_y_mvmt = (np.max(np.abs(robot_positions[:,1]) - np.abs(robot_positions[0,1])))
-                # backward_y_mvmt = (np.max(np.abs(robot_positions[:,1]) - np.abs(robot_positions[-1,1])))
-                # total_y_mvmt = forward_y_mvmt + backward_y_mvmt
-                # peak_y_force = np.max(np.abs(robot_forces[:,1]))
-                # upward_z_mvmt = np.max(robot_positions[:,2]) - robot_positions[0,2]
-
-                # up_z_mvmt = np.abs(robot_positions[-1,2]) - np.min(np.abs(robot_positions[:,2])) 
-                # down_z_mvmt = np.abs(robot_positions[0,2]) - np.min(np.abs(robot_positions[:,2]))
-                # total_z_mvmt = up_z_mvmt + down_z_mvmt
-
                 # calc stats from dmp
                 cut_time = rospy.Time.now().to_time() - init_time
                 peak_y_force = np.max(np.abs(robot_forces[:,1]))
@@ -641,16 +625,6 @@ if __name__ == "__main__":
                     down_z_mvmt = np.abs(robot_positions[0,2]) - np.min(np.abs(robot_positions[:,2]))
                     total_z_mvmt = up_z_mvmt + down_z_mvmt
                     diff_up_down_z_mvmt = np.abs(up_z_mvmt - down_z_mvmt)
-
-                # save to buffers - OLD
-                # total_cut_time_all_dmps += cut_time
-                # peak_z_forces_all_dmps.append(peak_z_force)
-                # x_mvmt_all_dmps.append(total_x_mvmt)
-                # forw_vs_back_x_mvmt_all_dmps.append(diff_forw_back_x_mvmt)
-                # y_mvmt_all_dmps.append(total_y_mvmt)
-                # peak_y_force_all_dmps.append(peak_y_force)
-                # upward_z_mvmt_all_dmps.append(upward_z_mvmt)
-                # z_mvmt_all_dmps.append(total_z_mvmt)
 
                 # save to buffers 
                 total_cut_time_all_dmps += cut_time
