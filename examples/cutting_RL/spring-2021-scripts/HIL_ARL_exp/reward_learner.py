@@ -22,6 +22,8 @@ import copy
 from tqdm import tqdm
 from sklearn.metrics import f1_score
 
+from policy_learner import REPSPolicyLearner
+
      
 class RewardLearner:
     '''Reward_Learner for ARL using GPytorch for GP implementation 
@@ -54,13 +56,18 @@ class RewardLearner:
         return outcomes_arr
 
     def compute_KL_div_sampling_updated(self, agent, num_samples, pi_tilda_mean, pi_tilda_cov, \
-        pi_star_mean, pi_star_cov, pi_current_mean, pi_current_cov): #taking samples from policies pi_star and pi_tilda
+        pi_star_mean, pi_star_cov, pi_current_mean, pi_current_cov, initial_wts, cut_type, S): #taking samples from policies pi_star and pi_tilda
         sampled_params_pi_tilda, sampled_params_pi_star, sampled_params_pi_current = [], [], []
+
         # sample params from each of the three policies
         for i in range(0, num_samples):
-            sampled_params_pi_tilda.append(agent.sample_params_from_policy(pi_tilda_mean, pi_tilda_cov))
-            sampled_params_pi_star.append(agent.sample_params_from_policy(pi_star_mean, pi_star_cov))
-            sampled_params_pi_current.append(agent.sample_params_from_policy(pi_current_mean, pi_current_cov))
+            new_params_pi_tilda = agent.sample_new_params_from_policy_only_mu_sigma(pi_tilda_mean, pi_tilda_cov, initial_wts, cut_type, S)
+            new_params_pi_star = agent.sample_new_params_from_policy_only_mu_sigma(pi_star_mean, pi_star_cov, initial_wts, cut_type, S)
+            new_params_pi_current = agent.sample_new_params_from_policy_only_mu_sigma(pi_current_mean, pi_current_cov, initial_wts, cut_type, S)
+
+            sampled_params_pi_tilda.append(new_params_pi_tilda)
+            sampled_params_pi_star.append(new_params_pi_star)
+            sampled_params_pi_current.append(new_params_pi_current)
 
         sampled_params_pi_tilda = np.array(sampled_params_pi_tilda)
         sampled_params_pi_star = np.array(sampled_params_pi_star)
@@ -80,6 +87,7 @@ class RewardLearner:
         
     def train_GPmodel(self, num_epochs, optimizer, model, likelihood, mll, train_x, train_y):
         print('training model')    
+        #import pdb; pdb.set_trace()
         model.train()
         likelihood.train()
         for epoch in range(num_epochs):
@@ -93,11 +101,11 @@ class RewardLearner:
 
             # only print this info if we're training/updating GP model, not when computing EPD
             if num_epochs > 1:
-                print('Epoch%d, Loss:%.3f, scale:%.3f' % (epoch, loss.item(), model.covar_module.outputscale.item()))
+                print('GP Model Training Epoch%d, Loss:%.3f, scale:%.3f' % (epoch, loss.item(), model.covar_module.outputscale.item()))
                 # print updated covar matrix 
                 #if epoch % 10 == 0:
-                print('updated covariance matrix', output.lazy_covariance_matrix.evaluate())
-                print('model noise', model.likelihood.noise.item())
+                #print('updated covariance matrix', output.lazy_covariance_matrix.evaluate())
+                #print('model noise', model.likelihood.noise.item())
                 # save updated covariance_matrix
                 covmat_np = output.lazy_covariance_matrix.evaluate().detach().numpy()
                 # np.savetxt('/home/test2/Documents/obj-rel-embeddings/AS_data/test_DKL_GP/Isaac_exps/epoch%i_numTrainSamples%i.txt'%(epoch, train_x.shape[0]), covmat_np)
@@ -112,8 +120,11 @@ class RewardLearner:
         return model
 
     def calc_expected_reward_for_observed_outcome_w_GPmodel(self, model, likelihood, new_outcomes):
+        # import pdb; pdb.set_trace()
         # convert new_outcomes data to torch tensor
-        if type(new_outcomes)==np.ndarray:
+        if type(new_outcomes)==np.ndarray: 
+            if len(new_outcomes.shape) == 1:
+                new_outcomes =  np.expand_dims(new_outcomes, axis=0) # expand dims to be 1xn
             new_outcomes = torch.from_numpy(new_outcomes)
             new_outcomes = new_outcomes.float()
         model.eval()
@@ -125,14 +136,14 @@ class RewardLearner:
             mean_expected_rewards = preds.mean.numpy().tolist()
             var_expected_rewards = preds.variance.numpy().tolist()
         
-        import pdb; pdb.set_trace()
+        # import pdb; pdb.set_trace()
         return mean_expected_rewards, var_expected_rewards
     
     def compute_EPD_for_each_sample_updated(self, num_training_epochs, optimizer, current_reward_model, likelihood, mll, \
             agent, pi_tilda_mean, pi_tilda_cov, pi_current_mean, pi_current_cov, prior_training_data, \
-                queried_samples_all, GP_training_data_x_all, GP_training_data_y_all, beta):
+                queried_samples_all, GP_training_data_x_all, GP_training_data_y_all, beta, initial_wts, cut_type, S):
 
-        agent = REPS_policy_learner() 
+        agent = REPSPolicyLearner() 
         
         prior_training_data_expect_rewards_mean, prior_training_data_policy_params, \
             prior_training_data_expect_rewards_sig = [], [], []
@@ -149,11 +160,12 @@ class RewardLearner:
         prior_training_data_expect_rewards_sig = np.array(prior_training_data_expect_rewards_sig)
         prior_training_data_policy_params = np.array(prior_training_data_policy_params)
 
+        import pdb; pdb.set_trace()
         '''
-        prior_training_data_o: nx3x50x50x50 arr
+        prior_training_data_o: nx7 arr (size reward features)
         prior_training_data_expect_rewards_mean: (n,) arr
         prior_training_data_expect_rewards_sig: (n,) arr
-        prior_training_data_policy_params: nx3 arr
+        prior_training_data_policy_params: nx8 arr
         '''
 
         num_samples = len(prior_training_data)       
@@ -205,8 +217,10 @@ class RewardLearner:
                     prior_training_data_policy_params, rel_entropy_bound=1.5, min_temperature=0.001) 
                 
                 # note - 40 is higher # samples (used to be 10)
+                print('computing KL div')
+                import pdb; pdb.set_trace()
                 KL_div = self.compute_KL_div_sampling_updated(agent, 40, pi_tilda_mean, pi_tilda_cov, \
-                    pi_star_mean, pi_star_cov, pi_current_mean, pi_current_cov)
+                    pi_star_mean, pi_star_cov, pi_current_mean, pi_current_cov, initial_wts, cut_type, S)
                 
                 print('KLdiv_sampling', KL_div)
                 KL_div_all.append(KL_div)           

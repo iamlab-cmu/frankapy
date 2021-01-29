@@ -6,7 +6,6 @@ import gpytorch
 from matplotlib import pyplot as plt
 
 import numpy as np
-import open3d
 import argparse
 import pickle
 import h5py
@@ -14,7 +13,6 @@ import sys
 import os
 import pprint
 import torch.nn as nn
-from torchvision.transforms import functional as F
 import torch.optim as optim
 import time
 import json
@@ -44,11 +42,11 @@ class GPRegressionModel(gpytorch.models.ExactGP):
         self.covar_module.outputscale = signal_var_initial                   
 
     def forward(self, x):
-        print('in forward method of GPRModel')      
+        #print('in forward method of GPRModel')      
         # input to GP kernel is  feature vector
         mean_x = self.mean_module(x)
         covar_x = self.covar_module(x) 
-        print('exiting forward method of GPRModel')
+        #print('exiting forward method of GPRModel')
         return gpytorch.distributions.MultivariateNormal(mean_x, covar_x)
     
 # def train(num_epochs, model):

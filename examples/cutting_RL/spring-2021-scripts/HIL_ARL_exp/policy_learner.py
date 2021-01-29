@@ -16,16 +16,16 @@ class REPSPolicyLearner:
         self.training_samples_all = []
         self.outcomes_all = []     
 
-    def initialize_gaussian_policy(self, cut_type, food_type, dmp_wt_sampling_var, start_from_previous, previous_datadir, prev_epochs_to_calc_pol_update, \
+    def initialize_gaussian_policy(self, num_expert_rews_each_sample, cut_type, food_type, dmp_wt_sampling_var, start_from_previous, previous_datadir, prev_epochs_to_calc_pol_update, \
             init_dmp_info_dict, work_dir, position_dmp_weights_file_path, starting_epoch_num, dmp_traject_time):
 
         use_all_dmp_dims = False
         if start_from_previous: # load previous data collected and start from updated policy and/or sample/epoch        
             prev_data_dir = previous_datadir
             if use_all_dmp_dims:
-                policy_params_mean, policy_params_sigma = parse_policy_params_and_rews_from_file(prev_data_dir, prev_epochs_to_calc_pol_update, hfpc = False)
+                policy_params_mean, policy_params_sigma = parse_policy_params_and_rews_from_file_HIL_ARL(num_expert_rews_each_sample, prev_data_dir, prev_epochs_to_calc_pol_update, hfpc = False)
             else:
-                policy_params_mean, policy_params_sigma = parse_policy_params_and_rews_from_file(prev_data_dir, prev_epochs_to_calc_pol_update)
+                policy_params_mean, policy_params_sigma = parse_policy_params_and_rews_from_file_HIL_ARL(num_expert_rews_each_sample, prev_data_dir, prev_epochs_to_calc_pol_update)
 
             initial_mu, initial_sigma = policy_params_mean, policy_params_sigma
             mu, sigma = initial_mu, initial_sigma
@@ -190,6 +190,59 @@ class REPSPolicyLearner:
                 new_weights = np.expand_dims(np.vstack((initial_wts[0,:,:],initial_wts[1,:,:], new_z_weights)),axis=1)
 
         return new_params, new_weights, new_z_force, new_cart_pitch_stiffness 
+
+    def sample_new_params_from_policy_only_mu_sigma(self, mu, sigma, initial_wts, cut_type, S):
+        new_params = np.random.multivariate_normal(mu, sigma)    
+ 
+        if cut_type == 'normal' or cut_type == 'scoring':
+            if S[2] == 0:
+                new_x_weights = new_params[0:-2]
+                new_z_force = new_params[-2]
+                new_cart_pitch_stiffness = new_params[-1]
+                # cap force value
+                new_z_force = np.clip(new_z_force, -40, -3)    # TODO: up force to -50N        
+                new_params[-2] = int(new_z_force)  
+                print('clipped sampled z force', new_z_force)  
+
+                new_cart_pitch_stiffness = np.clip(new_cart_pitch_stiffness, 5, 600)           
+                new_params[-1] = int(new_cart_pitch_stiffness)  
+                print('clipped sampled new_cart_pitch_stiffness', new_cart_pitch_stiffness)         
+            
+            elif S[2] == 1:
+                #import pdb; pdb.set_trace()
+                num_weights = initial_wts.shape[2]
+                new_x_weights = new_params[0:num_weights]
+                new_z_weights = new_params[num_weights:(2*num_weights)]
+                new_cart_pitch_stiffness = new_params[-1]
+                # cap value                   
+                new_cart_pitch_stiffness = np.clip(new_cart_pitch_stiffness, 5, 600)           
+                new_params[-1] = int(new_cart_pitch_stiffness)  
+                print('clipped sampled new_cart_pitch_stiffness', new_cart_pitch_stiffness)      
+                new_z_force = 'NA'   
+        
+        elif cut_type == 'pivchop':                    
+            if S[2] == 0:  
+                new_z_weights = initial_wts[2,:,:] # not actually using this in this case b/c no position control in z
+                new_z_force = new_params[0]
+                new_cart_pitch_stiffness = new_params[1]
+                # cap force value
+                new_z_force = np.clip(new_z_force, -40, -3)    # TODO: up force to -50N        
+                new_params[0] = int(new_z_force)  
+                print('clipped sampled z force', new_z_force)  
+                new_cart_pitch_stiffness = np.clip(new_cart_pitch_stiffness, 5, 600)           
+                new_params[1] = int(new_cart_pitch_stiffness)  
+                print('clipped sampled new_cart_pitch_stiffness', new_cart_pitch_stiffness)  
+            
+            elif S[2] == 1:
+                new_z_weights = new_params[0:-1]
+                new_cart_pitch_stiffness = new_params[-1]
+                # cap value
+                new_cart_pitch_stiffness = np.clip(new_cart_pitch_stiffness, 5, 600)           
+                new_params[-1] = int(new_cart_pitch_stiffness)  
+                print('clipped sampled new_cart_pitch_stiffness', new_cart_pitch_stiffness)
+                new_z_force = 'NA'        
+
+        return new_params
     
     def update_policy_REPS(self, rewards_all, policy_params_all, rel_entropy_bound, min_temperature):
         REPS = reps.Reps(rel_entropy_bound, min_temperature) #Create REPS object

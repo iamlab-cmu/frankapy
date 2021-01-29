@@ -282,9 +282,9 @@ def load_prev_task_success_data(work_dir):
     
     return reward_features_all_samples, time_to_complete_cut, task_success, task_success_more_granular
 
-def plot_updated_policy_mean_traject(work_dir, cut_type, position_dmp_weights_file_path, epoch, dmp_traject_time, control_type_z_axis, init_dmp_info_dict, \
+def plot_updated_policy_mean_traject_HIL_ARL(work_dir, fa, cut_type, position_dmp_weights_file_path, epoch, dmp_traject_time, control_type_z_axis, init_dmp_info_dict, \
     initial_wts, REPS_updated_mean):
-    if cut_type == 'normal' or 'scoring':
+    if cut_type == 'normal' or cut_type =='scoring':
         if control_type_z_axis == 'force':                
             new_weights = np.expand_dims(np.vstack((REPS_updated_mean[0:7],initial_wts[1,:,:],initial_wts[2,:,:])),axis=1)
             new_z_force = REPS_updated_mean[-2]
@@ -292,7 +292,7 @@ def plot_updated_policy_mean_traject(work_dir, cut_type, position_dmp_weights_fi
             new_weights = np.expand_dims(np.vstack((REPS_updated_mean[0:7],initial_wts[1,:,:],REPS_updated_mean[7:14])),axis=1)
             new_z_force = 0
     
-    elif cut_time == 'pivchop':
+    elif cut_type == 'pivchop':
         if control_type_z_axis == 'force':                
             new_weights = np.expand_dims(np.vstack((REPS_updated_mean[0:7],initial_wts[1,:,:],initial_wts[2,:,:])),axis=1)
             new_z_force = REPS_updated_mean[-2]
@@ -334,15 +334,12 @@ def plot_updated_policy_mean_traject(work_dir, cut_type, position_dmp_weights_fi
     
     # check new dmp sampled wt trajectory vs original
     sample = 0
-    plot_sampled_new_dmp_traject_and_original_dmp(epoch, sample, work_dir, new_z_force, traject_time, \
+    plot_sampled_new_dmp_traject_and_original_dmp(epoch, work_dir, sample, new_z_force, traject_time, \
         position_dmp_weights_file_path, dmp_traject, y0)
     import pdb; pdb.set_trace()
 
-def plot_sampled_new_dmp_traject_and_original_dmp(epoch, sample, save_dir, new_z_force, traject_time, \
+def plot_sampled_new_dmp_traject_and_original_dmp(epoch, work_dir, sample, new_z_force, traject_time, \
     initial_dmp_weights_pkl_file, new_dmp_traject, y0):
-    '''
-    plot original IL trajectory overlayed with new sampled dmp trajectory
-    '''
     #original_dmp_wts_pkl_filepath = '/home/sony/Desktop/debug_dmp_wts.pkl'
     dmp_traj = DMPPositionTrajectoryGenerator(traject_time)
     dmp_traj.load_saved_dmp_params_from_pkl_file(initial_dmp_weights_pkl_file)
@@ -369,6 +366,39 @@ def plot_sampled_new_dmp_traject_and_original_dmp(epoch, sample, save_dir, new_z
     plt.show()
     # save figure to working dir
     fig.savefig(work_dir + '/' + 'dmp_traject_plots' + '/sampledDMP_' + 'epoch_'+str(epoch) + '_ep_'+str(sample)+'.png')
+
+# OLD
+# def plot_sampled_new_dmp_traject_and_original_dmp(epoch, sample, save_dir, new_z_force, traject_time, \
+#     initial_dmp_weights_pkl_file, new_dmp_traject, y0):
+#     '''
+#     plot original IL trajectory overlayed with new sampled dmp trajectory
+#     '''
+#     #original_dmp_wts_pkl_filepath = '/home/sony/Desktop/debug_dmp_wts.pkl'
+#     dmp_traj = DMPPositionTrajectoryGenerator(traject_time)
+#     dmp_traj.load_saved_dmp_params_from_pkl_file(initial_dmp_weights_pkl_file)
+#     dmp_traj.parse_dmp_params_dict()
+#     # calculate dmp position trajectory - NOTE: this assumes a 0.001 dt for calc the dmp traject
+#     original_traject, dy, _, _, _ = dmp_traj.run_dmp_with_weights(y0) # y: np array(tx3)
+    
+#     axes = ['x', 'y','z']   
+#     fig, ax = plt.subplots(3,1) 
+#     for i in range(3):
+#         ax[i].plot(np.arange(0, traject_time, 0.001), original_traject[:,i])
+#         ax[i].plot(np.arange(0, traject_time, 0.001), new_dmp_traject[:,i])           
+#         if i!=0:
+#             ax[i].set_title('Cartesian Position - '+str(axes[i]))
+#         else:     
+#             if new_z_force == 'NA':
+#                 ax[i].set_title('Cartesian Position - '+str(axes[i]))
+#             else:
+#                 ax[i].set_title('Cartesian Position - '+str(axes[i]) + ' ' + 'Downward z-force (N): '+str(new_z_force))
+#         ax[i].set_ylabel('Position (m)')
+#         ax[i].legend((axes[i] + '-original traject', axes[i] + '-new sampled traject'))
+    
+#     ax[2].set_xlabel('Time (s)')
+#     plt.show()
+#     # save figure to working dir
+#     fig.savefig(work_dir + '/' + 'dmp_traject_plots' + '/sampledDMP_' + 'epoch_'+str(epoch) + '_ep_'+str(sample)+'.png')
 
 def parse_policy_params_and_rews_from_file(work_dir, prev_epochs_to_calc_pol_update, hfpc=True):
     '''
@@ -397,6 +427,99 @@ def parse_policy_params_and_rews_from_file(work_dir, prev_epochs_to_calc_pol_upd
         data = np.load(data_file)
         pol_params = data[:,0:-1]
         rewards = data[:,-1]  
+        avg_rews_each_epoch.append(np.mean(rewards))
+        rews_all_epochs = np.concatenate((rews_all_epochs, rewards),axis=0)
+        pol_params_all_epochs = np.concatenate((pol_params_all_epochs, pol_params),axis=0)
+        num_samples+=data.shape[0]
+        num_samples_each_epoch.append(num_samples)
+        
+    #import pdb; pdb.set_trace()
+    # plot rewards
+    plt.plot(np.arange(rews_all_epochs.shape[0]),rews_all_epochs,'-o')
+    # add in labels for epochs
+    plt.vlines(np.array(num_samples_each_epoch)-1,np.min(rews_all_epochs)-5,0, colors = ['r','r','r'], linestyles={'dashed', 'dashed', 'dashed'})
+
+    counter = 0
+    if hfpc:
+        for x,y in zip(np.arange(rews_all_epochs.shape[0]), pol_params_all_epochs[:,-1]):
+            label = 'f_z = %i'%np.round(y) #'rStiff = %i'%np.round(y) 
+            plt.annotate(label, (x,rews_all_epochs[counter]), textcoords = 'offset points', xytext = (0,10), ha='center')
+            counter += 1
+    plt.xlabel('sample num')
+    plt.ylabel('reward - average across all dmps for each slice')
+    plt.ylim(np.min(rews_all_epochs)-5, 0)
+    plt.title('reward vs. sample - normalCut, potato')
+    plt.xticks(np.arange(rews_all_epochs.shape[0]))
+    plt.show()
+
+    # plot average rewards each epoch
+    plt.plot(avg_rews_each_epoch, '-o')
+    plt.xlabel('epoch')
+    plt.ylabel('avg reward each epoch - average across all dmps for each slice')
+    plt.ylim(-60, 0)
+    plt.title('avg reward vs epochs')
+    plt.xticks(np.arange(3))
+    plt.show()
+    
+    # update policy mean and cov (REPS)       
+    reps_agent = reps.Reps(rel_entropy_bound=1.5,min_temperature=0.001) #Create REPS object
+    if np.abs(-1-prev_epochs_to_calc_pol_update) > len(num_samples_each_epoch): # use all data from all epochs
+        #import pdb; pdb.set_trace()
+        policy_params_mean, policy_params_sigma, reps_info = reps_agent.policy_from_samples_and_rewards(pol_params_all_epochs, rews_all_epochs)
+    else:
+        print('using previous %i epochs to calc policy update'%prev_epochs_to_calc_pol_update)
+        #import pdb; pdb.set_trace()   
+        pol_params_desired_epochs = pol_params_all_epochs[num_samples_each_epoch[-1-prev_epochs_to_calc_pol_update]:]
+        rews_desired_epochs = rews_all_epochs[num_samples_each_epoch[-1-prev_epochs_to_calc_pol_update]:]
+        print('shape of prev data is ', rews_desired_epochs.shape)
+        policy_params_mean, policy_params_sigma, reps_info = reps_agent.policy_from_samples_and_rewards(pol_params_desired_epochs, rews_desired_epochs)
+
+    # np.savez(os.path.join(work_dir, 'REPSupdatedMean_' + 'epoch_'+str(x) +'.npz'), \
+    #         updated_mean = policy_params_mean, updated_cov = policy_params_sigma)
+
+    return policy_params_mean, policy_params_sigma
+
+def parse_policy_params_and_rews_from_file_HIL_ARL(num_expert_rews_each_sample, work_dir, prev_epochs_to_calc_pol_update, hfpc=True):
+    '''
+    calculate updated policy from previous data and plot rewards from previous data
+
+    prev_epochs_to_calc_pol_update: how many prev epochs' data to use to calculate policy update
+
+    NOTE: modified this function from "parse_policy_params_and_rews_from_file()" to take into account different reward indices depending on type of human reward/etc
+    '''
+    data_files = glob.glob(work_dir + "*epoch_*.npy")
+    #import pdb; pdb.set_trace()
+    num_prev_epochs = len(data_files)
+    #import pdb; pdb.set_trace()
+    # get num policy params
+    first_file = np.load(data_files[0])
+
+    if num_expert_rews_each_sample == 1:   
+        num_pol_params = first_file[:,0:-3].shape[1]          
+
+    elif num_expert_rews_each_sample == 2:  
+        num_pol_params = first_file[:,0:-4].shape[1]                                  
+
+    rews_all_epochs = np.empty((0))
+    avg_rews_each_epoch = []
+    num_samples_each_epoch = []
+    num_samples = 0
+    if hfpc:
+        pol_params_all_epochs = np.empty((0,num_pol_params))
+    else:
+        pol_params_all_epochs = np.empty((0,num_pol_params))
+    for i in range(num_prev_epochs):
+        data_file = glob.glob(work_dir + "*epoch_%s*.npy"%str(i))[0]
+        data = np.load(data_file)
+        if num_expert_rews_each_sample == 1:  
+            pol_params = data[:,0:-3] 
+            rewards = data[:,-2]# reward model rewards
+        elif num_expert_rews_each_sample == 2:  
+            pol_params = data[:,0:-4] 
+            rewards = data[:,-3]# reward model rewards
+
+        # pol_params = data[:,0:-1]
+        # rewards = data[:,-1]  
         avg_rews_each_epoch.append(np.mean(rewards))
         rews_all_epochs = np.concatenate((rews_all_epochs, rewards),axis=0)
         pol_params_all_epochs = np.concatenate((pol_params_all_epochs, pol_params),axis=0)
