@@ -1,4 +1,3 @@
-import gym
 from rl_utils import reps
 import numpy as np 
 import matplotlib.pyplot as plt 
@@ -49,12 +48,8 @@ class REPSPolicyLearner:
                 if food_type == 'hard':
                     S = [1,0,0,1,1,1] 
                 elif food_type == 'soft':
-                    S = [1,1,0,1,1,1]
+                    S = [1,1,0,1,1,1]           
             
-            if S[2] == 0:
-                control_type_z_axis = 'force'
-            elif S[2] == 1:
-                control_type_z_axis = 'position'
 
             # plot updated policy mean trajectory to visualize
             print('plotting REPS updated mean trajectory')
@@ -119,15 +114,82 @@ class REPSPolicyLearner:
                         initial_sigma = np.diag([120, 500])   
                         S = [1,1,0,1,1,1]
 
-        return initial_mu, initial_sigma, S, control_type_z_axis
+        if S[2] == 0:
+                control_type_z_axis = 'force'
+        elif S[2] == 1:
+            control_type_z_axis = 'position'
 
-    def sample_params_from_policy(self, u, sigma):
-        #import pdb; pdb.set_trace()
-        sampled_new_params = np.random.multivariate_normal(u,sigma)  
-        while sampled_new_params[1] < 0: #make sure height param is not < 0 to prevent from trying to place block below table
-            sampled_new_params = np.random.multivariate_normal(u,sigma)  
-        self.policy_params_all.append(sampled_new_params)        
-        return sampled_new_params
+        return initial_wts, initial_mu, initial_sigma, S, control_type_z_axis
+    
+    def sample_new_params_from_policy(self, mu, sigma, use_all_dmp_dims, initial_wts, cut_type, S):
+        new_params = np.random.multivariate_normal(mu, sigma)    
+
+        if use_all_dmp_dims:
+            #new_z_force = new_params[-1] -- not using z force!
+            new_weights = new_params.reshape(initial_wts.shape)
+            new_z_force = 'NA'                                
+        else:    
+            if cut_type == 'normal' or cut_type == 'scoring':
+                if S[2] == 0:
+                    new_x_weights = new_params[0:-2]
+                    new_z_force = new_params[-2]
+                    new_cart_pitch_stiffness = new_params[-1]
+                    # cap force value
+                    new_z_force = np.clip(new_z_force, -40, -3)    # TODO: up force to -50N        
+                    new_params[-2] = int(new_z_force)  
+                    print('clipped sampled z force', new_z_force)  
+
+                    new_cart_pitch_stiffness = np.clip(new_cart_pitch_stiffness, 5, 600)           
+                    new_params[-1] = int(new_cart_pitch_stiffness)  
+                    print('clipped sampled new_cart_pitch_stiffness', new_cart_pitch_stiffness)         
+                
+                elif S[2] == 1:
+                    #import pdb; pdb.set_trace()
+                    num_weights = initial_wts.shape[2]
+                    new_x_weights = new_params[0:num_weights]
+                    new_z_weights = new_params[num_weights:(2*num_weights)]
+                    new_cart_pitch_stiffness = new_params[-1]
+                    # cap value                   
+                    new_cart_pitch_stiffness = np.clip(new_cart_pitch_stiffness, 5, 600)           
+                    new_params[-1] = int(new_cart_pitch_stiffness)  
+                    print('clipped sampled new_cart_pitch_stiffness', new_cart_pitch_stiffness)      
+                    new_z_force = 'NA'   
+            
+            elif cut_type == 'pivchop':                    
+                if S[2] == 0:  
+                    new_z_weights = initial_wts[2,:,:] # not actually using this in this case b/c no position control in z
+                    new_z_force = new_params[0]
+                    new_cart_pitch_stiffness = new_params[1]
+                    # cap force value
+                    new_z_force = np.clip(new_z_force, -40, -3)    # TODO: up force to -50N        
+                    new_params[0] = int(new_z_force)  
+                    print('clipped sampled z force', new_z_force)  
+                    new_cart_pitch_stiffness = np.clip(new_cart_pitch_stiffness, 5, 600)           
+                    new_params[1] = int(new_cart_pitch_stiffness)  
+                    print('clipped sampled new_cart_pitch_stiffness', new_cart_pitch_stiffness)  
+                
+                elif S[2] == 1:
+                    new_z_weights = new_params[0:-1]
+                    new_cart_pitch_stiffness = new_params[-1]
+                    # cap value
+                    new_cart_pitch_stiffness = np.clip(new_cart_pitch_stiffness, 5, 600)           
+                    new_params[-1] = int(new_cart_pitch_stiffness)  
+                    print('clipped sampled new_cart_pitch_stiffness', new_cart_pitch_stiffness)
+                    new_z_force = 'NA'  
+
+        # concat new sampled x weights w/ old y (zero's) and z weights if we're only sampling x weights
+        if not use_all_dmp_dims: 
+            if cut_type == 'normal' or cut_type == 'scoring':
+                if S[2] == 0:
+                    new_weights = np.expand_dims(np.vstack((new_x_weights,initial_wts[1,:,:],initial_wts[2,:,:])),axis=1)
+                
+                elif S[2] == 1:
+                    new_weights = np.expand_dims(np.vstack((new_x_weights,initial_wts[1,:,:],new_z_weights)),axis=1)
+            
+            elif cut_type == 'pivchop':     
+                new_weights = np.expand_dims(np.vstack((initial_wts[0,:,:],initial_wts[1,:,:], new_z_weights)),axis=1)
+
+        return new_params, new_weights, new_z_force, new_cart_pitch_stiffness 
     
     def update_policy_REPS(self, rewards_all, policy_params_all, rel_entropy_bound, min_temperature):
         REPS = reps.Reps(rel_entropy_bound, min_temperature) #Create REPS object

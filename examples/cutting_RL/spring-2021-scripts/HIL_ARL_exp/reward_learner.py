@@ -1,6 +1,5 @@
 
 
-import gym
 from rl_utils import reps
 import numpy as np 
 import matplotlib.pyplot as plt 
@@ -13,7 +12,7 @@ import sys
 import os
 import pprint
 import torch.nn as nn
-from torchvision.transforms import functional as F
+# from torchvision.transforms import functional as F
 import torch.optim as optim
 import gpytorch
 import torch
@@ -125,7 +124,8 @@ class RewardLearner:
             preds = model(new_outcomes)
             mean_expected_rewards = preds.mean.numpy().tolist()
             var_expected_rewards = preds.variance.numpy().tolist()
-
+        
+        import pdb; pdb.set_trace()
         return mean_expected_rewards, var_expected_rewards
     
     def compute_EPD_for_each_sample_updated(self, num_training_epochs, optimizer, current_reward_model, likelihood, mll, \
@@ -215,14 +215,15 @@ class RewardLearner:
                     samples_to_query.append(i)
 
         #Check if we've already queried these samples. If yes, remove from list:
+        import pdb; pdb.set_trace()
         print('KL divs', KL_div_all)
         print('median KL DIV', np.median(KL_div_all))
         samples_to_query_new = self.remove_already_queried_samples_from_list(samples_to_query,\
             queried_samples_all)
         print('new samples_to_query', samples_to_query_new)
-        #import pdb; pdb.set_trace()
+        import pdb; pdb.set_trace()
         queried_outcomes_arr = prior_training_data_o[samples_to_query_new]              
-
+        import pdb; pdb.set_trace()
         return samples_to_query_new, queried_outcomes_arr #indexes of samples to query from expert
     
     def update_reward_GPmodel(self, continue_training, num_training_epochs, optimizer, model, likelihood, mll, updated_train_x, updated_train_y):

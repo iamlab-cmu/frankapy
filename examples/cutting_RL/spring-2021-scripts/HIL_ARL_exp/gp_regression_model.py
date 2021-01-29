@@ -34,8 +34,8 @@ class GPRegressionModel(gpytorch.models.ExactGP):
         self.likelihood = likelihood  
 
         self.mean_module = gpytorch.means.ZeroMean()
-        length_scale_initial = 5 
-        signal_var_initial = 5
+        length_scale_initial = 1 
+        signal_var_initial = 4 #5
         self.num_features = 7 # TODO: update this if adding more reward features
         self.covar_module = gpytorch.kernels.ScaleKernel(gpytorch.kernels.RBFKernel(ard_num_dims = self.num_features))
 
