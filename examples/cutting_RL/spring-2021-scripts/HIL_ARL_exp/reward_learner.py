@@ -59,7 +59,9 @@ class RewardLearner:
         pi_star_mean, pi_star_cov, pi_current_mean, pi_current_cov, initial_wts, cut_type, S): #taking samples from policies pi_star and pi_tilda
         sampled_params_pi_tilda, sampled_params_pi_star, sampled_params_pi_current = [], [], []
 
+        # print('computing KL div')
         # sample params from each of the three policies
+        import pdb; pdb.set_trace()
         for i in range(0, num_samples):
             new_params_pi_tilda = agent.sample_new_params_from_policy_only_mu_sigma(pi_tilda_mean, pi_tilda_cov, initial_wts, cut_type, S)
             new_params_pi_star = agent.sample_new_params_from_policy_only_mu_sigma(pi_star_mean, pi_star_cov, initial_wts, cut_type, S)
@@ -85,7 +87,8 @@ class RewardLearner:
         #import pdb; pdb.set_trace()
         return approx_sampling_KLdiv
         
-    def train_GPmodel(self, num_epochs, optimizer, model, likelihood, mll, train_x, train_y):
+    def train_GPmodel(self, work_dir, num_epochs, optimizer, model, likelihood, mll, train_x, train_y):
+        self.work_dir = work_dir 
         print('training model')    
         #import pdb; pdb.set_trace()
         model.train()
@@ -100,15 +103,15 @@ class RewardLearner:
             loss.backward()
 
             # only print this info if we're training/updating GP model, not when computing EPD
-            if num_epochs > 1:
+            if num_epochs > 10:
                 print('GP Model Training Epoch%d, Loss:%.3f, scale:%.3f' % (epoch, loss.item(), model.covar_module.outputscale.item()))
                 # print updated covar matrix 
-                #if epoch % 10 == 0:
+                if epoch % 20 == 0:
                 #print('updated covariance matrix', output.lazy_covariance_matrix.evaluate())
                 #print('model noise', model.likelihood.noise.item())
                 # save updated covariance_matrix
-                covmat_np = output.lazy_covariance_matrix.evaluate().detach().numpy()
-                # np.savetxt('/home/test2/Documents/obj-rel-embeddings/AS_data/test_DKL_GP/Isaac_exps/epoch%i_numTrainSamples%i.txt'%(epoch, train_x.shape[0]), covmat_np)
+                    covmat_np = output.lazy_covariance_matrix.evaluate().detach().numpy()
+                    np.savetxt(work_dir + '/' + 'GP_reward_model_data' + '/' + 'GP_cov_mat/' + 'epoch%i_numTrainSamples%i.txt'%(epoch, train_x.shape[0]), covmat_np)
 
             optimizer.step() #updates lengthscale, signal variance, AND g NN weights
         print('updated lengthscale: ', model.covar_module.base_kernel.lengthscale)
@@ -139,7 +142,7 @@ class RewardLearner:
         # import pdb; pdb.set_trace()
         return mean_expected_rewards, var_expected_rewards
     
-    def compute_EPD_for_each_sample_updated(self, num_training_epochs, optimizer, current_reward_model, likelihood, mll, \
+    def compute_EPD_for_each_sample_updated(self, work_dir, num_training_epochs, optimizer, current_reward_model, likelihood, mll, \
             agent, pi_tilda_mean, pi_tilda_cov, pi_current_mean, pi_current_cov, prior_training_data, \
                 queried_samples_all, GP_training_data_x_all, GP_training_data_y_all, beta, initial_wts, cut_type, S):
 
@@ -160,9 +163,9 @@ class RewardLearner:
         prior_training_data_expect_rewards_sig = np.array(prior_training_data_expect_rewards_sig)
         prior_training_data_policy_params = np.array(prior_training_data_policy_params)
 
-        import pdb; pdb.set_trace()
+        # import pdb; pdb.set_trace()
         '''
-        prior_training_data_o: nx7 arr (size reward features)
+        prior_training_data_o: nx7 arr (7 reward features)
         prior_training_data_expect_rewards_mean: (n,) arr
         prior_training_data_expect_rewards_sig: (n,) arr
         prior_training_data_policy_params: nx8 arr
@@ -206,7 +209,7 @@ class RewardLearner:
 
                 #update hypoth reward model with this outcome
                 continue_training = False
-                hypoth_reward_model = self.update_reward_GPmodel(continue_training, num_training_epochs, hypoth_optimizer, hypoth_reward_model, hypoth_likelihood, hypoth_mll, updated_train_x, updated_train_y)
+                hypoth_reward_model = self.update_reward_GPmodel(work_dir, continue_training, num_training_epochs, hypoth_optimizer, hypoth_reward_model, hypoth_likelihood, hypoth_mll, updated_train_x, updated_train_y)
                 
                 #calculate rewards for training data under updated reward model                   
                 mean_exp_rewards, var_exp_rewards = self.calc_expected_reward_for_observed_outcome_w_GPmodel(hypoth_reward_model, \
@@ -218,7 +221,7 @@ class RewardLearner:
                 
                 # note - 40 is higher # samples (used to be 10)
                 print('computing KL div')
-                import pdb; pdb.set_trace()
+                # import pdb; pdb.set_trace()
                 KL_div = self.compute_KL_div_sampling_updated(agent, 40, pi_tilda_mean, pi_tilda_cov, \
                     pi_star_mean, pi_star_cov, pi_current_mean, pi_current_cov, initial_wts, cut_type, S)
                 
@@ -240,7 +243,7 @@ class RewardLearner:
         import pdb; pdb.set_trace()
         return samples_to_query_new, queried_outcomes_arr #indexes of samples to query from expert
     
-    def update_reward_GPmodel(self, continue_training, num_training_epochs, optimizer, model, likelihood, mll, updated_train_x, updated_train_y):
+    def update_reward_GPmodel(self, work_dir, continue_training, num_training_epochs, optimizer, model, likelihood, mll, updated_train_x, updated_train_y):
         # if updated_train data are np arrays, convert to torch float tensors
         #import pdb; pdb.set_trace()
         if type(updated_train_x)==np.ndarray:
@@ -255,9 +258,65 @@ class RewardLearner:
 
         epochs_to_cont_training = num_training_epochs        
         if epochs_to_cont_training != 0:
-            model = self.train_GPmodel(epochs_to_cont_training, optimizer, model, likelihood, mll, updated_train_x, updated_train_y)
+            model = self.train_GPmodel(work_dir, epochs_to_cont_training, optimizer, model, likelihood, mll, updated_train_x, updated_train_y)
         
         return model
+    
+    def calc_mean_std_reward_features(self, cut_type, save_mean_std = False):
+        '''
+        save_mean_std: True, False
+        cut_type: normal, pivchop, scoring
+
+        this function calculates the mean and std from prior training data and saves to an array for loading in the future
+        '''
+        base_dir = '/home/sony/Documents/cutting_RL_experiments/data/Jan-2021-LL-param-exps/' + cut_type + '/'
+        food_types = ['potato', 'celery', 'carrot', 'banana', 'tomato', 'mozz']
+        reward_feats_all_foods = np.empty((0,7))
+        for food in food_types:
+            #import pdb; pdb.set_trace()
+            work_dir = base_dir + food + '/'
+            exp_folder = os.listdir(work_dir)
+            work_dir = work_dir + exp_folder[0] + '/'
+
+            reward_feats = np.load(work_dir + '/reward_features_all_samples.npy')
+            # import pdb; pdb.set_trace()
+            if len(np.where(reward_feats==np.inf)[0])!= 0: # there are inf's in array
+                inf_inds = np.unique(np.where(reward_feats==np.inf)[0])
+                last_inf_ind = inf_inds.max()
+                reward_feats = reward_feats[last_inf_ind+1:]
+            reward_feats_all_foods = np.vstack((reward_feats_all_foods, reward_feats))
+        
+        #import pdb; pdb.set_trace()
+        reward_feats_mean = np.mean(reward_feats_all_foods, axis=0)
+        reward_feats_std = np.std(reward_feats_all_foods, axis=0)
+
+        if save_mean_std:
+            np.save(base_dir + '/' + cut_type + '_reward_feats_mean_std' + '.npy', np.array([reward_feats_mean, reward_feats_std]))
+        
+        return reward_feats_mean, reward_feats_std
+
+    def standardize_reward_feature(self, cut_type, current_reward_feat):
+        '''
+        standardize reward features using mean and std from previous training data
+        '''
+        base_dir = '/home/sony/Documents/cutting_RL_experiments/data/Jan-2021-LL-param-exps/' + cut_type + '/'
+        mean_std_reward_feats = np.load(base_dir + '/' + cut_type + '_reward_feats_mean_std' + '.npy')
+        mean_reward_feats = mean_std_reward_feats[0,:]
+        std_reward_feats = mean_std_reward_feats[1,:]
+        #import pdb; pdb.set_trace()
+        standardized_reward_feat = (current_reward_feat - mean_reward_feats)/std_reward_feats
+
+        return standardized_reward_feat
+
+    def unstandardize_reward_feature(self, cut_type, standardized_reward_feat):
+        base_dir = '/home/sony/Documents/cutting_RL_experiments/data/Jan-2021-LL-param-exps/' + cut_type + '/'
+        mean_std_reward_feats = np.load(base_dir + '/' + cut_type + '_reward_feats_mean_std' + '.npy')
+        mean_reward_feats = mean_std_reward_feats[0,:]
+        std_reward_feats = mean_std_reward_feats[1,:]
+
+        unstandardized_reward_feat = (standardized_reward_feat*std_reward_feats) + mean_reward_feats
+
+        return unstandardized_reward_feat
 
    
 # class Reward_Learner:

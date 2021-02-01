@@ -28,6 +28,10 @@ UPDATES:
 -- refactored lower level parameter experiment scripts (prev separate script for each cut type) to support all 3 cut types in 1 script
 -- added in option to standardize reward features before inputting to GP model
 
+NOTES:
+training_data_list = n_samples x 4 np array: [outcomes_from_sample/reward_features (7,), mean_expected_reward[0] (scalar), var_expected_reward[0] (scalar), sampled_policy_params (8,)]
+
+polParamsRews_epoch_ep saved as: [polParams, analytical_reward, GP_reward_model_mean, expert_reward (slow, fast)]
 
 ex. CL args: python run_learn_LL_params_w_ARL_all3CutTypes.py --exp_num 1 --food_type hard --food_name celery --num_samples 5 --cut_type normal --desired_cutting_behavior fast --standardize_reward_feats False
 python run_learn_LL_params_w_ARL_all3CutTypes.py --exp_num 1 --food_type hard --food_name celery --num_samples 5 --cut_type normal --desired_cutting_behavior quality_cut --standardize_reward_feats True
@@ -168,6 +172,8 @@ if __name__ == "__main__":
         createFolder(work_dir + '/' + 'all_polParamRew_data')
     if not os.path.isdir(work_dir + '/' + 'GP_reward_model_data'):
         createFolder(work_dir + '/' + 'GP_reward_model_data')
+    if not os.path.isdir(work_dir + '/' + 'GP_reward_model_data' + '/' + 'GP_cov_mat'):
+        createFolder(work_dir + '/' + 'GP_reward_model_data' + '/' + 'GP_cov_mat')
     if not os.path.isdir(work_dir + '/' + 'dmp_traject_plots'):
         createFolder(work_dir + '/' + 'dmp_traject_plots')    
     if not os.path.isdir(work_dir + '/' + 'dmp_wts'):
@@ -223,7 +229,7 @@ if __name__ == "__main__":
     total_queried_samples_each_epoch, mean_reward_model_rewards_all_epochs = [], [] #track number of queries to expert for rewards and average rewards for each epoch
     training_data_list, queried_samples_all = [], []
     GP_training_data_x_all = np.empty([0,7])
-    GP_training_data_y_all =  np.empty([0])
+    GP_training_data_y_all, GP_training_data_y_all_slow, GP_training_data_y_all_fast =  np.empty([0]), np.empty([0]), np.empty([0]) 
     queried_outcomes, queried_expert_rewards, policy_params_all_epochs, block_poses_all_epochs = [], [], [], []
     reward_model_rewards_all_mean_buffer, expert_rewards_all_epochs = [], []
     total_samples = 0
@@ -258,9 +264,23 @@ if __name__ == "__main__":
     if args.starting_epoch_num > 0:
         print('training GP reward model from previously saved data')
         import pdb; pdb.set_trace()    
-        prev_GP_training_data = np.load(work_dir + '/' 'GP_reward_model_data/' + 'GP_reward_model_training_data_epoch_'+str(args.starting_epoch_num-1) + '.npz')
-        GP_training_data_x_all = prev_GP_training_data['GP_training_data_x_all']
-        GP_training_data_y_all = prev_GP_training_data['GP_training_data_y_all']
+            
+        if args.desired_cutting_behavior == 'slow':
+            prev_GP_training_data = np.load(work_dir + '/' 'GP_reward_model_data/' + 'GP_reward_model_training_data_slowCut_epoch_' +str(args.starting_epoch_num-1) + '.npz')
+            GP_training_data_x_all = prev_GP_training_data['GP_training_data_x_all']
+            GP_training_data_y_all = prev_GP_training_data['GP_training_data_y_all']
+            GP_training_data_y_all_slow = GP_training_data_y_all
+
+        elif args.desired_cutting_behavior == 'fast': 
+            prev_GP_training_data = np.load(work_dir + '/' 'GP_reward_model_data/' + 'GP_reward_model_training_data_fastCut_epoch_' +str(args.starting_epoch_num-1) + '.npz')
+            GP_training_data_x_all = prev_GP_training_data['GP_training_data_x_all']
+            GP_training_data_y_all = prev_GP_training_data['GP_training_data_y_all']
+            GP_training_data_y_all_fast = GP_training_data_y_all
+        
+        else:
+            prev_GP_training_data = np.load(work_dir + '/' 'GP_reward_model_data/' + 'GP_reward_model_training_data_qualityCut_epoch_' +str(args.starting_epoch_num-1) + '.npz')
+            GP_training_data_x_all = prev_GP_training_data['GP_training_data_x_all']
+            GP_training_data_y_all = prev_GP_training_data['GP_training_data_y_all']
 
         # train with previous data
         print('initializing and training GP reward model from previous data')
@@ -281,7 +301,7 @@ if __name__ == "__main__":
         ], lr=0.01) # lr = 0.01 originally 
         mll = gpytorch.mlls.ExactMarginalLogLikelihood(likelihood, gpr_reward_model)
         # train reward GP model given initial train_x and train_y data (voxel_data, queried human rewards)
-        gpr_reward_model = reward_learner.train_GPmodel(GP_training_epochs_initial, optimizer, gpr_reward_model, likelihood, mll, train_x, train_y)
+        gpr_reward_model = reward_learner.train_GPmodel(work_dir, GP_training_epochs_initial, optimizer, gpr_reward_model, likelihood, mll, train_x, train_y)
         import pdb; pdb.set_trace()
 
     for epoch in range(args.starting_epoch_num, args.num_epochs):
@@ -292,75 +312,7 @@ if __name__ == "__main__":
 
         for sample in range(args.starting_sample_num, args.num_samples):
             print('Epoch: %i Sample: %i'%(epoch,sample))
-            total_samples += 1
-
-            #------------------ OLD CODE - moved out to separate function
-            # Sample new policy params from mu and sigma - NOTE: cap force to be [-1, -40]
-            # new_params = np.random.multivariate_normal(mu, sigma)     
-            # if args.use_all_dmp_dims:
-            #     #new_z_force = new_params[-1] -- not using z force!
-            #     new_weights = new_params.reshape(initial_wts.shape)
-            #     new_z_force = 'NA'                                
-            # else:    
-            #     if args.cut_type == 'normal' or args.cut_type == 'scoring':
-            #         if S[2] == 0:
-            #             new_x_weights = new_params[0:-2]
-            #             new_z_force = new_params[-2]
-            #             new_cart_pitch_stiffness = new_params[-1]
-            #             # cap force value
-            #             new_z_force = np.clip(new_z_force, -40, -3)    # TODO: up force to -50N        
-            #             new_params[-2] = int(new_z_force)  
-            #             print('clipped sampled z force', new_z_force)  
-
-            #             new_cart_pitch_stiffness = np.clip(new_cart_pitch_stiffness, 5, 600)           
-            #             new_params[-1] = int(new_cart_pitch_stiffness)  
-            #             print('clipped sampled new_cart_pitch_stiffness', new_cart_pitch_stiffness)         
-                    
-            #         elif S[2] == 1:
-            #             #import pdb; pdb.set_trace()
-            #             num_weights = initial_wts.shape[2]
-            #             new_x_weights = new_params[0:num_weights]
-            #             new_z_weights = new_params[num_weights:(2*num_weights)]
-            #             new_cart_pitch_stiffness = new_params[-1]
-            #             # cap value                   
-            #             new_cart_pitch_stiffness = np.clip(new_cart_pitch_stiffness, 5, 600)           
-            #             new_params[-1] = int(new_cart_pitch_stiffness)  
-            #             print('clipped sampled new_cart_pitch_stiffness', new_cart_pitch_stiffness)      
-            #             new_z_force = 'NA'   
-                
-            #     elif args.cut_type == 'pivchop':                    
-            #         if S[2] == 0:  
-            #             new_z_weights = initial_wts[2,:,:] # not actually using this in this case b/c no position control in z
-            #             new_z_force = new_params[0]
-            #             new_cart_pitch_stiffness = new_params[1]
-            #             # cap force value
-            #             new_z_force = np.clip(new_z_force, -40, -3)    # TODO: up force to -50N        
-            #             new_params[0] = int(new_z_force)  
-            #             print('clipped sampled z force', new_z_force)  
-            #             new_cart_pitch_stiffness = np.clip(new_cart_pitch_stiffness, 5, 600)           
-            #             new_params[1] = int(new_cart_pitch_stiffness)  
-            #             print('clipped sampled new_cart_pitch_stiffness', new_cart_pitch_stiffness)  
-                    
-            #         elif S[2] == 1:
-            #             new_z_weights = new_params[0:-1]
-            #             new_cart_pitch_stiffness = new_params[-1]
-            #             # cap value
-            #             new_cart_pitch_stiffness = np.clip(new_cart_pitch_stiffness, 5, 600)           
-            #             new_params[-1] = int(new_cart_pitch_stiffness)  
-            #             print('clipped sampled new_cart_pitch_stiffness', new_cart_pitch_stiffness)     
-            # -------------------------------------------            
-                                    
-            # # concat new sampled x weights w/ old y (zero's) and z weights if we're only sampling x weights
-            # if not args.use_all_dmp_dims: 
-            #     if args.cut_type == 'normal' or args.cut_type == 'scoring':
-            #         if S[2] == 0:
-            #             new_weights = np.expand_dims(np.vstack((new_x_weights,initial_wts[1,:,:],initial_wts[2,:,:])),axis=1)
-                    
-            #         elif S[2] == 1:
-            #             new_weights = np.expand_dims(np.vstack((new_x_weights,initial_wts[1,:,:],new_z_weights)),axis=1)
-                
-            #     elif args.cut_type == 'pivchop':     
-            #         new_weights = np.expand_dims(np.vstack((initial_wts[0,:,:],initial_wts[1,:,:], new_z_weights)),axis=1)
+            total_samples += 1            
 
             # Sample new policy params from mu and sigma - NOTE: cap force to be [-1, -40]
             new_params, new_weights, new_z_force, new_cart_pitch_stiffness  = agent.sample_new_params_from_policy(mu, sigma, args.use_all_dmp_dims, initial_wts,  args.cut_type, S)
@@ -570,7 +522,6 @@ if __name__ == "__main__":
                     target_poses = get_dmp_traj_poses_reformatted(downsmpled_dmp_traject, starting_rotation) # target_poses is a nx16 list of target poses at each time step
                 
             
-            # After finishing set of dmps for a full slice - calculate avg reward here
             # pause to let skill fully stop
             time.sleep(1.5)
 
@@ -631,8 +582,7 @@ if __name__ == "__main__":
             elif args.cut_type == 'pivchop':
                 avg_upward_z_penalty = np.max(upward_z_penalty_all_dmps)
             
-            # import pdb; pdb.set_trace()
-            # trying out more generalized cutting reward function - remove not returning to start penalty:
+            # more generalized cutting reward function:
             analytical_reward = -0.1*avg_peak_y_force -0.15*avg_peak_z_force - 10*avg_x_mvmt -100*avg_y_mvmt - 10*avg_z_mvmt \
                 -100*avg_upward_z_penalty -0.2*total_cut_time_all_dmps 
 
@@ -648,16 +598,15 @@ if __name__ == "__main__":
             analytical_rewards_all_samples.append(analytical_reward)
             reward_features = [avg_peak_y_force, avg_peak_z_force, avg_x_mvmt, avg_y_mvmt, avg_z_mvmt, avg_upward_z_penalty, total_cut_time_all_dmps]
             reward_features_all_samples.append(reward_features)
-            # import pdb; pdb.set_trace()
             
             # save reward features as sample outcome 
             outcomes_from_sample = np.array(reward_features)
             # if standardizing reward features:
             if args.standardize_reward_feats:
-                print('standardizing reward features')
+                # print('standardizing reward features')
                 print('original feats: ', outcomes_from_sample)
-                import pdb; pdb.set_trace()
-                outcomes_from_sample = standardize_reward_feature(args.cut_type, np.array(reward_features))
+                # import pdb; pdb.set_trace()
+                outcomes_from_sample = reward_learner.standardize_reward_feature(args.cut_type, np.array(reward_features))
                 print('standardized feats: ', outcomes_from_sample)
             outcomes_all.append(outcomes_from_sample)     
             # import pdb; pdb.set_trace()
@@ -676,7 +625,7 @@ if __name__ == "__main__":
             elif epoch != 0: 
                 mean_expected_reward, var_expected_reward = reward_learner.calc_expected_reward_for_observed_outcome_w_GPmodel(gpr_reward_model, \
                     likelihood, outcomes_from_sample)
-                print('reward model reward = ', mean_expected_reward)
+                print('reward model reward = ', mean_expected_reward[0])
                 import pdb; pdb.set_trace()
                 
                 #Save expected reward mean and var to lists and add to training_data_list of all training data
@@ -767,7 +716,7 @@ if __name__ == "__main__":
         # current policy pi_current (before updating)
         pi_current_mean = mu
         pi_current_cov = sigma
-        import pdb; pdb.set_trace()
+        # import pdb; pdb.set_trace()
         # load all samples from this epoch saved in format: [polParams, analytical_reward, GP_reward_model_mean, expert_reward]'''
         if args.starting_sample_num !=0:
             all_data = work_dir + '/all_polParamRew_data/' +'polParamsRews_epoch_' + str(epoch) + '_ep_'+ str(sample) + '.npy'
@@ -796,7 +745,7 @@ if __name__ == "__main__":
             print(policy_params_mean)
             print('updated policy cov')
             print(policy_params_sigma)
-            import pdb; pdb.set_trace()            
+            # import pdb; pdb.set_trace()            
 
             mu, sigma = policy_params_mean, policy_params_sigma
             # pi_tilda is the new policy under the current reward model 
@@ -811,7 +760,7 @@ if __name__ == "__main__":
             # plot updated policy mean trajectory to visualize
             plot_updated_policy_mean_traject_HIL_ARL(work_dir, fa, args.cut_type, dmp_wts_file, epoch, args.dmp_traject_time, control_type_z_axis, init_dmp_info_dict,\
                 initial_wts, policy_params_mean)
-            import pdb; pdb.set_trace()
+            # import pdb; pdb.set_trace()
 
             # save new policy params mean and cov   
             np.savez(os.path.join(work_dir, 'REPSupdatedMean_' + 'epoch_'+str(epoch) +'.npz'), \
@@ -828,39 +777,79 @@ if __name__ == "__main__":
             print('computing EPD for each sample')
             import pdb; pdb.set_trace()
             #num_EPD_epochs = 5 # define in CL args
-            samples_to_query, queried_outcomes  = reward_learner.compute_EPD_for_each_sample_updated(num_EPD_epochs, optimizer, \
+            samples_to_query, queried_outcomes  = reward_learner.compute_EPD_for_each_sample_updated(work_dir, num_EPD_epochs, optimizer, \
                 gpr_reward_model, likelihood, mll, agent, pi_tilda_mean, pi_tilda_cov, pi_current_mean, pi_current_cov, \
-                    training_data_list, queried_samples_all, GP_training_data_x_all, GP_training_data_y_all, beta, initial_wts, cut_type, S) 
+                    training_data_list, queried_samples_all, GP_training_data_x_all, GP_training_data_y_all, beta, initial_wts, args.cut_type, S) 
             import pdb; pdb.set_trace()
 
         # query expert rewards  
         if samples_to_query!=[]:
+            print('querying samples: samples_to_query ')
             # import pdb; pdb.set_trace()       
-            if args.desired_cutting_behavior == 'slow':
-                queried_expert_rewards = (np.array(expert_rewards_all_epochs)[samples_to_query, 0])
-            elif args.desired_cutting_behavior == 'fast':
-                queried_expert_rewards = (np.array(expert_rewards_all_epochs)[samples_to_query, 1])
+            if args.desired_cutting_behavior == 'slow' or args.desired_cutting_behavior == 'fast':
+                queried_expert_rewards_slow = (np.array(expert_rewards_all_epochs)[samples_to_query, 0])
+                queried_expert_rewards_fast = (np.array(expert_rewards_all_epochs)[samples_to_query, 1])
+
+                if args.desired_cutting_behavior == 'slow':
+                    queried_expert_rewards = queried_expert_rewards_slow
+
+                elif args.desired_cutting_behavior == 'fast':
+                    queried_expert_rewards = queried_expert_rewards_fast
+           
             else:
                 queried_expert_rewards = np.array(expert_rewards_all_epochs[samples_to_query])
-            # import pdb; pdb.set_trace()
+            import pdb; pdb.set_trace()
+        
+        else: 
+            print('No samples to query from human')
         
         # save all queried outcomes and queried rewards in buffer to send to GPytorch model as training data everytime it get updated:
         '''train_x is queried_outcomes ((nxD) arr), train_y is queried_expert_rewards ((n,) arr)'''
+
+        # stack reward features (GP model x training data)
         GP_training_data_x_all = np.vstack((GP_training_data_x_all, queried_outcomes))
-        GP_training_data_y_all = np.concatenate((GP_training_data_y_all, queried_expert_rewards))
+
+        # get GP model y training data (expert rewards) based on desired cutting behavior
+        if args.desired_cutting_behavior == 'slow' or args.desired_cutting_behavior == 'fast':
+            GP_training_data_y_all_slow = np.concatenate((GP_training_data_y_all_slow, queried_expert_rewards_slow))
+            GP_training_data_y_all_fast = np.concatenate((GP_training_data_y_all_fast, queried_expert_rewards_fast))
+            import pdb; pdb.set_trace()
+
+            if args.desired_cutting_behavior == 'slow':
+                np.savez(work_dir + '/' 'GP_reward_model_data/' + 'GP_reward_model_training_data_slowCut_epoch_'+str(epoch) + '.npz', GP_training_data_x_all = GP_training_data_x_all, \
+                        GP_training_data_y_all = GP_training_data_y_all_slow)
+                GP_training_data_y_all = np.concatenate((GP_training_data_y_all, queried_expert_rewards_slow))
+                import pdb; pdb.set_trace()
+
+            elif args.desired_cutting_behavior == 'fast': 
+                np.savez(work_dir + '/' 'GP_reward_model_data/' + 'GP_reward_model_training_data_fastCut_epoch_'+str(epoch) + '.npz', GP_training_data_x_all = GP_training_data_x_all, \
+                        GP_training_data_y_all = GP_training_data_y_all_fast)
+                GP_training_data_y_all = np.concatenate((GP_training_data_y_all, queried_expert_rewards_fast))
+                import pdb; pdb.set_trace()
+        
+        else:
+            GP_training_data_y_all = np.concatenate((GP_training_data_y_all, queried_expert_rewards))
+            np.savez(work_dir + '/' 'GP_reward_model_data/' + 'GP_reward_model_training_data_qualityCut_epoch_'+str(epoch) + '.npz', GP_training_data_x_all = GP_training_data_x_all, \
+                    GP_training_data_y_all = GP_training_data_y_all)
+            import pdb; pdb.set_trace()
 
         print('GP_training_data_x_all', GP_training_data_x_all.shape)
         print('GP_training_data_y_all', GP_training_data_y_all.shape)
-        #import pdb; pdb.set_trace()
-        
-        # save GP_training_data for loading later
-        np.savez(work_dir + '/' 'GP_reward_model_data/' + 'GP_reward_model_training_data_epoch_'+str(epoch) + '.npz', GP_training_data_x_all = GP_training_data_x_all, \
-                    GP_training_data_y_all = GP_training_data_y_all)
+        #import pdb; pdb.set_trace()          
+           
         # import pdb; pdb.set_trace()       
 
         # Add samples to query to running list of queried_samples
         queried_samples_all = queried_samples_all + samples_to_query # running list of queried samples
-        np.save(work_dir + '/' + 'GP_reward_model_data/' + 'queried_samples_all.npy', np.array(queried_samples_all))
+        if args.desired_cutting_behavior == 'slow':
+            np.save(work_dir + '/' + 'GP_reward_model_data/' + 'queried_samples_all_slowCut.npy', np.array(queried_samples_all))
+
+        elif args.desired_cutting_behavior == 'fast':
+            np.save(work_dir + '/' + 'GP_reward_model_data/' + 'queried_samples_all_fastCut.npy', np.array(queried_samples_all))
+
+        else:
+            np.save(work_dir + '/' + 'GP_reward_model_data/' + 'queried_samples_all_qualityCut.npy', np.array(queried_samples_all))
+
 
         # #Keep track of number of queried samples 
         if epoch > 0:
@@ -869,7 +858,14 @@ if __name__ == "__main__":
         else:
             total_queried_samples_each_epoch.append(len(samples_to_query)) 
         
-        np.save(work_dir + '/' 'GP_reward_model_data/' + 'total_queried_samples_each_epoch.npy', np.array(total_queried_samples_each_epoch))
+        if args.desired_cutting_behavior == 'slow':
+            np.save(work_dir + '/' 'GP_reward_model_data/' + 'total_queried_samples_each_epoch_slowCut.npy', np.array(total_queried_samples_each_epoch))
+
+        elif args.desired_cutting_behavior == 'fast':
+            np.save(work_dir + '/' 'GP_reward_model_data/' + 'total_queried_samples_each_epoch_fastCut.npy', np.array(total_queried_samples_each_epoch))
+        
+        else:
+            np.save(work_dir + '/' 'GP_reward_model_data/' + 'total_queried_samples_each_epoch_qualityCut.npy', np.array(total_queried_samples_each_epoch))
         import pdb; pdb.set_trace()
         
         # initialize reward GP model if 0th epoch
@@ -893,7 +889,7 @@ if __name__ == "__main__":
             ], lr=0.01) # lr = 0.01 originally 
             mll = gpytorch.mlls.ExactMarginalLogLikelihood(likelihood, gpr_reward_model)
             # train reward GP model given initial train_x and train_y data (voxel_data, queried human rewards)
-            gpr_reward_model = reward_learner.train_GPmodel(GP_training_epochs_initial, optimizer, gpr_reward_model, likelihood, mll, train_x, train_y)
+            gpr_reward_model = reward_learner.train_GPmodel(work_dir, GP_training_epochs_initial, optimizer, gpr_reward_model, likelihood, mll, train_x, train_y)
             # import pdb; pdb.set_trace()            
 
         #Update Reward model GP if there are any outcomes to query [outcome/s, expert reward/s]
@@ -904,7 +900,8 @@ if __name__ == "__main__":
                 updated_train_x = GP_training_data_x_all
                 updated_train_y = GP_training_data_y_all                
                 #GP_training_epochs_later = 11 #100  # how long to train during updates?? # now define in CL args
-                gpr_reward_model = reward_learner.update_reward_GPmodel(GP_training_epochs_later, optimizer, gpr_reward_model, likelihood, mll, updated_train_x, updated_train_y)                                       
+                continue_training = False
+                gpr_reward_model = reward_learner.update_reward_GPmodel(continue_training, work_dir, GP_training_epochs_later, optimizer, gpr_reward_model, likelihood, mll, updated_train_x, updated_train_y)                                       
                 
         import pdb; pdb.set_trace()           
 
