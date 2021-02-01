@@ -20,7 +20,7 @@ class REPSPolicyLearner:
             init_dmp_info_dict, work_dir, position_dmp_weights_file_path, starting_epoch_num, dmp_traject_time):
 
         use_all_dmp_dims = False
-        if start_from_previous: # load previous data collected and start from updated policy and/or sample/epoch        
+        if start_from_previous and starting_epoch_num > 1: # load previous data collected and start from updated policy and/or sample/epoch        
             prev_data_dir = previous_datadir
             if use_all_dmp_dims:
                 policy_params_mean, policy_params_sigma = parse_policy_params_and_rews_from_file_HIL_ARL(num_expert_rews_each_sample, prev_data_dir, prev_epochs_to_calc_pol_update, hfpc = False)

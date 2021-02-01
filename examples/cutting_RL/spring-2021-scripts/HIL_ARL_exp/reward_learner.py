@@ -61,7 +61,7 @@ class RewardLearner:
 
         # print('computing KL div')
         # sample params from each of the three policies
-        import pdb; pdb.set_trace()
+        # import pdb; pdb.set_trace()
         for i in range(0, num_samples):
             new_params_pi_tilda = agent.sample_new_params_from_policy_only_mu_sigma(pi_tilda_mean, pi_tilda_cov, initial_wts, cut_type, S)
             new_params_pi_star = agent.sample_new_params_from_policy_only_mu_sigma(pi_star_mean, pi_star_cov, initial_wts, cut_type, S)
@@ -84,7 +84,7 @@ class RewardLearner:
         
         approx_sampling_KLdiv = (1/num_samples)*np.sum(star_div_current*np.log(star_div_tilda))
 
-        #import pdb; pdb.set_trace()
+        import pdb; pdb.set_trace()
         return approx_sampling_KLdiv
         
     def train_GPmodel(self, work_dir, num_epochs, optimizer, model, likelihood, mll, train_x, train_y):

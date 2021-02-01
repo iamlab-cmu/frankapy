@@ -514,6 +514,7 @@ def parse_policy_params_and_rews_from_file_HIL_ARL(num_expert_rews_each_sample, 
         if num_expert_rews_each_sample == 1:  
             pol_params = data[:,0:-3] 
             rewards = data[:,-2]# reward model rewards
+            
         elif num_expert_rews_each_sample == 2:  
             pol_params = data[:,0:-4] 
             rewards = data[:,-3]# reward model rewards

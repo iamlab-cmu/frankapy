@@ -1,6 +1,7 @@
 # TODO: Need to continue debugging EPD and KL div calculation
 # TODO: need to select lengthscale and signal variance hyperparams for GP kernel
 # TODO: need to try out standardizing/scaling reward function features
+# TODO: update expert_rewards_all_epochs to load previous data 
 
 '''
 Workflow:
@@ -133,7 +134,6 @@ if __name__ == "__main__":
     parser.add_argument('--num_EPD_epochs', type=int, default = 5)
     parser.add_argument('--GP_training_epochs_initial', type=int, default = 120)
     parser.add_argument('--GP_training_epochs_later', type=int, default = 11)
-    # parser.add_argument('--desired_cutting_behavior', type=str, default = 'fast_vs_slow', help='options: fast_or_slow, quality_cut') # options: fast_or_slow, quality_cut
     parser.add_argument('--desired_cutting_behavior', type=str, help='options: fast, slow, quality_cut') # fast, slow, quality_cut
     parser.add_argument('--standardize_reward_feats', type=bool, default = False)
     args = parser.parse_args()
@@ -196,7 +196,7 @@ if __name__ == "__main__":
 
     # go to initial cutting pose
     starting_position = RigidTransform(rotation=knife_orientation, \
-        translation=np.array([0.44, 0.105, 0.2]), #z=0.05
+        translation=np.array([0.48, 0.044, 0.09]), #z=0.05
         from_frame='franka_tool', to_frame='world')    
     fa.goto_pose(starting_position, duration=5, use_impedance=False)
 
@@ -231,7 +231,7 @@ if __name__ == "__main__":
     GP_training_data_x_all = np.empty([0,7])
     GP_training_data_y_all, GP_training_data_y_all_slow, GP_training_data_y_all_fast =  np.empty([0]), np.empty([0]), np.empty([0]) 
     queried_outcomes, queried_expert_rewards, policy_params_all_epochs, block_poses_all_epochs = [], [], [], []
-    reward_model_rewards_all_mean_buffer, expert_rewards_all_epochs = [], []
+    reward_model_rewards_all_mean_buffer, expert_rewards_all_epochs = [], [] # TODO: update expert_rewards_all_epochs to load previous data 
     total_samples = 0
     
     # Track success metrics
@@ -250,12 +250,30 @@ if __name__ == "__main__":
         prev_GP_training_data_list = np.load(work_dir + '/' + 'GP_reward_model_data/' + 'training_data_list.npy', allow_pickle=True)
         training_data_list = prev_GP_training_data_list.tolist()
 
-        # load prev queried_samples_all
-        prev_queried_samples_all = np.load(work_dir + '/' + 'GP_reward_model_data/' + 'queried_samples_all.npy')
-        queried_samples_all = prev_queried_samples_all.tolist()
+        prev_expert_rewards_all_epochs = np.load(work_dir + '/' + 'GP_reward_model_data/' + 'expert_rewards_all_epochs.npy')     
+        expert_rewards_all_epochs = prev_expert_rewards_all_epochs.tolist()
 
-        prev_total_queried_samples_each_epoch = np.load(work_dir + '/' 'GP_reward_model_data/' + 'total_queried_samples_each_epoch.npy')
-        total_queried_samples_each_epoch = prev_total_queried_samples_each_epoch.tolist()        
+        # load prev queried_samples_all
+        if args.desired_cutting_behavior == 'slow':
+            prev_queried_samples_all = np.load(work_dir + '/' + 'GP_reward_model_data/' + 'queried_samples_all_slowCut.npy')
+            queried_samples_all = prev_queried_samples_all.tolist()
+
+            prev_total_queried_samples_each_epoch = np.load(work_dir + '/' 'GP_reward_model_data/' + 'total_queried_samples_each_epoch_slowCut.npy')
+            total_queried_samples_each_epoch = prev_total_queried_samples_each_epoch.tolist()    
+
+        elif args.desired_cutting_behavior == 'fast':
+            prev_queried_samples_all = np.load(work_dir + '/' + 'GP_reward_model_data/' + 'queried_samples_all_fastCut.npy')
+            queried_samples_all = prev_queried_samples_all.tolist()
+
+            prev_total_queried_samples_each_epoch = np.load(work_dir + '/' 'GP_reward_model_data/' + 'total_queried_samples_each_epoch_fastCut.npy')
+            total_queried_samples_each_epoch = prev_total_queried_samples_each_epoch.tolist()    
+
+        else:    
+            prev_queried_samples_all = np.load(work_dir + '/' + 'GP_reward_model_data/' + 'queried_samples_all_qualityCut.npy')
+            queried_samples_all = prev_queried_samples_all.tolist()
+
+            prev_total_queried_samples_each_epoch = np.load(work_dir + '/' 'GP_reward_model_data/' + 'total_queried_samples_each_epoch_qualityCut.npy')
+            total_queried_samples_each_epoch = prev_total_queried_samples_each_epoch.tolist()    
         
         import pdb; pdb.set_trace()
     
@@ -604,10 +622,10 @@ if __name__ == "__main__":
             # if standardizing reward features:
             if args.standardize_reward_feats:
                 # print('standardizing reward features')
-                print('original feats: ', outcomes_from_sample)
+                #print('original feats: ', outcomes_from_sample)
                 # import pdb; pdb.set_trace()
                 outcomes_from_sample = reward_learner.standardize_reward_feature(args.cut_type, np.array(reward_features))
-                print('standardized feats: ', outcomes_from_sample)
+                #print('standardized feats: ', outcomes_from_sample)
             outcomes_all.append(outcomes_from_sample)     
             # import pdb; pdb.set_trace()
 
@@ -638,6 +656,8 @@ if __name__ == "__main__":
 
             # save training data list  
             np.save(work_dir + '/' + 'GP_reward_model_data/' + 'training_data_list.npy', np.array(training_data_list))
+            # save expert rewards all epochs
+            np.save(work_dir + '/' + 'GP_reward_model_data/' + 'expert_rewards_all_epochs.npy', np.array(expert_rewards_all_epochs))            
             
             # save intermediate rewards/pol params 
             '''NOTE: saving these in format: [polParams, analytical_reward, GP_reward_model_mean, expert_reward],
@@ -652,7 +672,7 @@ if __name__ == "__main__":
                 elif num_expert_rews_each_sample == 2:                  
                     new_analytRew_GPmodelRew_ExpertRew = np.concatenate((np.array([analytical_rewards_all_samples]).T, np.array([reward_model_mean_rewards_all_samples]).T, np.array(expert_rewards_all_samples)),axis=1)
                                                
-                new_sample_data = np.concatenate((np.array(policy_params_all_samples), np.array([new_analytRew_GPmodelRew_ExpertRew]).T), axis=1)
+                new_sample_data = np.concatenate((np.array(policy_params_all_samples), new_analytRew_GPmodelRew_ExpertRew), axis=1)
                 combined_data = np.concatenate((prev_sample_data, new_sample_data), axis=0)
                 np.save(os.path.join(work_dir + '/' + 'all_polParamRew_data', 'polParamsRews_' + 'epoch_'+str(epoch) + '_ep_'+str(sample) + '.npy'),
                     combined_data)
@@ -720,13 +740,15 @@ if __name__ == "__main__":
         # load all samples from this epoch saved in format: [polParams, analytical_reward, GP_reward_model_mean, expert_reward]'''
         if args.starting_sample_num !=0:
             all_data = work_dir + '/all_polParamRew_data/' +'polParamsRews_epoch_' + str(epoch) + '_ep_'+ str(sample) + '.npy'
-            if num_expert_rews_each_sample == 1:                
+            if num_expert_rews_each_sample == 1:       
+                import pdb; pdb.set_trace()         
                 policy_params_all_samples = (np.load(all_data)[:,0:-3]).tolist()
                 reward_model_mean_rewards_all_samples = (np.load(all_data)[:,-2]).tolist()
                 expert_rewards_all_samples = (np.load(all_data)[:,-1]).tolist()
                 #import pdb; pdb.set_trace()
 
-            elif num_expert_rews_each_sample == 2:                
+            elif num_expert_rews_each_sample == 2: 
+                import pdb; pdb.set_trace()               
                 policy_params_all_samples = (np.load(all_data)[:,0:-4]).tolist()
                 reward_model_mean_rewards_all_samples = (np.load(all_data)[:,-3]).tolist()
                 expert_rewards_all_samples = (np.load(all_data)[:,-2:]).tolist()  # 2 expert reward values (desired fast and slow rewards)         
@@ -737,7 +759,7 @@ if __name__ == "__main__":
         if epoch > 0: 
             print('updating policy w/ REPS')
             reps_agent = reps.Reps(rel_entropy_bound=rel_entropy_bound,min_temperature=0.001) #Create REPS object
-            # import pdb; pdb.set_trace()
+            import pdb; pdb.set_trace() # TODO CHECK that reward_model_mean_rewards_all_samples has all previously loaded samples
             policy_params_mean, policy_params_sigma, reps_info = \
                 reps_agent.policy_from_samples_and_rewards(policy_params_all_samples, reward_model_mean_rewards_all_samples)
             
@@ -784,7 +806,7 @@ if __name__ == "__main__":
 
         # query expert rewards  
         if samples_to_query!=[]:
-            print('querying samples: samples_to_query ')
+            print('querying samples: ', samples_to_query)
             # import pdb; pdb.set_trace()       
             if args.desired_cutting_behavior == 'slow' or args.desired_cutting_behavior == 'fast':
                 queried_expert_rewards_slow = (np.array(expert_rewards_all_epochs)[samples_to_query, 0])
@@ -813,17 +835,18 @@ if __name__ == "__main__":
         if args.desired_cutting_behavior == 'slow' or args.desired_cutting_behavior == 'fast':
             GP_training_data_y_all_slow = np.concatenate((GP_training_data_y_all_slow, queried_expert_rewards_slow))
             GP_training_data_y_all_fast = np.concatenate((GP_training_data_y_all_fast, queried_expert_rewards_fast))
+            # save both slow and fast for post-processing later
+            np.savez(work_dir + '/' 'GP_reward_model_data/' + 'GP_reward_model_training_data_slowCut_epoch_'+str(epoch) + '.npz', GP_training_data_x_all = GP_training_data_x_all, \
+                        GP_training_data_y_all = GP_training_data_y_all_slow)
+            np.savez(work_dir + '/' 'GP_reward_model_data/' + 'GP_reward_model_training_data_fastCut_epoch_'+str(epoch) + '.npz', GP_training_data_x_all = GP_training_data_x_all, \
+                        GP_training_data_y_all = GP_training_data_y_all_fast)
             import pdb; pdb.set_trace()
 
-            if args.desired_cutting_behavior == 'slow':
-                np.savez(work_dir + '/' 'GP_reward_model_data/' + 'GP_reward_model_training_data_slowCut_epoch_'+str(epoch) + '.npz', GP_training_data_x_all = GP_training_data_x_all, \
-                        GP_training_data_y_all = GP_training_data_y_all_slow)
+            if args.desired_cutting_behavior == 'slow':                
                 GP_training_data_y_all = np.concatenate((GP_training_data_y_all, queried_expert_rewards_slow))
                 import pdb; pdb.set_trace()
 
-            elif args.desired_cutting_behavior == 'fast': 
-                np.savez(work_dir + '/' 'GP_reward_model_data/' + 'GP_reward_model_training_data_fastCut_epoch_'+str(epoch) + '.npz', GP_training_data_x_all = GP_training_data_x_all, \
-                        GP_training_data_y_all = GP_training_data_y_all_fast)
+            elif args.desired_cutting_behavior == 'fast':                 
                 GP_training_data_y_all = np.concatenate((GP_training_data_y_all, queried_expert_rewards_fast))
                 import pdb; pdb.set_trace()
         
