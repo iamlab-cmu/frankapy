@@ -34,6 +34,8 @@ training_data_list = n_samples x 4 np array: [outcomes_from_sample/reward_featur
 
 polParamsRews_epoch_ep saved as: [polParams, analytical_reward, GP_reward_model_mean, expert_reward (slow, fast)]
 
+outcomes/reward features: [avg_peak_y_force, avg_peak_z_force, avg_x_mvmt, avg_y_mvmt, avg_z_mvmt, avg_upward_z_penalty, total_cut_time_all_dmps]
+
 ex. CL args: python run_learn_LL_params_w_ARL_all3CutTypes.py --exp_num 1 --food_type hard --food_name celery --num_samples 5 --cut_type normal --desired_cutting_behavior fast --standardize_reward_feats False
 python run_learn_LL_params_w_ARL_all3CutTypes.py --exp_num 1 --food_type hard --food_name celery --num_samples 5 --cut_type normal --desired_cutting_behavior quality_cut --standardize_reward_feats True
 
@@ -214,6 +216,7 @@ if __name__ == "__main__":
         args.previous_datadir, args.prev_epochs_to_calc_pol_update, init_dmp_info_dict, work_dir, dmp_wts_file, args.starting_epoch_num, args.dmp_traject_time)
     print('initial mu', initial_mu)        
     mu, sigma = initial_mu, initial_sigma
+
     import pdb; pdb.set_trace()
 
     mean_params_each_epoch, cov_each_epoch = [], []
@@ -320,7 +323,8 @@ if __name__ == "__main__":
         mll = gpytorch.mlls.ExactMarginalLogLikelihood(likelihood, gpr_reward_model)
         # train reward GP model given initial train_x and train_y data (voxel_data, queried human rewards)
         gpr_reward_model = reward_learner.train_GPmodel(work_dir, GP_training_epochs_initial, optimizer, gpr_reward_model, likelihood, mll, train_x, train_y)
-        import pdb; pdb.set_trace()
+    
+    import pdb; pdb.set_trace()
 
     for epoch in range(args.starting_epoch_num, args.num_epochs):
         #Initialize lists to save epoch's data                 
@@ -762,6 +766,7 @@ if __name__ == "__main__":
             import pdb; pdb.set_trace() # TODO CHECK that reward_model_mean_rewards_all_samples has all previously loaded samples
             policy_params_mean, policy_params_sigma, reps_info = \
                 reps_agent.policy_from_samples_and_rewards(policy_params_all_samples, reward_model_mean_rewards_all_samples)
+            reps_wts = reps_info['weights']
             
             print('updated policy params mean')
             print(policy_params_mean)
@@ -773,6 +778,7 @@ if __name__ == "__main__":
             # pi_tilda is the new policy under the current reward model 
             pi_tilda_mean = mu
             pi_tilda_cov = sigma
+            pi_tilda_wts = reps_wts
 
             mean_params_each_epoch.append(policy_params_mean)
             cov_each_epoch.append(policy_params_sigma)
@@ -799,7 +805,8 @@ if __name__ == "__main__":
             print('computing EPD for each sample')
             import pdb; pdb.set_trace()
             #num_EPD_epochs = 5 # define in CL args
-            samples_to_query, queried_outcomes  = reward_learner.compute_EPD_for_each_sample_updated(work_dir, num_EPD_epochs, optimizer, \
+            current_epoch = epoch
+            samples_to_query, queried_outcomes  = reward_learner.compute_EPD_for_each_sample_updated(current_epoch, args.num_samples, work_dir, num_EPD_epochs, optimizer, \
                 gpr_reward_model, likelihood, mll, agent, pi_tilda_mean, pi_tilda_cov, pi_current_mean, pi_current_cov, \
                     training_data_list, queried_samples_all, GP_training_data_x_all, GP_training_data_y_all, beta, initial_wts, args.cut_type, S) 
             import pdb; pdb.set_trace()
