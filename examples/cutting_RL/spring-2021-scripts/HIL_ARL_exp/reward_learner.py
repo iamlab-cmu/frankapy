@@ -63,6 +63,11 @@ class RewardLearner:
         # print('computing KL div')
         # sample params from each of the three policies
         # import pdb; pdb.set_trace()
+
+        # ADDING TO DEBUG NUM INSTAB
+        pi_tilda_cov = pi_tilda_cov + np.eye(9)*5
+        pi_star_cov = pi_star_cov + np.eye(9)*5
+
         for i in range(0, num_samples):
             new_params_pi_tilda = agent.sample_new_params_from_policy_only_mu_sigma(pi_tilda_mean, pi_tilda_cov, initial_wts, cut_type, S)
             new_params_pi_star = agent.sample_new_params_from_policy_only_mu_sigma(pi_star_mean, pi_star_cov, initial_wts, cut_type, S)
@@ -90,7 +95,7 @@ class RewardLearner:
         # removed pi_current
         approx_sampling_KLdiv = (1/num_samples)*np.sum(star_div_tilda*np.log(star_div_tilda))
 
-        # import pdb; pdb.set_trace()
+        import pdb; pdb.set_trace()
         return approx_sampling_KLdiv
    
            
@@ -273,8 +278,9 @@ class RewardLearner:
                     hypoth_likelihood, prior_training_data_o)
                 # import pdb; pdb.set_trace()
                 #Calculate policy update under updated reward model            
+                # NOTE: 2/4/21 update: lower rel_entropy_bound so new policy cov doesn't deviate too far 
                 pi_star_mean, pi_star_cov, reps_wts = agent.update_policy_REPS(mean_exp_rewards, \
-                    prior_training_data_policy_params, rel_entropy_bound= 0.4, min_temperature=0.001) 
+                    prior_training_data_policy_params, rel_entropy_bound = 0.4, min_temperature=0.001) 
                 pi_star_wts = reps_wts
 
                 print('pi_current_mean (policy before updating)' , pi_current_mean)

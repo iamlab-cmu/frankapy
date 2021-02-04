@@ -53,7 +53,7 @@ sys.path.append('/home/sony/Documents/frankapy/examples/cutting_RL/spring-2021-s
 from reward_learner import RewardLearner
 from policy_learner import REPSPolicyLearner
 from gp_regression_model import GPRegressionModel
-from data_utils import *
+# from data_utils import *
 
 
 import subprocess
@@ -80,36 +80,6 @@ from rl_utils import reps
 import time 
 import copy
 
-# def plot_sampled_new_dmp_traject_and_original_dmp(epoch, work_dir, sample, new_z_force, traject_time, \
-#     initial_dmp_weights_pkl_file, new_dmp_traject, y0):
-#     #original_dmp_wts_pkl_filepath = '/home/sony/Desktop/debug_dmp_wts.pkl'
-#     dmp_traj = DMPPositionTrajectoryGenerator(traject_time)
-#     dmp_traj.load_saved_dmp_params_from_pkl_file(initial_dmp_weights_pkl_file)
-#     dmp_traj.parse_dmp_params_dict()
-#     # calculate dmp position trajectory - NOTE: this assumes a 0.001 dt for calc the dmp traject
-#     original_traject, dy, _, _, _ = dmp_traj.run_dmp_with_weights(y0) # y: np array(tx3)
-    
-#     axes = ['x', 'y','z']   
-#     fig, ax = plt.subplots(3,1) 
-#     for i in range(3):
-#         ax[i].plot(np.arange(0, traject_time, 0.001), original_traject[:,i])
-#         ax[i].plot(np.arange(0, traject_time, 0.001), new_dmp_traject[:,i])           
-#         if i!=0:
-#             ax[i].set_title('Cartesian Position - '+str(axes[i]))
-#         else:     
-#             if new_z_force == 'NA':
-#                 ax[i].set_title('Cartesian Position - '+str(axes[i]))
-#             else:
-#                 ax[i].set_title('Cartesian Position - '+str(axes[i]) + ' ' + 'Downward z-force (N): '+str(new_z_force))
-#         ax[i].set_ylabel('Position (m)')
-#         ax[i].legend((axes[i] + '-original traject', axes[i] + '-new sampled traject'))
-    
-#     ax[2].set_xlabel('Time (s)')
-#     plt.show()
-#     # save figure to working dir
-#     fig.savefig(work_dir + '/' + 'dmp_traject_plots' + '/sampledDMP_' + 'epoch_'+str(epoch) + '_ep_'+str(sample)+'.png')
-
-
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument('--use_all_dmp_dims', type=bool, default = False)
@@ -132,7 +102,7 @@ if __name__ == "__main__":
     
     # GP reward model-related args
     parser.add_argument('--kappa', type=int, default = 5)
-    parser.add_argument('--rel_entropy_bound', type=float, default = 1.2)
+    parser.add_argument('--rel_entropy_bound', type=float, default = 1.5)
     parser.add_argument('--num_EPD_epochs', type=int, default = 5)
     parser.add_argument('--GP_training_epochs_initial', type=int, default = 120)
     parser.add_argument('--GP_training_epochs_later', type=int, default = 11)
@@ -200,7 +170,7 @@ if __name__ == "__main__":
 
     # go to initial cutting pose
     starting_position = RigidTransform(rotation=knife_orientation, \
-        translation=np.array([0.48, 0.044, 0.09]), #z=0.05
+        translation=np.array([0.5, 0.124, 0.15]), #z=0.05
         from_frame='franka_tool', to_frame='world')    
     fa.goto_pose(starting_position, duration=5, use_impedance=False)
 
@@ -333,6 +303,26 @@ if __name__ == "__main__":
         expert_rewards_all_samples, reward_model_mean_rewards_all_samples, reward_model_rewards_all_cov, \
             policy_params_all_samples, outcomes_all = [],[],[],[],[]
         analytical_rewards_all_samples = []
+        
+        # if starting from nonzero sample num, need to load previous reward_model_mean_rewards_all_samples, reward_model_rewards_all_cov, outcomes_all
+        # TODO: pull this out and clean up!!
+        if args.starting_sample_num !=0:
+            prev_data = np.load(work_dir + '/' + 'GP_reward_model_data/' + 'training_data_list.npy', allow_pickle=True)
+            if epoch == 0:
+                start_idx = 0
+            elif epoch == 1:
+                start_idx = 25
+            elif epoch == 2:
+                start_idx = 50
+            elif epoch == 3:
+                start_idx = 75
+            elif epoch == 4:
+                start_idx = 95
+
+            outcomes_all = prev_data[start_idx:,0].tolist()
+            # reward_model_mean_rewards_all_samples = prev_data[start_idx:,1].tolist()
+            reward_model_rewards_all_cov = prev_data[start_idx:,2].tolist()            
+        import pdb; pdb.set_trace()    
 
         for sample in range(args.starting_sample_num, args.num_samples):
             print('Epoch: %i Sample: %i'%(epoch,sample))
@@ -660,20 +650,22 @@ if __name__ == "__main__":
                 reward_model_rewards_all_mean_buffer.append(mean_expected_reward[0])
                 training_data_list.append([outcomes_from_sample, mean_expected_reward[0], var_expected_reward[0], new_params])          
 
-            # save training data list  
-            np.save(work_dir + '/' + 'GP_reward_model_data/' + 'training_data_list.npy', np.array(training_data_list))
-            # save expert rewards all epochs
-            np.save(work_dir + '/' + 'GP_reward_model_data/' + 'expert_rewards_all_epochs.npy', np.array(expert_rewards_all_epochs))            
+            # # save training data list  
+            # np.save(work_dir + '/' + 'GP_reward_model_data/' + 'training_data_list.npy', np.array(training_data_list))
+            # # save expert rewards all epochs
+            # np.save(work_dir + '/' + 'GP_reward_model_data/' + 'expert_rewards_all_epochs.npy', np.array(expert_rewards_all_epochs))            
             
             # save intermediate rewards/pol params 
             '''NOTE: saving these in format: [polParams, analytical_reward, GP_reward_model_mean, expert_reward],
             where expert_reward can be 1 or 2-element list depending on type of desired behavior
             '''
             if args.starting_sample_num !=0:
-                import pdb; pdb.set_trace()
+                # import pdb; pdb.set_trace()
                 # policy param data
                 prev_sample_data = np.load(os.path.join(work_dir + '/' + 'all_polParamRew_data', 'polParamsRews_' + 'epoch_'+str(epoch) + '_ep_'+str(args.starting_sample_num-1) + '.npy'))
+                    
                 if num_expert_rews_each_sample == 1:
+                    # import pdb; pdb.set_trace()
                     new_analytRew_GPmodelRew_ExpertRew = np.concatenate((np.array([analytical_rewards_all_samples]).T, np.array([reward_model_mean_rewards_all_samples]).T, np.array([expert_rewards_all_samples]).T),axis=1)
                 elif num_expert_rews_each_sample == 2:                  
                     new_analytRew_GPmodelRew_ExpertRew = np.concatenate((np.array([analytical_rewards_all_samples]).T, np.array([reward_model_mean_rewards_all_samples]).T, np.array(expert_rewards_all_samples)),axis=1)
@@ -682,7 +674,7 @@ if __name__ == "__main__":
                 combined_data = np.concatenate((prev_sample_data, new_sample_data), axis=0)
                 np.save(os.path.join(work_dir + '/' + 'all_polParamRew_data', 'polParamsRews_' + 'epoch_'+str(epoch) + '_ep_'+str(sample) + '.npy'),
                     combined_data)
-                import pdb; pdb.set_trace()
+                # import pdb; pdb.set_trace()
 
             else:
                 # import pdb; pdb.set_trace()
@@ -696,6 +688,10 @@ if __name__ == "__main__":
                 # import pdb; pdb.set_trace()
             
             # import pdb; pdb.set_trace()
+            # save training data list  
+            np.save(work_dir + '/' + 'GP_reward_model_data/' + 'training_data_list.npy', np.array(training_data_list))
+            # save expert rewards all epochs
+            np.save(work_dir + '/' + 'GP_reward_model_data/' + 'expert_rewards_all_epochs.npy', np.array(expert_rewards_all_epochs))  
 
             # save task success metrics           
             np.save(os.path.join(work_dir, 'cut_times_all_samples.npy'), np.array(time_to_complete_cut))
@@ -735,9 +731,7 @@ if __name__ == "__main__":
                
         np.save(os.path.join(work_dir, 'polParamsRews_' + 'epoch_'+str(epoch) +'.npy'), \
             np.concatenate((np.array(policy_params_all_samples), new_analytRew_GPmodelRew_ExpertRew), axis=1))
-
-        #Save mean expert rewards and reward model reward from this rollout of 15 episodes        
-        mean_reward_model_rewards_all_epochs.append(np.mean(reward_model_mean_rewards_all_samples))
+        
 
         # current policy pi_current (before updating)
         pi_current_mean = mu
@@ -747,18 +741,25 @@ if __name__ == "__main__":
         if args.starting_sample_num !=0:
             all_data = work_dir + '/all_polParamRew_data/' +'polParamsRews_epoch_' + str(epoch) + '_ep_'+ str(sample) + '.npy'
             if num_expert_rews_each_sample == 1:       
-                import pdb; pdb.set_trace()         
+                #import pdb; pdb.set_trace()         
                 policy_params_all_samples = (np.load(all_data)[:,0:-3]).tolist()
                 reward_model_mean_rewards_all_samples = (np.load(all_data)[:,-2]).tolist()
                 expert_rewards_all_samples = (np.load(all_data)[:,-1]).tolist()
-                #import pdb; pdb.set_trace()
+                import pdb; pdb.set_trace()
 
             elif num_expert_rews_each_sample == 2: 
-                import pdb; pdb.set_trace()               
+                #import pdb; pdb.set_trace()               
                 policy_params_all_samples = (np.load(all_data)[:,0:-4]).tolist()
                 reward_model_mean_rewards_all_samples = (np.load(all_data)[:,-3]).tolist()
-                expert_rewards_all_samples = (np.load(all_data)[:,-2:]).tolist()  # 2 expert reward values (desired fast and slow rewards)         
-                #import pdb; pdb.set_trace()
+                expert_rewards_all_samples = (np.load(all_data)[:,-2:]).tolist()  # 2 expert reward values (desired fast and slow rewards)     
+                import pdb; pdb.set_trace()    
+            
+            mean_reward_model_rewards_all_epochs.append(np.mean(reward_model_mean_rewards_all_samples))
+            import pdb; pdb.set_trace()
+        
+        else:
+            #Save mean expert rewards and reward model reward from this rollout of 15 episodes        
+            mean_reward_model_rewards_all_epochs.append(np.mean(reward_model_mean_rewards_all_samples))
         import pdb; pdb.set_trace()       
         
         # update policy mean and cov (REPS) if not 1st epoch (1st epoch is just collecting training data)
@@ -828,7 +829,7 @@ if __name__ == "__main__":
                     queried_expert_rewards = queried_expert_rewards_fast
            
             else:
-                queried_expert_rewards = np.array(expert_rewards_all_epochs[samples_to_query])
+                queried_expert_rewards = np.array(expert_rewards_all_epochs)[samples_to_query]
             import pdb; pdb.set_trace()
         
         else: 

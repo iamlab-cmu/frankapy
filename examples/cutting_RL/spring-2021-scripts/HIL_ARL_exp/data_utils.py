@@ -1,9 +1,33 @@
 '''OLD CODE - moved these functions to reward_learner.py
 '''
-# import numpy as np
-# import matplotlib.pyplot as plt 
-# import os
-# import glob
+import numpy as np
+import matplotlib.pyplot as plt 
+import os
+import glob
+
+def plot_analytical_human_GPmodel_rewards(pol_param_data_filepath):
+    data = np.load(pol_param_data_filepath)
+    plt.figure()
+    plt.plot(data[:,-3])
+    plt.plot(data[:,-2])
+    plt.plot(data[:,-1])
+    plt.legend(('analytical reward','GP reward model reward','human reward'))
+    plt.xlabel('sample')
+    plt.ylabel('reward')
+    plt.title('scoring-tomato-HIL-RL, comparison of rewards')
+
+    plt.figure()
+    plt.plot(data[:,-2])
+    plt.plot(data[:,-1])
+    plt.legend(('GP reward model reward','human reward'))
+    plt.xlabel('sample')
+    plt.ylabel('reward')
+    plt.title('scoring-tomato-HIL-RL, comparison of rewards')
+
+    plt.show()
+
+# pol_param_data_filepath = '/home/sony/Documents/cutting_RL_experiments/data/Jan-2021-HIL-ARL-exps/scoring/tomato/exp_1/all_polParamRew_data/polParamsRews_epoch_1_ep_24.npy'
+# plot_analytical_human_GPmodel_rewards(pol_param_data_filepath)
 
 # def calc_mean_std_reward_features(cut_type, save_mean_std):
 #     '''
