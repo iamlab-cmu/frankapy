@@ -137,7 +137,7 @@ if __name__ == "__main__":
     parser.add_argument('--GP_training_epochs_initial', type=int, default = 120)
     parser.add_argument('--GP_training_epochs_later', type=int, default = 11)
     parser.add_argument('--desired_cutting_behavior', type=str, help='options: fast, slow, quality_cut') # fast, slow, quality_cut
-    parser.add_argument('--standardize_reward_feats', type=bool, default = False)
+    parser.add_argument('--standardize_reward_feats', type=bool, default = True)
     args = parser.parse_args()
 
     kappa = args.kappa   
@@ -176,6 +176,8 @@ if __name__ == "__main__":
         createFolder(work_dir + '/' + 'GP_reward_model_data')
     if not os.path.isdir(work_dir + '/' + 'GP_reward_model_data' + '/' + 'GP_cov_mat'):
         createFolder(work_dir + '/' + 'GP_reward_model_data' + '/' + 'GP_cov_mat')
+    if not os.path.isdir(work_dir + '/' + 'GP_reward_model_data' + '/' + 'policy_pi_star_tilda_data'):
+        createFolder(work_dir + '/' + 'GP_reward_model_data' + '/' + 'policy_pi_star_tilda_data')
     if not os.path.isdir(work_dir + '/' + 'dmp_traject_plots'):
         createFolder(work_dir + '/' + 'dmp_traject_plots')    
     if not os.path.isdir(work_dir + '/' + 'dmp_wts'):

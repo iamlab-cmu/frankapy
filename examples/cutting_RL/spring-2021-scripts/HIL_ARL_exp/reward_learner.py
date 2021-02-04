@@ -83,10 +83,14 @@ class RewardLearner:
         star_div_current = (pi_star_wi/pi_current_wi)
         star_div_tilda = (pi_star_wi/pi_tilda_wi)
 
-        import pdb; pdb.set_trace()
-        approx_sampling_KLdiv = (1/num_samples)*np.sum(star_div_current*np.log(star_div_tilda))
+        # import pdb; pdb.set_trace()
+        #approx_sampling_KLdiv = (1/num_samples)*np.sum(star_div_current*np.log(star_div_tilda))
+        #approx_sampling_KLdiv = (1/num_samples)*np.sum(star_div_current*(np.log(pi_star_wi) - np.log(pi_tilda_wi)))
 
-        import pdb; pdb.set_trace()
+        # removed pi_current
+        approx_sampling_KLdiv = (1/num_samples)*np.sum(star_div_tilda*np.log(star_div_tilda))
+
+        # import pdb; pdb.set_trace()
         return approx_sampling_KLdiv
    
            
@@ -185,24 +189,7 @@ class RewardLearner:
         print('samples_to_query', samples_to_query)            
         import pdb; pdb.set_trace()
         return samples_to_query, queried_outcomes_arr
-
-
-    # def calc_EI_all_outcomes(self,prior_training_data, queried_samples_all, eps=0.01):
-    #     prior_training_data_expect_rewards_mean, prior_training_data_policy_params, \
-    #         prior_training_data_expect_rewards_sig = [], [], []
-    #     prior_training_data_o = np.empty([0,self.num_reward_features])
-        
-    #     for i in range(len(prior_training_data)):
-    #         prior_training_data_o = np.vstack((prior_training_data_o, prior_training_data[i][0]))
-    #         prior_training_data_expect_rewards_mean.append(prior_training_data[i][1])
-    #         prior_training_data_expect_rewards_sig.append(prior_training_data[i][2])
-    #         prior_training_data_policy_params.append(prior_training_data[i][3])      
-       
-    #     prior_training_data_expect_rewards_mean = np.array(prior_training_data_expect_rewards_mean)
-    #     prior_training_data_expect_rewards_sig = np.sqrt(np.array(prior_training_data_expect_rewards_sig)) # NOTE: add sqrt to get std from variance!!
-    #     prior_training_data_policy_params = np.array(prior_training_data_policy_params)
-
-    #     import pdb; pdb.set_trace()
+  
 
     def compute_EPD_for_each_sample_updated(self, current_epoch, num_samples_each_epoch, work_dir, num_training_epochs, optimizer, current_reward_model, likelihood, mll, \
             agent, pi_tilda_mean, pi_tilda_cov, pi_current_mean, pi_current_cov, prior_training_data, \
@@ -244,7 +231,7 @@ class RewardLearner:
             start_sample_to_check = 3*num_samples_each_epoch  
 
         # iterate through all samples in current epoch in training data set
-        for i in range(start_sample_to_check, num_samples):       
+        for i in range(0, num_samples):       
             # don't iterate through all samples, skip already queried and ones from previous rollouts (?)     
             if i in queried_samples_all: # total_samples - samples_in_current_epoch
                 continue            
@@ -284,16 +271,21 @@ class RewardLearner:
                 #calculate rewards for training data under updated reward model                   
                 mean_exp_rewards, var_exp_rewards = self.calc_expected_reward_for_observed_outcome_w_GPmodel(hypoth_reward_model, \
                     hypoth_likelihood, prior_training_data_o)
-                
+                # import pdb; pdb.set_trace()
                 #Calculate policy update under updated reward model            
                 pi_star_mean, pi_star_cov, reps_wts = agent.update_policy_REPS(mean_exp_rewards, \
-                    prior_training_data_policy_params, rel_entropy_bound=1.2, min_temperature=0.001) 
+                    prior_training_data_policy_params, rel_entropy_bound= 0.4, min_temperature=0.001) 
                 pi_star_wts = reps_wts
 
                 print('pi_current_mean (policy before updating)' , pi_current_mean)
                 print('pi_tilda_mean (new policy under current reward model)' , pi_tilda_mean)
                 print('pi_star_mean (new policy under updated reward model)' , pi_star_mean)
-                import pdb; pdb.set_trace()
+
+                # save policy mean and covs for debugging
+                np.savez(work_dir + '/' + 'GP_reward_model_data/policy_pi_star_tilda_data/' + 'epoch_' + str(current_epoch) + '_pi_star_tilda_sample_' + str(i) + '.npz', 
+                    pi_current_mean = pi_current_mean, pi_tilda_mean = pi_tilda_mean, pi_star_mean = pi_star_mean,
+                        pi_current_cov = pi_current_cov, pi_tilda_cov = pi_tilda_cov, pi_star_cov = pi_star_cov)
+                # import pdb; pdb.set_trace()
 
                 # note - 40 is higher # samples (used to be 10)
                 print('computing KL div')
@@ -313,11 +305,10 @@ class RewardLearner:
                 # KL_div_all_wts.append(KL_div_wts) 
 
         #Check if we've already queried these samples. If yes, remove from list:
-        import pdb; pdb.set_trace()
+        # import pdb; pdb.set_trace()
         print('KL divs', KL_div_all)
         print('median KL DIV', np.median(KL_div_all))
-        samples_to_query_new = self.remove_already_queried_samples_from_list(samples_to_query,\
-            queried_samples_all)
+        samples_to_query_new = self.remove_already_queried_samples_from_list(samples_to_query, queried_samples_all)
         print('new samples_to_query', samples_to_query_new)
         import pdb; pdb.set_trace()
         queried_outcomes_arr = prior_training_data_o[samples_to_query_new]              

@@ -103,6 +103,8 @@ if __name__ == "__main__":
         createFolder(work_dir + '/' + 'GP_reward_model_data')
     if not os.path.isdir(work_dir + '/' + 'GP_reward_model_data' + '/' + 'GP_cov_mat'):
         createFolder(work_dir + '/' + 'GP_reward_model_data' + '/' + 'GP_cov_mat')
+    if not os.path.isdir(work_dir + '/' + 'GP_reward_model_data' + '/' + 'policy_pi_star_tilda_data'):
+        createFolder(work_dir + '/' + 'GP_reward_model_data' + '/' + 'policy_pi_star_tilda_data')
     if not os.path.isdir(work_dir + '/' + 'dmp_traject_plots'):
         createFolder(work_dir + '/' + 'dmp_traject_plots')    
     if not os.path.isdir(work_dir + '/' + 'dmp_wts'):
@@ -276,14 +278,14 @@ if __name__ == "__main__":
     pi_tilda_cov = np.load(os.path.join(work_dir, 'REPSupdatedMean_' + 'epoch_1.npz'))['updated_cov']
     # pi_tilda_wts = reps_wts
     
-    # determine outcomes to query using PI
-    samples_to_query, queried_outcomes  = reward_learner.calc_PI_all_outcomes(training_data_list, queried_samples_all, lambda_thresh=1.0, eps=0.01, beta = 0.5)
-    import pdb; pdb.set_trace()
+    # # determine outcomes to query using PI
+    # samples_to_query, queried_outcomes  = reward_learner.calc_PI_all_outcomes(training_data_list, queried_samples_all, lambda_thresh=1.0, eps=0.01, beta = 0.5)
+    # import pdb; pdb.set_trace()
 
-    # # determine outcomes to query using EPD
-    # current_epoch = args.starting_epoch_num
-    # samples_to_query, queried_outcomes  = reward_learner.compute_EPD_for_each_sample_updated(current_epoch, args.num_samples, work_dir, num_EPD_epochs, optimizer, \
-    #     gpr_reward_model, likelihood, mll, agent, pi_tilda_mean, pi_tilda_cov, pi_current_mean, pi_current_cov, \
-    #         training_data_list, queried_samples_all, GP_training_data_x_all, GP_training_data_y_all, beta, initial_wts, args.cut_type, S) 
+    # determine outcomes to query using EPD
+    current_epoch = args.starting_epoch_num
+    samples_to_query, queried_outcomes  = reward_learner.compute_EPD_for_each_sample_updated(current_epoch, args.num_samples, work_dir, num_EPD_epochs, optimizer, \
+        gpr_reward_model, likelihood, mll, agent, pi_tilda_mean, pi_tilda_cov, pi_current_mean, pi_current_cov, \
+            training_data_list, queried_samples_all, GP_training_data_x_all, GP_training_data_y_all, beta, initial_wts, args.cut_type, S) 
 
     import pdb; pdb.set_trace()
