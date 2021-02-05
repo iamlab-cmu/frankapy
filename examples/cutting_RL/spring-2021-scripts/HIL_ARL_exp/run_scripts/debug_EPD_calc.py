@@ -58,13 +58,14 @@ if __name__ == "__main__":
     parser.add_argument('--debug', type=bool, default=False)
     
     # GP reward model-related args
-    parser.add_argument('--kappa', type=int, default = 5) #5)
+    parser.add_argument('--kappa', type=int, default = 300) #5)
     parser.add_argument('--rel_entropy_bound', type=float, default = 1.2)
     parser.add_argument('--num_EPD_epochs', type=int, default = 5)
     parser.add_argument('--GP_training_epochs_initial', type=int, default = 120)
     parser.add_argument('--GP_training_epochs_later', type=int, default = 11)
     parser.add_argument('--desired_cutting_behavior', type=str, help='options: fast, slow, quality_cut') # fast, slow, quality_cut
     parser.add_argument('--standardize_reward_feats', type=bool, default = False)
+    parser.add_argument('--scale_pol_params_for_KLD', type=bool, default = True)
     args = parser.parse_args()
 
     kappa = args.kappa   
@@ -86,6 +87,7 @@ if __name__ == "__main__":
 
     # Instantiate reward learner - note: GPR model not instantiated yet
     reward_learner = RewardLearner(kappa)
+    reward_learner.scale_pol_params = args.scale_pol_params_for_KLD    
     beta = 0.001 # fixed gaussian noise likelihood
     
     # create folders to save data
@@ -157,6 +159,11 @@ if __name__ == "__main__":
         mean_params_each_epoch.append(initial_mu)   
         cov_each_epoch.append(initial_sigma) 
     
+    # if not starting from initial mean and sigma, load these and save them to the policy learner for scaling params later
+    if args.starting_epoch_num > 1:        
+        agent.init_mu_0 = np.array(mean_params_each_epoch[0])
+        agent.init_cov_0 = np.array(cov_each_epoch[0])
+        
     # Buffers for GP reward model data
     total_queried_samples_each_epoch, mean_reward_model_rewards_all_epochs = [], [] #track number of queries to expert for rewards and average rewards for each epoch
     training_data_list, queried_samples_all = [], []
@@ -207,7 +214,7 @@ if __name__ == "__main__":
             prev_total_queried_samples_each_epoch = np.load(work_dir + '/' 'GP_reward_model_data/' + 'total_queried_samples_each_epoch_qualityCut.npy')
             total_queried_samples_each_epoch = prev_total_queried_samples_each_epoch.tolist()    
         
-        import pdb; pdb.set_trace()
+        # import pdb; pdb.set_trace()
     
     # if not starting from 0-th epoch - need to load/train GP reward model based on previous data
     # TODO: pull this out to a separate function
@@ -270,25 +277,41 @@ if __name__ == "__main__":
         gpr_reward_model = reward_learner.train_GPmodel(work_dir, GP_training_epochs_initial, optimizer, gpr_reward_model, likelihood, mll, train_x, train_y)
     
     # import pdb; pdb.set_trace()
-
     pi_current_mean = mu
     pi_current_cov = sigma
 
-    pi_tilda_mean = np.load(os.path.join(work_dir, 'REPSupdatedMean_' + 'epoch_2.npz'))['updated_mean']
-    pi_tilda_cov = np.load(os.path.join(work_dir, 'REPSupdatedMean_' + 'epoch_2.npz'))['updated_cov']
+    # pi_tilda_mean = np.load(os.path.join(work_dir, 'REPSupdatedMean_' + 'epoch_2.npz'))['updated_mean']
+    # pi_tilda_cov = np.load(os.path.join(work_dir, 'REPSupdatedMean_' + 'epoch_2.npz'))['updated_cov']
     # pi_tilda_wts = reps_wts
     reps_agent = reps.Reps(rel_entropy_bound=1.5, min_temperature=0.001) #Create REPS object
-    import pdb; pdb.set_trace()
-    pi_tilda_wts, temp = reps_agent.weights_from_rewards(np.array(training_data_list)[:,-3].tolist())
-    
-    # # determine outcomes to query using PI
-    # samples_to_query, queried_outcomes  = reward_learner.calc_PI_all_outcomes(training_data_list, queried_samples_all, lambda_thresh=1.0, eps=0.01, beta = 0.5)
     # import pdb; pdb.set_trace()
+    pi_tilda_wts, temp = reps_agent.weights_from_rewards(np.array(training_data_list)[:,-3].tolist())
+
+    # load prev pol params
+    # training_data_list = training_data_list[0:50]
+    # prev_epoch_data = np.load(work_dir + '/polParamsRews_epoch_1.npy')
+
+    prev_epoch_data = np.load(work_dir + '/polParamsRews_epoch_2.npy')
+    policy_params_all_samples = prev_epoch_data[:,0:9]
+    policy_params_all_samples_scaled = agent.scale_pol_params(policy_params_all_samples)
+    reward_model_mean_rewards_all_samples = prev_epoch_data[:,-2]   
+    import pdb; pdb.set_trace()
+
+    policy_params_mean_scaled, policy_params_sigma_scaled, reps_info = \
+        reps_agent.policy_from_samples_and_rewards(policy_params_all_samples_scaled, reward_model_mean_rewards_all_samples)
+    policy_params_mean, policy_params_sigma, reps_info = \
+        reps_agent.policy_from_samples_and_rewards(policy_params_all_samples, reward_model_mean_rewards_all_samples)
+    # SCALED PI_TILDA MEAN AND COV
+    pi_tilda_mean = policy_params_mean_scaled #scaled
+    pi_tilda_cov = policy_params_sigma_scaled #scaled
+    #pi_tilda_mean = policy_params_mean
+    #pi_tilda_cov = policy_params_sigma
+
+    import pdb; pdb.set_trace()
 
     # determine outcomes to query using EPD
     current_epoch = args.starting_epoch_num
     samples_to_query, queried_outcomes  = reward_learner.compute_EPD_for_each_sample_updated(current_epoch, args.num_samples, work_dir, num_EPD_epochs, optimizer, \
         gpr_reward_model, likelihood, mll, agent, pi_tilda_mean, pi_tilda_cov, pi_tilda_wts, pi_current_mean, pi_current_cov, \
             training_data_list, queried_samples_all, GP_training_data_x_all, GP_training_data_y_all, beta, initial_wts, args.cut_type, S) 
-
     import pdb; pdb.set_trace()

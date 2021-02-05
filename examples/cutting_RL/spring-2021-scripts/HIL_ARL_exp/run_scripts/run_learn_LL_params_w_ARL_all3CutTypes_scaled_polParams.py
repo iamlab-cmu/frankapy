@@ -101,13 +101,15 @@ if __name__ == "__main__":
     parser.add_argument('--debug', type=bool, default=False)
     
     # GP reward model-related args
-    parser.add_argument('--kappa', type=int, default = 200) #5)
+    parser.add_argument('--kappa', type=int, default = 300) #5)
     parser.add_argument('--rel_entropy_bound', type=float, default = 1.5)
     parser.add_argument('--num_EPD_epochs', type=int, default = 5)
     parser.add_argument('--GP_training_epochs_initial', type=int, default = 120)
     parser.add_argument('--GP_training_epochs_later', type=int, default = 11)
     parser.add_argument('--desired_cutting_behavior', type=str, help='options: fast, slow, quality_cut') # fast, slow, quality_cut
     parser.add_argument('--standardize_reward_feats', type=bool, default = True)
+    parser.add_argument('--scale_pol_params_for_KLD', type=bool, default = True)
+    parser.add_argument('--add_ridge_to_pol_cov_for_KLD', type=bool, default = True)
     args = parser.parse_args()
 
     kappa = args.kappa   
@@ -129,6 +131,8 @@ if __name__ == "__main__":
 
     # Instantiate reward learner - note: GPR model not instantiated yet
     reward_learner = RewardLearner(kappa)
+    reward_learner.scale_pol_params = args.scale_pol_params_for_KLD
+    reward_learner.add_ridge_to_pol_cov = args.add_ridge_to_pol_cov_for_KLD
     beta = 0.001 # fixed gaussian noise likelihood
     
     # create folders to save data
@@ -187,7 +191,7 @@ if __name__ == "__main__":
     initial_wts, initial_mu, initial_sigma, S, control_type_z_axis = agent.initialize_gaussian_policy(num_expert_rews_each_sample, args.cut_type, args.food_type, args.dmp_wt_sampling_var, args.start_from_previous, \
         args.previous_datadir, args.prev_epochs_to_calc_pol_update, init_dmp_info_dict, work_dir, dmp_wts_file, args.starting_epoch_num, args.dmp_traject_time)
     print('initial mu', initial_mu)        
-    mu, sigma = initial_mu, initial_sigma
+    mu, sigma = initial_mu, initial_sigma   
 
     import pdb; pdb.set_trace()
 
@@ -199,6 +203,10 @@ if __name__ == "__main__":
     else:   
         mean_params_each_epoch.append(initial_mu)   
         cov_each_epoch.append(initial_sigma) 
+
+    if args.starting_epoch_num > 1:
+        agent.init_mu_0 = mean_params_each_epoch[0,:]
+        agent.init_cov_0 = cov_each_epoch[0,:,:]
     
     # Buffers for GP reward model data
     total_queried_samples_each_epoch, mean_reward_model_rewards_all_epochs = [], [] #track number of queries to expert for rewards and average rewards for each epoch
@@ -263,17 +271,20 @@ if __name__ == "__main__":
             GP_training_data_x_all = prev_GP_training_data['GP_training_data_x_all']
             GP_training_data_y_all = prev_GP_training_data['GP_training_data_y_all']
             GP_training_data_y_all_slow = GP_training_data_y_all
+            import pdb; pdb.set_trace()   
 
         elif args.desired_cutting_behavior == 'fast': 
             prev_GP_training_data = np.load(work_dir + '/' 'GP_reward_model_data/' + 'GP_reward_model_training_data_fastCut_epoch_' +str(args.starting_epoch_num-1) + '.npz')
             GP_training_data_x_all = prev_GP_training_data['GP_training_data_x_all']
             GP_training_data_y_all = prev_GP_training_data['GP_training_data_y_all']
             GP_training_data_y_all_fast = GP_training_data_y_all
+            import pdb; pdb.set_trace()   
         
         else:
             prev_GP_training_data = np.load(work_dir + '/' 'GP_reward_model_data/' + 'GP_reward_model_training_data_qualityCut_epoch_' +str(args.starting_epoch_num-1) + '.npz')
             GP_training_data_x_all = prev_GP_training_data['GP_training_data_x_all']
             GP_training_data_y_all = prev_GP_training_data['GP_training_data_y_all']
+            import pdb; pdb.set_trace()   
 
         # train with previous data
         print('initializing and training GP reward model from previous data')
@@ -767,22 +778,32 @@ if __name__ == "__main__":
             print('updating policy w/ REPS')
             reps_agent = reps.Reps(rel_entropy_bound=rel_entropy_bound,min_temperature=0.001) #Create REPS object
             import pdb; pdb.set_trace() # TODO CHECK that reward_model_mean_rewards_all_samples has all previously loaded samples
+            
+            # unscaled
             policy_params_mean, policy_params_sigma, reps_info = \
-                reps_agent.policy_from_samples_and_rewards(policy_params_all_samples, reward_model_mean_rewards_all_samples)
-                                    
+                reps_agent.policy_from_samples_and_rewards(policy_params_all_samples, reward_model_mean_rewards_all_samples)            
             print('updated policy params mean')
             print(policy_params_mean)
             print('updated policy cov')
             print(policy_params_sigma)
             # import pdb; pdb.set_trace()            
-
             mu, sigma = policy_params_mean, policy_params_sigma
-            # pi_tilda is the new policy under the current reward model 
-            pi_tilda_mean = mu
-            pi_tilda_cov = sigma
+            
+            # scaled for KLD calc
+            policy_params_all_samples_scaled = agent.scale_pol_params(policy_params_all_samples)
+            policy_params_mean_scaled, policy_params_sigma_scaled, reps_info_scaled = \
+                reps_agent.policy_from_samples_and_rewards(policy_params_all_samples_scaled, reward_model_mean_rewards_all_samples)
 
+            # pi_tilda is the new policy under the current reward model -- will use this to compute KLD
+            if args.scale_pol_params_for_KLD:    # scaled
+                pi_tilda_mean = policy_params_mean_scaled   
+                pi_tilda_cov = policy_params_sigma_scaled  
+            else:  # unscaled
+                pi_tilda_mean = policy_params_mean
+                pi_tilda_cov = policy_params_sigma           
             pi_tilda_wts, temp = reps_agent.weights_from_rewards(np.array(training_data_list)[:,-3].tolist())
             
+            # save policy mean and cov to buffers
             mean_params_each_epoch.append(policy_params_mean)
             cov_each_epoch.append(policy_params_sigma)
             np.save(os.path.join(work_dir, 'policy_mean_each_epoch.npy'),np.array(mean_params_each_epoch))
@@ -933,9 +954,8 @@ if __name__ == "__main__":
                 updated_train_x = GP_training_data_x_all
                 updated_train_y = GP_training_data_y_all                
                 #GP_training_epochs_later = 11 #100  # how long to train during updates?? # now define in CL args
-                continue_training = False
-                gpr_reward_model = reward_learner.update_reward_GPmodel(continue_training, work_dir, GP_training_epochs_later, optimizer, gpr_reward_model, likelihood, mll, updated_train_x, updated_train_y)                                       
-                
+                continue_training = False 
+                gpr_reward_model = reward_learner.update_reward_GPmodel(work_dir, continue_training, GP_training_epochs_later, optimizer, gpr_reward_model, likelihood, mll, updated_train_x, updated_train_y)                                       
         import pdb; pdb.set_trace()           
 
         # after epoch is complete, reset start_sample to 0

@@ -15,6 +15,10 @@ class REPSPolicyLearner:
         self.policy_params_all = []
         self.training_samples_all = []
         self.outcomes_all = []     
+    
+    def scale_pol_params(self, pol_params):
+        pol_params_scaled = (pol_params-self.init_mu_0)/np.sqrt(np.diag(self.init_cov_0))        
+        return pol_params_scaled
 
     def initialize_gaussian_policy(self, num_expert_rews_each_sample, cut_type, food_type, dmp_wt_sampling_var, start_from_previous, previous_datadir, prev_epochs_to_calc_pol_update, \
             init_dmp_info_dict, work_dir, position_dmp_weights_file_path, starting_epoch_num, dmp_traject_time):
@@ -121,7 +125,10 @@ class REPSPolicyLearner:
                 control_type_z_axis = 'force'
         elif S[2] == 1:
             control_type_z_axis = 'position'
-
+        
+        if starting_epoch_num in [0,1]:
+            self.init_mu_0 = initial_mu
+            self.init_cov_0 = initial_sigma
         return initial_wts, initial_mu, initial_sigma, S, control_type_z_axis
     
     def sample_new_params_from_policy(self, mu, sigma, use_all_dmp_dims, initial_wts, cut_type, S):
