@@ -53,9 +53,11 @@ class REPSPolicyLearner:
             
 
             # plot updated policy mean trajectory to visualize
-            print('plotting REPS updated mean trajectory')
-            plot_updated_policy_mean_traject(work_dir, cut_type, position_dmp_weights_file_path, starting_epoch_num, dmp_traject_time, control_type_z_axis,\
-                init_dmp_info_dict, initial_wts, mu)
+            # print('plotting REPS updated mean trajectory')
+            # plot_updated_policy_mean_traject(work_dir, cut_type, position_dmp_weights_file_path, starting_epoch_num, dmp_traject_time, control_type_z_axis,\
+            #     init_dmp_info_dict, initial_wts, mu)
+            # plot_updated_policy_mean_traject_HIL_ARL(work_dir, fa, args.cut_type, dmp_wts_file, epoch, args.dmp_traject_time, control_type_z_axis, init_dmp_info_dict,\
+            #     initial_wts, policy_params_mean)
             import pdb; pdb.set_trace()
 
         else: # start w/ initial DMP weights from IL

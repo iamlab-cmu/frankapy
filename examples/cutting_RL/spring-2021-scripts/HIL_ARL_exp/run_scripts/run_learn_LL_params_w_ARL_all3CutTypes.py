@@ -101,7 +101,7 @@ if __name__ == "__main__":
     parser.add_argument('--debug', type=bool, default=False)
     
     # GP reward model-related args
-    parser.add_argument('--kappa', type=int, default = 5)
+    parser.add_argument('--kappa', type=int, default = 5) #5)
     parser.add_argument('--rel_entropy_bound', type=float, default = 1.5)
     parser.add_argument('--num_EPD_epochs', type=int, default = 5)
     parser.add_argument('--GP_training_epochs_initial', type=int, default = 120)
@@ -769,8 +769,7 @@ if __name__ == "__main__":
             import pdb; pdb.set_trace() # TODO CHECK that reward_model_mean_rewards_all_samples has all previously loaded samples
             policy_params_mean, policy_params_sigma, reps_info = \
                 reps_agent.policy_from_samples_and_rewards(policy_params_all_samples, reward_model_mean_rewards_all_samples)
-            reps_wts = reps_info['weights']
-            
+                                    
             print('updated policy params mean')
             print(policy_params_mean)
             print('updated policy cov')
@@ -781,8 +780,9 @@ if __name__ == "__main__":
             # pi_tilda is the new policy under the current reward model 
             pi_tilda_mean = mu
             pi_tilda_cov = sigma
-            pi_tilda_wts = reps_wts
 
+            pi_tilda_wts, temp = reps_agent.weights_from_rewards(np.array(training_data_list)[:,-3].tolist())
+            
             mean_params_each_epoch.append(policy_params_mean)
             cov_each_epoch.append(policy_params_sigma)
             np.save(os.path.join(work_dir, 'policy_mean_each_epoch.npy'),np.array(mean_params_each_epoch))
@@ -795,7 +795,7 @@ if __name__ == "__main__":
 
             # save new policy params mean and cov   
             np.savez(os.path.join(work_dir, 'REPSupdatedMean_' + 'epoch_'+str(epoch) +'.npz'), \
-                updated_mean = policy_params_mean, updated_cov = policy_params_sigma)
+                updated_mean = policy_params_mean, updated_cov = policy_params_sigma, pi_tilda_wts = pi_tilda_wts)
         
         # Reward model: Evaluate sample outcomes from above set of iterations and determine outcomes to query from expert        
         '''only compute EPD if epoch!=0 (i.e. reward model has been trained on initial set of data)'''
@@ -810,7 +810,7 @@ if __name__ == "__main__":
             #num_EPD_epochs = 5 # define in CL args
             current_epoch = epoch
             samples_to_query, queried_outcomes  = reward_learner.compute_EPD_for_each_sample_updated(current_epoch, args.num_samples, work_dir, num_EPD_epochs, optimizer, \
-                gpr_reward_model, likelihood, mll, agent, pi_tilda_mean, pi_tilda_cov, pi_current_mean, pi_current_cov, \
+                gpr_reward_model, likelihood, mll, agent, pi_tilda_mean, pi_tilda_cov, pi_tilda_wts, pi_current_mean, pi_current_cov, \
                     training_data_list, queried_samples_all, GP_training_data_x_all, GP_training_data_y_all, beta, initial_wts, args.cut_type, S) 
             import pdb; pdb.set_trace()
 

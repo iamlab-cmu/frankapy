@@ -65,8 +65,8 @@ class RewardLearner:
         # import pdb; pdb.set_trace()
 
         # ADDING TO DEBUG NUM INSTAB
-        pi_tilda_cov = pi_tilda_cov + np.eye(9)*5
-        pi_star_cov = pi_star_cov + np.eye(9)*5
+        pi_tilda_cov = pi_tilda_cov + 0.5 #np.eye(9)*20
+        pi_star_cov = pi_star_cov + 0.5 # np.eye(9)*20
 
         for i in range(0, num_samples):
             new_params_pi_tilda = agent.sample_new_params_from_policy_only_mu_sigma(pi_tilda_mean, pi_tilda_cov, initial_wts, cut_type, S)
@@ -95,7 +95,7 @@ class RewardLearner:
         # removed pi_current
         approx_sampling_KLdiv = (1/num_samples)*np.sum(star_div_tilda*np.log(star_div_tilda))
 
-        import pdb; pdb.set_trace()
+        # import pdb; pdb.set_trace()
         return approx_sampling_KLdiv
    
            
@@ -197,7 +197,7 @@ class RewardLearner:
   
 
     def compute_EPD_for_each_sample_updated(self, current_epoch, num_samples_each_epoch, work_dir, num_training_epochs, optimizer, current_reward_model, likelihood, mll, \
-            agent, pi_tilda_mean, pi_tilda_cov, pi_current_mean, pi_current_cov, prior_training_data, \
+            agent, pi_tilda_mean, pi_tilda_cov, pi_tilda_wts, pi_current_mean, pi_current_cov, prior_training_data, \
                 queried_samples_all, GP_training_data_x_all, GP_training_data_y_all, beta, initial_wts, cut_type, S):
 
         agent = REPSPolicyLearner()        
@@ -288,20 +288,34 @@ class RewardLearner:
                 print('pi_star_mean (new policy under updated reward model)' , pi_star_mean)
 
                 # save policy mean and covs for debugging
-                np.savez(work_dir + '/' + 'GP_reward_model_data/policy_pi_star_tilda_data/' + 'epoch_' + str(current_epoch) + '_pi_star_tilda_sample_' + str(i) + '.npz', 
-                    pi_current_mean = pi_current_mean, pi_tilda_mean = pi_tilda_mean, pi_star_mean = pi_star_mean,
-                        pi_current_cov = pi_current_cov, pi_tilda_cov = pi_tilda_cov, pi_star_cov = pi_star_cov)
+                # np.savez(work_dir + '/' + 'GP_reward_model_data/policy_pi_star_tilda_data/' + 'epoch_' + str(current_epoch) + '_pi_star_tilda_sample_' + str(i) + '.npz', 
+                #     pi_current_mean = pi_current_mean, pi_tilda_mean = pi_tilda_mean, pi_star_mean = pi_star_mean,
+                #         pi_current_cov = pi_current_cov, pi_tilda_cov = pi_tilda_cov, pi_star_cov = pi_star_cov)
                 # import pdb; pdb.set_trace()
 
                 # note - 40 is higher # samples (used to be 10)
-                print('computing KL div')
+                ######### KL DIV ANALYTICAL
+                #print('computing KL div analytical')
                 # import pdb; pdb.set_trace()
+                #KL_div = self.compute_kl_divergence(pi_tilda_mean, pi_tilda_cov, pi_star_mean, pi_star_cov)
+                #print('KLdiv_analytical', KL_div)
+
+                ########## KL DIV SAMPLING
+                #import pdb; pdb.set_trace()
+                print('computing KL div')
                 KL_div = self.compute_KL_div_sampling_updated(agent, 40, pi_tilda_mean, pi_tilda_cov, \
                     pi_star_mean, pi_star_cov, pi_current_mean, pi_current_cov, initial_wts, cut_type, S)
-                
+                #import pdb; pdb.set_trace()
                 print('KLdiv_sampling', KL_div)
-                KL_div_all.append(KL_div)                    
-                     
+                
+
+                # ############ KL DIV WEIGHTS SPACE
+                # KL_div = self.compute_kl_divergence_wts(pi_star_wts, pi_tilda_wts)                   
+                #print('KLdiv_weights', KL_div)
+
+
+                KL_div_all.append(KL_div)             
+                # determine whether to query by checking threshold
                 if (np.all(np.isnan(KL_div)==True))==False and np.any(KL_div >= self.kappa):
                     samples_to_query.append(i)
 
@@ -395,6 +409,36 @@ class RewardLearner:
         unstandardized_reward_feat = (standardized_reward_feat*std_reward_feats) + mean_reward_feats
 
         return unstandardized_reward_feat
+    
+    def compute_kl_divergence(self, pm, pv, qm, qv):    
+        """
+        Kullback-Liebler divergence analytical
+        """        
+        n_dims = pv.shape[0]
+
+        #qv = qv + np.eye(n_dims)*0.5
+        #pv = pv + np.eye(n_dims)*0.5
+        # import pdb; pdb.set_trace()
+        det_p = np.linalg.det(pv)
+        det_q = np.linalg.det(qv)
+        inv_p = np.linalg.pinv(pv)
+        inv_q = np.linalg.pinv(qv)
+
+        log_det1_det2 = np.log(det_q) - np.log(det_p)
+        trace_pq = np.trace(inv_q*pv)
+
+        mu2_minus_mu1 = np.array([qm-pm]).T
+
+        kl_div = 0.5*(log_det1_det2 - n_dims + trace_pq +  np.matmul(np.matmul(mu2_minus_mu1.T,inv_q),mu2_minus_mu1))
+
+        # import pdb; pdb.set_trace()
+        return kl_div
+    
+    def compute_kl_divergence_wts(self, pi_star_wts, pi_tilda_wts):
+        num_samples = pi_star_wts.shape[0]
+        kl_div = (1/num_samples)*np.sum(pi_star_wts*np.log(pi_star_wts/pi_tilda_wts))
+        # import pdb; pdb.set_trace()
+        return kl_div
 
    
 # class Reward_Learner:

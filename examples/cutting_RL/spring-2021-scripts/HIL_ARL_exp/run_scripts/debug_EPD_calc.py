@@ -58,7 +58,7 @@ if __name__ == "__main__":
     parser.add_argument('--debug', type=bool, default=False)
     
     # GP reward model-related args
-    parser.add_argument('--kappa', type=int, default = 5)
+    parser.add_argument('--kappa', type=int, default = 5) #5)
     parser.add_argument('--rel_entropy_bound', type=float, default = 1.2)
     parser.add_argument('--num_EPD_epochs', type=int, default = 5)
     parser.add_argument('--GP_training_epochs_initial', type=int, default = 120)
@@ -146,7 +146,7 @@ if __name__ == "__main__":
     print('initial mu', initial_mu)        
     mu, sigma = initial_mu, initial_sigma
 
-    # import pdb; pdb.set_trace()
+    import pdb; pdb.set_trace()
 
     mean_params_each_epoch, cov_each_epoch = [], []
     # if starting from a later epoch: load previous data    
@@ -274,9 +274,12 @@ if __name__ == "__main__":
     pi_current_mean = mu
     pi_current_cov = sigma
 
-    pi_tilda_mean = np.load(os.path.join(work_dir, 'REPSupdatedMean_' + 'epoch_1.npz'))['updated_mean']
-    pi_tilda_cov = np.load(os.path.join(work_dir, 'REPSupdatedMean_' + 'epoch_1.npz'))['updated_cov']
+    pi_tilda_mean = np.load(os.path.join(work_dir, 'REPSupdatedMean_' + 'epoch_2.npz'))['updated_mean']
+    pi_tilda_cov = np.load(os.path.join(work_dir, 'REPSupdatedMean_' + 'epoch_2.npz'))['updated_cov']
     # pi_tilda_wts = reps_wts
+    reps_agent = reps.Reps(rel_entropy_bound=1.5, min_temperature=0.001) #Create REPS object
+    import pdb; pdb.set_trace()
+    pi_tilda_wts, temp = reps_agent.weights_from_rewards(np.array(training_data_list)[:,-3].tolist())
     
     # # determine outcomes to query using PI
     # samples_to_query, queried_outcomes  = reward_learner.calc_PI_all_outcomes(training_data_list, queried_samples_all, lambda_thresh=1.0, eps=0.01, beta = 0.5)
@@ -285,7 +288,7 @@ if __name__ == "__main__":
     # determine outcomes to query using EPD
     current_epoch = args.starting_epoch_num
     samples_to_query, queried_outcomes  = reward_learner.compute_EPD_for_each_sample_updated(current_epoch, args.num_samples, work_dir, num_EPD_epochs, optimizer, \
-        gpr_reward_model, likelihood, mll, agent, pi_tilda_mean, pi_tilda_cov, pi_current_mean, pi_current_cov, \
+        gpr_reward_model, likelihood, mll, agent, pi_tilda_mean, pi_tilda_cov, pi_tilda_wts, pi_current_mean, pi_current_cov, \
             training_data_list, queried_samples_all, GP_training_data_x_all, GP_training_data_y_all, beta, initial_wts, args.cut_type, S) 
 
     import pdb; pdb.set_trace()
