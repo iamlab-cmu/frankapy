@@ -323,17 +323,14 @@ class RewardLearner:
 
                 if self.sampl_or_weight_kld_calc == 'sampling':
                     ######### KL DIV SAMPLING
-                    #import pdb; pdb.set_trace()
                     print('computing KL div')
                     n_samples = 10000 #20 #10000 #20
                     KL_div = self.compute_KL_div_sampling_updated(agent, n_samples, pi_tilda_mean, pi_tilda_cov, \
                         pi_star_mean, pi_star_cov, pi_current_mean, pi_current_cov, initial_wts, cut_type, S)
-                    #import pdb; pdb.set_trace()
                     print('KLdiv_sampling', KL_div)     
 
                 elif self.sampl_or_weight_kld_calc == 'weight':          
                     # ############ KL DIV WEIGHTS SPACE
-                    # import pdb; pdb.set_trace()
                     KL_div = self.compute_kl_divergence_wts(pi_star_wts, pi_tilda_wts)                   
                     print('KLdiv_weights', KL_div)
 

@@ -101,7 +101,7 @@ if __name__ == "__main__":
     parser.add_argument('--debug', type=bool, default=False)
     
     # GP reward model-related args
-    parser.add_argument('--kappa', type=int, default = 300) #5)
+    parser.add_argument('--kappa', type=int, default = 0.01) #5)
     parser.add_argument('--rel_entropy_bound', type=float, default = 1.5)
     parser.add_argument('--num_EPD_epochs', type=int, default = 5)
     parser.add_argument('--GP_training_epochs_initial', type=int, default = 120)
@@ -109,8 +109,8 @@ if __name__ == "__main__":
     parser.add_argument('--desired_cutting_behavior', type=str, help='options: fast, slow, quality_cut') # fast, slow, quality_cut
     parser.add_argument('--standardize_reward_feats', type=bool, default = True)
     parser.add_argument('--scale_pol_params_for_KLD', type=bool, default = True)
-    parser.add_argument('--add_ridge_to_pol_cov_for_KLD', type=bool, default = True)
-    parser.add_argument('--sampl_or_weight_kld_calc', type=str, default = None, help = 'sampling or weight')
+    parser.add_argument('--add_ridge_to_pol_cov_for_KLD', type=bool, default = False)
+    parser.add_argument('--sampl_or_weight_kld_calc', type=str, default = 'sampling', help = 'sampling or weight')
 
     args = parser.parse_args()
 
@@ -135,7 +135,7 @@ if __name__ == "__main__":
     reward_learner = RewardLearner(kappa)
     reward_learner.scale_pol_params = args.scale_pol_params_for_KLD
     reward_learner.add_ridge_to_pol_cov = args.add_ridge_to_pol_cov_for_KLD
-    reward.learner.sampl_or_weight_kld_calc = args.sampl_or_weight_kld_calc
+    reward_learner.sampl_or_weight_kld_calc = args.sampl_or_weight_kld_calc
     beta = 0.001 # fixed gaussian noise likelihood
     
     # create folders to save data
@@ -177,7 +177,7 @@ if __name__ == "__main__":
 
     # go to initial cutting pose
     starting_position = RigidTransform(rotation=knife_orientation, \
-        translation=np.array([0.5, 0.124, 0.15]), #z=0.05
+        translation=np.array([0.509, 0.124, 0.15]), #z=0.05
         from_frame='franka_tool', to_frame='world')    
     fa.goto_pose(starting_position, duration=5, use_impedance=False)
 
@@ -199,6 +199,7 @@ if __name__ == "__main__":
     import pdb; pdb.set_trace()
 
     mean_params_each_epoch, cov_each_epoch = [], []
+    #import pdb; pdb.set_trace()
     # if starting from a later epoch: load previous data    
     if os.path.isfile(os.path.join(work_dir, 'policy_mean_each_epoch.npy')):
         mean_params_each_epoch = np.load(os.path.join(work_dir, 'policy_mean_each_epoch.npy')).tolist()
@@ -208,8 +209,8 @@ if __name__ == "__main__":
         cov_each_epoch.append(initial_sigma) 
 
     if args.starting_epoch_num > 1:
-        agent.init_mu_0 = mean_params_each_epoch[0,:]
-        agent.init_cov_0 = cov_each_epoch[0,:,:]
+        agent.init_mu_0 = np.array(mean_params_each_epoch[0])
+        agent.init_cov_0 = np.array(cov_each_epoch[0])
     
     # Buffers for GP reward model data
     total_queried_samples_each_epoch, mean_reward_model_rewards_all_epochs = [], [] #track number of queries to expert for rewards and average rewards for each epoch
@@ -273,20 +274,20 @@ if __name__ == "__main__":
             prev_GP_training_data = np.load(work_dir + '/' 'GP_reward_model_data/' + 'GP_reward_model_training_data_slowCut_epoch_' +str(args.starting_epoch_num-1) + '.npz')
             GP_training_data_x_all = prev_GP_training_data['GP_training_data_x_all']
             GP_training_data_y_all = prev_GP_training_data['GP_training_data_y_all']
-            GP_training_data_y_all_slow = GP_training_data_y_all
+            GP_training_data_y_all_slow = GP_training_data_y_all            
             import pdb; pdb.set_trace()   
 
         elif args.desired_cutting_behavior == 'fast': 
             prev_GP_training_data = np.load(work_dir + '/' 'GP_reward_model_data/' + 'GP_reward_model_training_data_fastCut_epoch_' +str(args.starting_epoch_num-1) + '.npz')
             GP_training_data_x_all = prev_GP_training_data['GP_training_data_x_all']
             GP_training_data_y_all = prev_GP_training_data['GP_training_data_y_all']
-            GP_training_data_y_all_fast = GP_training_data_y_all
+            GP_training_data_y_all_fast = GP_training_data_y_all            
             import pdb; pdb.set_trace()   
         
         else:
             prev_GP_training_data = np.load(work_dir + '/' 'GP_reward_model_data/' + 'GP_reward_model_training_data_qualityCut_epoch_' +str(args.starting_epoch_num-1) + '.npz')
             GP_training_data_x_all = prev_GP_training_data['GP_training_data_x_all']
-            GP_training_data_y_all = prev_GP_training_data['GP_training_data_y_all']
+            GP_training_data_y_all = prev_GP_training_data['GP_training_data_y_all']            
             import pdb; pdb.set_trace()   
 
         # train with previous data
@@ -309,7 +310,9 @@ if __name__ == "__main__":
         mll = gpytorch.mlls.ExactMarginalLogLikelihood(likelihood, gpr_reward_model)
         # train reward GP model given initial train_x and train_y data (voxel_data, queried human rewards)
         gpr_reward_model = reward_learner.train_GPmodel(work_dir, GP_training_epochs_initial, optimizer, gpr_reward_model, likelihood, mll, train_x, train_y)
-    
+
+        print('shape GP_training_data_x_all', GP_training_data_x_all.shape)
+        print('shape GP_training_data_y_all', GP_training_data_y_all.shape)
     import pdb; pdb.set_trace()
 
     for epoch in range(args.starting_epoch_num, args.num_epochs):
@@ -963,11 +966,11 @@ if __name__ == "__main__":
 
         # after epoch is complete, reset start_sample to 0
         args.starting_sample_num = 0
-        plt.figure()
-        plt.plot(time_to_complete_cut)
-        plt.title('epoch %i time to complete cut'%epoch)
-        plt.xlabel('samples')
-        plt.ylabel('time to complete cut')
+        #plt.figure()
+        #plt.plot(time_to_complete_cut)
+        #plt.title('epoch %i time to complete cut'%epoch)
+        #plt.xlabel('samples')
+        #plt.ylabel('time to complete cut')
         plt.figure()
         plt.plot(task_success)
         plt.title('epoch %i task_success'%epoch)

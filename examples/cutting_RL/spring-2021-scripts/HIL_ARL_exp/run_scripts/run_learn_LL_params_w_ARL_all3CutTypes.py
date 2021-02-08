@@ -1,3 +1,7 @@
+'''
+THIS SCRIPT IS OLD - LATEST IS run_learn_LL_params_w_ARL_all3CutTypes_scaled_polParams.py
+'''
+
 # TODO: Need to continue debugging EPD and KL div calculation
 # TODO: need to select lengthscale and signal variance hyperparams for GP kernel
 # TODO: need to try out standardizing/scaling reward function features

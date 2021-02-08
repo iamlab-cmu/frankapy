@@ -58,16 +58,16 @@ if __name__ == "__main__":
     parser.add_argument('--debug', type=bool, default=False)
     
     # GP reward model-related args
-    parser.add_argument('--kappa', type=int, default = 300) #5)
+    parser.add_argument('--kappa', type=int, default = 0.01) #5) # 0.005
     parser.add_argument('--rel_entropy_bound', type=float, default = 1.2)
     parser.add_argument('--num_EPD_epochs', type=int, default = 5)
     parser.add_argument('--GP_training_epochs_initial', type=int, default = 120)
     parser.add_argument('--GP_training_epochs_later', type=int, default = 11)
     parser.add_argument('--desired_cutting_behavior', type=str, help='options: fast, slow, quality_cut') # fast, slow, quality_cut
-    parser.add_argument('--standardize_reward_feats', type=bool, default = False)
+    parser.add_argument('--standardize_reward_feats', type=bool, default = True)
     parser.add_argument('--scale_pol_params_for_KLD', type=bool, default = True)
     parser.add_argument('--add_ridge_to_pol_cov_for_KLD', type=bool, default = False)
-    parser.add_argument('--sampl_or_weight_kld_calc', type=str, default = 'weight', help = 'sampling or weight')
+    parser.add_argument('--sampl_or_weight_kld_calc', type=str, default = 'sampling', help = 'sampling or weight')
 
     args = parser.parse_args()
 

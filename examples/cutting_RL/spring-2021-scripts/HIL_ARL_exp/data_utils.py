@@ -5,7 +5,7 @@ import matplotlib.pyplot as plt
 import os
 import glob
 
-def plot_analytical_human_GPmodel_rewards(pol_param_data_filepath):
+def plot_analytical_human_GPmodel_rewards_one_file(pol_param_data_filepath):
     data = np.load(pol_param_data_filepath)
     plt.figure()
     plt.plot(data[:,-3])
@@ -26,8 +26,79 @@ def plot_analytical_human_GPmodel_rewards(pol_param_data_filepath):
 
     plt.show()
 
-# pol_param_data_filepath = '/home/sony/Documents/cutting_RL_experiments/data/Jan-2021-HIL-ARL-exps/scoring/tomato/exp_1/all_polParamRew_data/polParamsRews_epoch_1_ep_24.npy'
-# plot_analytical_human_GPmodel_rewards(pol_param_data_filepath)
+def plot_analytical_human_GPmodel_rewards_all_prev_epochs(work_dir):
+    data_files = glob.glob(work_dir + "*epoch_*.npy")
+    num_prev_epochs = len(data_files)
+    # get num policy params
+    first_file = np.load(data_files[0])
+
+    analyt_rews_all_epochs = np.empty((0))
+    GP_rews_all_epochs = np.empty((0))
+    human_rews_all_epochs = np.empty((0))
+    avg_GP_rews_each_epoch = []
+    avg_human_rews_each_epoch = []
+    num_samples_each_epoch = []
+    num_samples = 0
+    for i in range(num_prev_epochs):
+        data_file = glob.glob(work_dir + "*epoch_%s*.npy"%str(i))[0]
+        data = np.load(data_file)
+        analyt_rews = data[:,-3]
+        GP_model_rews = data[:,-2]
+        human_rews = data[:,-1]
+
+        avg_GP_rews_each_epoch.append(np.mean(GP_model_rews))
+        avg_human_rews_each_epoch.append(np.mean(human_rews))
+
+        analyt_rews_all_epochs = np.concatenate((analyt_rews_all_epochs, analyt_rews),axis=0)
+        GP_rews_all_epochs = np.concatenate((GP_rews_all_epochs, GP_model_rews),axis=0)
+        human_rews_all_epochs = np.concatenate((human_rews_all_epochs, human_rews),axis=0)
+
+        num_samples+=data.shape[0]
+        num_samples_each_epoch.append(num_samples)
+    
+    plt.figure()
+    plt.plot(analyt_rews_all_epochs)
+    plt.plot(GP_rews_all_epochs)
+    plt.plot(human_rews_all_epochs)
+    plt.legend(('analytical reward','GP reward model reward','human reward'))
+    plt.xlabel('sample')
+    plt.ylabel('reward')
+    plt.vlines(np.array(num_samples_each_epoch),np.min(analyt_rews_all_epochs)-1,0, colors = ['r','r','r'], linestyles={'dashed', 'dashed', 'dashed'})
+    plt.title('scoring-tomato-HIL-RL, comparison of rewards')
+
+    plt.figure()
+    plt.plot(GP_rews_all_epochs)
+    plt.plot(human_rews_all_epochs)
+    plt.legend(('GP reward model reward','human reward'))
+    plt.xlabel('sample')
+    plt.ylabel('reward')
+    plt.vlines(np.array(num_samples_each_epoch),np.min(GP_rews_all_epochs)-1,0, colors = ['r','r','r'], linestyles={'dashed', 'dashed', 'dashed'})
+    plt.title('scoring-tomato-HIL-RL, comparison of rewards')
+
+    # plot average rewards each epoch
+    plt.figure()
+    avg_GP_rews_each_epoch = [np.mean(GP_rews_all_epochs[0:50]), np.mean(GP_rews_all_epochs[50:])]
+    avg_human_rews_each_epoch = [np.mean(human_rews_all_epochs[0:50]), np.mean(human_rews_all_epochs[50:])]
+
+    plt.plot(avg_GP_rews_each_epoch, '-o')
+    plt.plot(avg_human_rews_each_epoch, '-o')
+    plt.xlabel('epoch')
+    plt.ylabel('avg rewards each epoch')
+    # plt.ylim(-60, 0)
+    plt.title('avg reward vs epochs')
+    plt.legend(('GP reward model reward','human reward'))
+    # plt.xticks(np.arange(3))
+
+    plt.show()
+    import pdb; pdb.set_trace()
+
+#work_dir = '/home/sony/Documents/cutting_RL_experiments/data/Jan-2021-HIL-ARL-exps/scoring/tomato/exp_1/'
+#plot_analytical_human_GPmodel_rewards_all_prev_epochs(work_dir)
+
+
+#pol_param_data_filepath = '/home/sony/Documents/cutting_RL_experiments/data/Jan-2021-HIL-ARL-exps/scoring/tomato/exp_1/all_polParamRew_data/polParamsRews_epoch_1_ep_24.npy'
+#plot_analytical_human_GPmodel_rewards(pol_param_data_filepath)
+
 
 # def calc_mean_std_reward_features(cut_type, save_mean_std):
 #     '''
