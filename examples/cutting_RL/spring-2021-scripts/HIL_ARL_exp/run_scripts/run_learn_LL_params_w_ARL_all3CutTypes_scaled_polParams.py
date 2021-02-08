@@ -110,6 +110,8 @@ if __name__ == "__main__":
     parser.add_argument('--standardize_reward_feats', type=bool, default = True)
     parser.add_argument('--scale_pol_params_for_KLD', type=bool, default = True)
     parser.add_argument('--add_ridge_to_pol_cov_for_KLD', type=bool, default = True)
+    parser.add_argument('--sampl_or_weight_kld_calc', type=str, default = None, help = 'sampling or weight')
+
     args = parser.parse_args()
 
     kappa = args.kappa   
@@ -133,6 +135,7 @@ if __name__ == "__main__":
     reward_learner = RewardLearner(kappa)
     reward_learner.scale_pol_params = args.scale_pol_params_for_KLD
     reward_learner.add_ridge_to_pol_cov = args.add_ridge_to_pol_cov_for_KLD
+    reward.learner.sampl_or_weight_kld_calc = args.sampl_or_weight_kld_calc
     beta = 0.001 # fixed gaussian noise likelihood
     
     # create folders to save data

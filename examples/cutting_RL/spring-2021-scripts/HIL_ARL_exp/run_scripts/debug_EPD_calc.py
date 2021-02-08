@@ -66,6 +66,9 @@ if __name__ == "__main__":
     parser.add_argument('--desired_cutting_behavior', type=str, help='options: fast, slow, quality_cut') # fast, slow, quality_cut
     parser.add_argument('--standardize_reward_feats', type=bool, default = False)
     parser.add_argument('--scale_pol_params_for_KLD', type=bool, default = True)
+    parser.add_argument('--add_ridge_to_pol_cov_for_KLD', type=bool, default = False)
+    parser.add_argument('--sampl_or_weight_kld_calc', type=str, default = 'weight', help = 'sampling or weight')
+
     args = parser.parse_args()
 
     kappa = args.kappa   
@@ -87,7 +90,9 @@ if __name__ == "__main__":
 
     # Instantiate reward learner - note: GPR model not instantiated yet
     reward_learner = RewardLearner(kappa)
-    reward_learner.scale_pol_params = args.scale_pol_params_for_KLD    
+    reward_learner.scale_pol_params = args.scale_pol_params_for_KLD   
+    reward_learner.add_ridge_to_pol_cov = args.add_ridge_to_pol_cov_for_KLD 
+    reward_learner.sampl_or_weight_kld_calc = args.sampl_or_weight_kld_calc
     beta = 0.001 # fixed gaussian noise likelihood
     
     # create folders to save data
@@ -282,10 +287,9 @@ if __name__ == "__main__":
 
     # pi_tilda_mean = np.load(os.path.join(work_dir, 'REPSupdatedMean_' + 'epoch_2.npz'))['updated_mean']
     # pi_tilda_cov = np.load(os.path.join(work_dir, 'REPSupdatedMean_' + 'epoch_2.npz'))['updated_cov']
-    # pi_tilda_wts = reps_wts
     reps_agent = reps.Reps(rel_entropy_bound=1.5, min_temperature=0.001) #Create REPS object
     # import pdb; pdb.set_trace()
-    pi_tilda_wts, temp = reps_agent.weights_from_rewards(np.array(training_data_list)[:,-3].tolist())
+    # pi_tilda_wts, temp = reps_agent.weights_from_rewards(np.array(training_data_list)[:,-3].tolist())
 
     # load prev pol params
     # training_data_list = training_data_list[0:50]
@@ -297,17 +301,27 @@ if __name__ == "__main__":
     reward_model_mean_rewards_all_samples = prev_epoch_data[:,-2]   
     import pdb; pdb.set_trace()
 
-    policy_params_mean_scaled, policy_params_sigma_scaled, reps_info = \
+    # scaled
+    policy_params_mean_scaled, policy_params_sigma_scaled, reps_info_scaled = \
         reps_agent.policy_from_samples_and_rewards(policy_params_all_samples_scaled, reward_model_mean_rewards_all_samples)
+    # unscaled
     policy_params_mean, policy_params_sigma, reps_info = \
         reps_agent.policy_from_samples_and_rewards(policy_params_all_samples, reward_model_mean_rewards_all_samples)
+    
     # SCALED PI_TILDA MEAN AND COV
-    pi_tilda_mean = policy_params_mean_scaled #scaled
-    pi_tilda_cov = policy_params_sigma_scaled #scaled
-    #pi_tilda_mean = policy_params_mean
-    #pi_tilda_cov = policy_params_sigma
+    if args.scale_pol_params_for_KLD:
+        pi_tilda_mean = policy_params_mean_scaled #scaled
+        pi_tilda_cov = policy_params_sigma_scaled #scaled
+        #pi_tilda_wts = reps_info_scaled['weights']
+        #import pdb; pdb.set_trace()
+        pi_tilda_wts, temp = reps_agent.weights_from_rewards(np.array(training_data_list)[:,-3].tolist())
 
-    import pdb; pdb.set_trace()
+    else:
+        pi_tilda_mean = policy_params_mean
+        pi_tilda_cov = policy_params_sigma
+        # pi_tilda_wts = reps_info['weights']
+        pi_tilda_wts, temp = reps_agent.weights_from_rewards(np.array(training_data_list)[:,-3].tolist())
+    # import pdb; pdb.set_trace()
 
     # determine outcomes to query using EPD
     current_epoch = args.starting_epoch_num

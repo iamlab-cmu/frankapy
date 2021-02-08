@@ -201,7 +201,7 @@ class REPSPolicyLearner:
 
         return new_params, new_weights, new_z_force, new_cart_pitch_stiffness 
 
-    def sample_new_params_from_policy_only_mu_sigma(self, mu, sigma, initial_wts, cut_type, S):
+    def sample_new_params_from_policy_only_mu_sigma(self, scaled_pol_params, mu, sigma, initial_wts, cut_type, S):
         new_params = np.random.multivariate_normal(mu, sigma)    
  
         if cut_type == 'normal' or cut_type == 'scoring':
@@ -210,13 +210,14 @@ class REPSPolicyLearner:
                 new_z_force = new_params[-2]
                 new_cart_pitch_stiffness = new_params[-1]
                 # cap force value
-                new_z_force = np.clip(new_z_force, -40, -3)    # TODO: up force to -50N        
-                new_params[-2] = int(new_z_force)  
-                print('clipped sampled z force', new_z_force)  
+                if not scaled_pol_params:
+                    new_z_force = np.clip(new_z_force, -40, -3)    # TODO: up force to -50N        
+                    new_params[-2] = int(new_z_force)  
+                    print('clipped sampled z force', new_z_force)  
 
-                new_cart_pitch_stiffness = np.clip(new_cart_pitch_stiffness, 5, 600)           
-                new_params[-1] = int(new_cart_pitch_stiffness)  
-                print('clipped sampled new_cart_pitch_stiffness', new_cart_pitch_stiffness)         
+                    new_cart_pitch_stiffness = np.clip(new_cart_pitch_stiffness, 5, 600)           
+                    new_params[-1] = int(new_cart_pitch_stiffness)  
+                    print('clipped sampled new_cart_pitch_stiffness', new_cart_pitch_stiffness)         
             
             elif S[2] == 1:
                 #import pdb; pdb.set_trace()
@@ -224,10 +225,12 @@ class REPSPolicyLearner:
                 new_x_weights = new_params[0:num_weights]
                 new_z_weights = new_params[num_weights:(2*num_weights)]
                 new_cart_pitch_stiffness = new_params[-1]
-                # cap value                   
-                new_cart_pitch_stiffness = np.clip(new_cart_pitch_stiffness, 5, 600)           
-                new_params[-1] = int(new_cart_pitch_stiffness)  
-                print('clipped sampled new_cart_pitch_stiffness', new_cart_pitch_stiffness)      
+                # cap value if we're sampling and not in scaled space                   
+                if not scaled_pol_params:
+                    new_cart_pitch_stiffness = np.clip(new_cart_pitch_stiffness, 5, 600)           
+                    new_params[-1] = int(new_cart_pitch_stiffness)  
+                    print('clipped sampled new_cart_pitch_stiffness', new_cart_pitch_stiffness)      
+                
                 new_z_force = 'NA'   
         
         elif cut_type == 'pivchop':                    
@@ -236,20 +239,22 @@ class REPSPolicyLearner:
                 new_z_force = new_params[0]
                 new_cart_pitch_stiffness = new_params[1]
                 # cap force value
-                new_z_force = np.clip(new_z_force, -40, -3)    # TODO: up force to -50N        
-                new_params[0] = int(new_z_force)  
-                print('clipped sampled z force', new_z_force)  
-                new_cart_pitch_stiffness = np.clip(new_cart_pitch_stiffness, 5, 600)           
-                new_params[1] = int(new_cart_pitch_stiffness)  
-                print('clipped sampled new_cart_pitch_stiffness', new_cart_pitch_stiffness)  
+                if not scaled_pol_params:
+                    new_z_force = np.clip(new_z_force, -40, -3)    # TODO: up force to -50N        
+                    new_params[0] = int(new_z_force)  
+                    print('clipped sampled z force', new_z_force)  
+                    new_cart_pitch_stiffness = np.clip(new_cart_pitch_stiffness, 5, 600)           
+                    new_params[1] = int(new_cart_pitch_stiffness)  
+                    print('clipped sampled new_cart_pitch_stiffness', new_cart_pitch_stiffness)  
             
             elif S[2] == 1:
                 new_z_weights = new_params[0:-1]
                 new_cart_pitch_stiffness = new_params[-1]
                 # cap value
-                new_cart_pitch_stiffness = np.clip(new_cart_pitch_stiffness, 5, 600)           
-                new_params[-1] = int(new_cart_pitch_stiffness)  
-                print('clipped sampled new_cart_pitch_stiffness', new_cart_pitch_stiffness)
+                if not scaled_pol_params:
+                    new_cart_pitch_stiffness = np.clip(new_cart_pitch_stiffness, 5, 600)           
+                    new_params[-1] = int(new_cart_pitch_stiffness)  
+                    print('clipped sampled new_cart_pitch_stiffness', new_cart_pitch_stiffness)
                 new_z_force = 'NA'        
 
         return new_params

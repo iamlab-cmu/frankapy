@@ -33,6 +33,7 @@ class RewardLearner:
         self.kappa = kappa #EPD sampling threshold
         self.scale_pol_params = None
         self.add_ridge_to_pol_cov = True
+        self.sampl_or_weight_kld_calc = None #'sampling' or 'weight'
 
     def plot_rewardModel_vs_oracle_rewards(self, reward_model_rewards_all_mean_buffer, automated_expert_rewards_all):
         plt.plot(reward_model_rewards_all_mean_buffer)
@@ -68,9 +69,10 @@ class RewardLearner:
             pi_star_cov = pi_star_cov + np.eye(pi_tilda_cov.shape[0])*5 #2       
         
         for i in range(0, num_samples):
-            new_params_pi_tilda = agent.sample_new_params_from_policy_only_mu_sigma(pi_tilda_mean, pi_tilda_cov, initial_wts, cut_type, S)
-            new_params_pi_star = agent.sample_new_params_from_policy_only_mu_sigma(pi_star_mean, pi_star_cov, initial_wts, cut_type, S)
-            new_params_pi_current = agent.sample_new_params_from_policy_only_mu_sigma(pi_current_mean, pi_current_cov, initial_wts, cut_type, S)
+            new_params_pi_tilda = agent.sample_new_params_from_policy_only_mu_sigma(self.scale_pol_params, pi_tilda_mean, pi_tilda_cov, initial_wts, cut_type, S)
+            new_params_pi_star = agent.sample_new_params_from_policy_only_mu_sigma(self.scale_pol_params, pi_star_mean, pi_star_cov, initial_wts, cut_type, S)
+            new_params_pi_current = agent.sample_new_params_from_policy_only_mu_sigma(self.scale_pol_params, pi_current_mean, pi_current_cov, initial_wts, cut_type, S)
+            #import pdb; pdb.set_trace()
 
             sampled_params_pi_tilda.append(new_params_pi_tilda)
             sampled_params_pi_star.append(new_params_pi_star)
@@ -285,11 +287,11 @@ class RewardLearner:
                 #Calculate policy update under updated reward model            
                 # NOTE: 2/4/21 update: lower rel_entropy_bound so new policy cov doesn't deviate too far 
                 
-                                # SCALED
+                # SCALED
                 # TODO: clean this up!!!!!!!!!!!!!!
                 prior_training_data_policy_params_scaled = agent.scale_pol_params(prior_training_data_policy_params)
                 pi_star_mean_scaled, pi_star_cov_scaled, reps_wts_scaled = agent.update_policy_REPS(mean_exp_rewards, \
-                    prior_training_data_policy_params_scaled, rel_entropy_bound = 0.4, min_temperature=0.001) 
+                    prior_training_data_policy_params_scaled, rel_entropy_bound = 1.5, min_temperature=0.001) #rel_entropy_bound = 0.4
                 
                 if self.scale_pol_params:
                     pi_star_wts = reps_wts_scaled
@@ -298,7 +300,7 @@ class RewardLearner:
                 else:
                     # UNSCALED
                     pi_star_mean, pi_star_cov, reps_wts = agent.update_policy_REPS(mean_exp_rewards, \
-                        prior_training_data_policy_params, rel_entropy_bound = 0.4, min_temperature=0.001) 
+                        prior_training_data_policy_params, rel_entropy_bound = 1.5, min_temperature=0.001) #rel_entropy_bound = 0.4
                     pi_star_wts = reps_wts
 
                 print('pi_current_mean (policy before updating)' , pi_current_mean)
@@ -319,18 +321,21 @@ class RewardLearner:
                 #KL_div = self.compute_kl_divergence(pi_tilda_mean, pi_tilda_cov, pi_star_mean, pi_star_cov)
                 #print('KLdiv_analytical', KL_div)
 
-                ########## KL DIV SAMPLING
-                #import pdb; pdb.set_trace()
-                print('computing KL div')
-                n_samples = 20
-                KL_div = self.compute_KL_div_sampling_updated(agent, n_samples, pi_tilda_mean, pi_tilda_cov, \
-                    pi_star_mean, pi_star_cov, pi_current_mean, pi_current_cov, initial_wts, cut_type, S)
-                #import pdb; pdb.set_trace()
-                print('KLdiv_sampling', KL_div)                
+                if self.sampl_or_weight_kld_calc == 'sampling':
+                    ######### KL DIV SAMPLING
+                    #import pdb; pdb.set_trace()
+                    print('computing KL div')
+                    n_samples = 10000 #20 #10000 #20
+                    KL_div = self.compute_KL_div_sampling_updated(agent, n_samples, pi_tilda_mean, pi_tilda_cov, \
+                        pi_star_mean, pi_star_cov, pi_current_mean, pi_current_cov, initial_wts, cut_type, S)
+                    #import pdb; pdb.set_trace()
+                    print('KLdiv_sampling', KL_div)     
 
-                # ############ KL DIV WEIGHTS SPACE
-                # KL_div = self.compute_kl_divergence_wts(pi_star_wts, pi_tilda_wts)                   
-                #print('KLdiv_weights', KL_div)
+                elif self.sampl_or_weight_kld_calc == 'weight':          
+                    # ############ KL DIV WEIGHTS SPACE
+                    # import pdb; pdb.set_trace()
+                    KL_div = self.compute_kl_divergence_wts(pi_star_wts, pi_tilda_wts)                   
+                    print('KLdiv_weights', KL_div)
 
                 # save to buffer
                 KL_div_all.append(KL_div)   
@@ -348,6 +353,12 @@ class RewardLearner:
         print('new samples_to_query', samples_to_query_new)
         print('num new samples to query', len(samples_to_query_new))
         plt.hist(KL_div_all)
+        if self.sampl_or_weight_kld_calc == 'sampling':
+            plt.title('histogram of KLD values calculated w/ sampling - %i pol param samples'%n_samples)
+        elif self.sampl_or_weight_kld_calc == 'weight':
+            plt.title('histogram of KLD values calculated in weight space')
+        plt.xlabel('KLD values')
+        plt.ylabel('freq')
         plt.show()
         queried_outcomes_arr = prior_training_data_o[samples_to_query_new]              
         import pdb; pdb.set_trace()
