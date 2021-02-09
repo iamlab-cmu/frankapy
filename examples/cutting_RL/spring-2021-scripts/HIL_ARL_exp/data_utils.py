@@ -57,9 +57,9 @@ def plot_analytical_human_GPmodel_rewards_all_prev_epochs(work_dir):
         num_samples_each_epoch.append(num_samples)
     
     plt.figure()
-    plt.plot(analyt_rews_all_epochs)
-    plt.plot(GP_rews_all_epochs)
-    plt.plot(human_rews_all_epochs)
+    plt.plot(analyt_rews_all_epochs, '-o')
+    plt.plot(GP_rews_all_epochs, '-o')
+    plt.plot(human_rews_all_epochs, '-o')
     plt.legend(('analytical reward','GP reward model reward','human reward'))
     plt.xlabel('sample')
     plt.ylabel('reward')
@@ -67,8 +67,8 @@ def plot_analytical_human_GPmodel_rewards_all_prev_epochs(work_dir):
     plt.title('scoring-tomato-HIL-RL, comparison of rewards')
 
     plt.figure()
-    plt.plot(GP_rews_all_epochs)
-    plt.plot(human_rews_all_epochs)
+    plt.plot(GP_rews_all_epochs, '-o')
+    plt.plot(human_rews_all_epochs, '-o')
     plt.legend(('GP reward model reward','human reward'))
     plt.xlabel('sample')
     plt.ylabel('reward')
@@ -77,8 +77,8 @@ def plot_analytical_human_GPmodel_rewards_all_prev_epochs(work_dir):
 
     # plot average rewards each epoch
     plt.figure()
-    avg_GP_rews_each_epoch = [np.mean(GP_rews_all_epochs[0:50]), np.mean(GP_rews_all_epochs[50:])]
-    avg_human_rews_each_epoch = [np.mean(human_rews_all_epochs[0:50]), np.mean(human_rews_all_epochs[50:])]
+    avg_GP_rews_each_epoch = [np.mean(GP_rews_all_epochs[0:50]), np.mean(GP_rews_all_epochs[0:50]), np.mean(GP_rews_all_epochs[50:75]), np.mean(GP_rews_all_epochs[75:95]),np.mean(GP_rews_all_epochs[95:])]
+    avg_human_rews_each_epoch = [np.mean(human_rews_all_epochs[0:50]), np.mean(human_rews_all_epochs[0:50]), np.mean(human_rews_all_epochs[50:75]),np.mean(human_rews_all_epochs[75:95]),np.mean(human_rews_all_epochs[95:])]
 
     plt.plot(avg_GP_rews_each_epoch, '-o')
     plt.plot(avg_human_rews_each_epoch, '-o')
@@ -92,12 +92,56 @@ def plot_analytical_human_GPmodel_rewards_all_prev_epochs(work_dir):
     plt.show()
     import pdb; pdb.set_trace()
 
+def plot_task_success_analyticalRew_vs_HIL(analyt_work_dir, HIL_work_dir):
+    task_success_HIL = np.load(HIL_work_dir + '/task_success_all_samples.npy')
+    task_success_analyt = np.load(analyt_work_dir + '/task_success_all_samples.npy')
+
+    epochs = [0,1,2,3,4]
+    mean_task_success_HIL = [np.mean(task_success_HIL[0:50]), np.mean(task_success_HIL[0:50]), np.mean(task_success_HIL[50:75]), np.mean(task_success_HIL[75:95]),np.mean(task_success_HIL[95:])]
+    mean_task_success_analyt = [np.mean(task_success_analyt[0:50]), np.mean(task_success_analyt[0:50]), np.mean(task_success_analyt[50:75]), np.mean(task_success_analyt[75:95]),np.mean(task_success_analyt[95:])]
+
+    plt.figure()
+    plt.plot(epochs,mean_task_success_HIL,'-o')
+    plt.plot(epochs,mean_task_success_analyt,'-o')
+    plt.xlabel('epoch')
+    plt.ylabel('average task success each epoch')
+    plt.ylim([0,2.02])
+    plt.title('average task success (0,1,2) vs. epoch - analytical reward experiment vs. HIL RL - scoring, tomato')
+    plt.legend(('HIL RL', 'analytical reward'))
+
+    perc_succ_HIL = [(50 - np.where(np.array(task_success_HIL[0:50])==0)[0].shape[0])/50, 
+        (50 - np.where(np.array(task_success_HIL[0:50])==0)[0].shape[0])/50,
+        (25 - np.where(np.array(task_success_HIL[50:75])==0)[0].shape[0])/25,
+            (20 - np.where(np.array(task_success_HIL[75:95])==0)[0].shape[0])/20,
+                (20 - np.where(np.array(task_success_HIL[95:])==0)[0].shape[0])/20]
+    
+    perc_succ_analyt = [(25 - np.where(np.array(task_success_analyt[0:25])==0)[0].shape[0])/25, \
+        (25 - np.where(np.array(task_success_analyt[25:50])==0)[0].shape[0])/25,
+        (25 - np.where(np.array(task_success_analyt[50:75])==0)[0].shape[0])/25,
+            (20 - np.where(np.array(task_success_analyt[75:95])==0)[0].shape[0])/20,
+                (20 - np.where(np.array(task_success_analyt[95:])==0)[0].shape[0])/20]
+    
+    plt.figure()
+    plt.plot(epochs,100*np.array(perc_succ_HIL),'-o')
+    plt.plot(epochs,100*np.array(perc_succ_analyt),'-o')
+    plt.xlabel('epoch')
+    plt.ylabel('percent task success each epoch')
+    plt.ylim([0,102])
+    plt.title('percent task success vs. epoch - analytical reward experiment vs. HIL RL - scoring, tomato')
+    plt.legend(('HIL RL', 'analytical reward'))
+
+    plt.show()
+   
+#analyt_work_dir = '/home/sony/Documents/cutting_RL_experiments/data/Jan-2021-LL-param-exps/scoring/tomato/exp_18/'
+#HIL_work_dir = '/home/sony/Documents/cutting_RL_experiments/data/Jan-2021-HIL-ARL-exps/scoring/tomato/exp_1/'
+#plot_task_success_analyticalRew_vs_HIL(analyt_work_dir, HIL_work_dir)
+
 #work_dir = '/home/sony/Documents/cutting_RL_experiments/data/Jan-2021-HIL-ARL-exps/scoring/tomato/exp_1/'
 #plot_analytical_human_GPmodel_rewards_all_prev_epochs(work_dir)
 
 
 #pol_param_data_filepath = '/home/sony/Documents/cutting_RL_experiments/data/Jan-2021-HIL-ARL-exps/scoring/tomato/exp_1/all_polParamRew_data/polParamsRews_epoch_1_ep_24.npy'
-#plot_analytical_human_GPmodel_rewards(pol_param_data_filepath)
+#plot_analytical_human_GPmodel_rewards_one_file(pol_param_data_filepath)
 
 
 # def calc_mean_std_reward_features(cut_type, save_mean_std):

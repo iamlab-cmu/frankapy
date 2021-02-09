@@ -704,6 +704,7 @@ def viz_force_data(force_data_dir, epoch, num_samples):
 
 def plot_mean_task_success_and_percent_success_cuts(work_dir, food_type, cut_type, perc_succ_or_avg_succ):
     #import pdb; pdb.set_trace()
+    # TODO: update this for HIL ARL - task_success mean for 0 and 1st epochs combined
     data = np.load(work_dir + 'task_success_all_samples.npy')
     if type(data[0]) == np.str_:
         data = np.array([int(i) for i in data])

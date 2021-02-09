@@ -177,9 +177,9 @@ if __name__ == "__main__":
 
     # go to initial cutting pose
     starting_position = RigidTransform(rotation=knife_orientation, \
-        translation=np.array([0.509, 0.124, 0.15]), #z=0.05
+        translation=np.array([0.509, 0.005, 0.17]), #z=0.05
         from_frame='franka_tool', to_frame='world')    
-    fa.goto_pose(starting_position, duration=5, use_impedance=False)
+    fa.goto_pose(starting_position, duration = 5, use_impedance=False)
 
     # move down to contact
     if not args.debug:
@@ -986,11 +986,12 @@ if __name__ == "__main__":
     # total_queried_samples_each_epoch is CUMULATIVE queries samples
     print('cumulative queried samples', total_queried_samples_each_epoch)
     import pdb; pdb.set_trace()
-    plt.plot(np.arange(epoch+1), total_queried_samples_each_epoch)
+    plt.plot(np.arange(epoch+1), total_queried_samples_each_epoch,'-o')
     plt.xlabel('epochs')
     plt.xticks(np.arange((epoch+1)))
     plt.ylabel('cumulative human queried samples')
-    plt.title('human queries vs epochs, total samples = %i'%total_samples)
+    plt.ylim([0, np.max(total_queried_samples_each_epoch)+3])
+    plt.title('cumulative human queries vs epochs, total samples = %i, %s, %s'%(115, args.cut_type, args.food_name))
     plt.show()  
     import pdb; pdb.set_trace()       
 
