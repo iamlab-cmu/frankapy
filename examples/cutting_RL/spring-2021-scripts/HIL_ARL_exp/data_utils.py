@@ -26,7 +26,7 @@ def plot_analytical_human_GPmodel_rewards_one_file(pol_param_data_filepath):
 
     plt.show()
 
-def plot_analytical_human_GPmodel_rewards_all_prev_epochs(work_dir):
+def plot_analytical_human_GPmodel_rewards_all_prev_epochs(work_dir, desired_cutting_behavior):
     data_files = glob.glob(work_dir + "*epoch_*.npy")
     num_prev_epochs = len(data_files)
     # get num policy params
@@ -42,9 +42,21 @@ def plot_analytical_human_GPmodel_rewards_all_prev_epochs(work_dir):
     for i in range(num_prev_epochs):
         data_file = glob.glob(work_dir + "*epoch_%s*.npy"%str(i))[0]
         data = np.load(data_file)
-        analyt_rews = data[:,-3]
-        GP_model_rews = data[:,-2]
-        human_rews = data[:,-1]
+        # import pdb; pdb.set_trace()
+        if desired_cutting_behavior == 'quality_cut':
+            analyt_rews = data[:,-3]
+            GP_model_rews = data[:,-2]
+            human_rews = data[:,-1]
+
+        elif desired_cutting_behavior == 'slow':
+            analyt_rews = data[:,-4]
+            GP_model_rews = data[:,-3]
+            human_rews = data[:,-2]
+
+        elif desired_cutting_behavior == 'fast':
+            analyt_rews = data[:,-4]
+            GP_model_rews = data[:,-3]
+            human_rews = data[:,-1]
 
         avg_GP_rews_each_epoch.append(np.mean(GP_model_rews))
         avg_human_rews_each_epoch.append(np.mean(human_rews))
@@ -137,7 +149,12 @@ def plot_task_success_analyticalRew_vs_HIL(analyt_work_dir, HIL_work_dir):
 #plot_task_success_analyticalRew_vs_HIL(analyt_work_dir, HIL_work_dir)
 
 #work_dir = '/home/sony/Documents/cutting_RL_experiments/data/Jan-2021-HIL-ARL-exps/scoring/tomato/exp_1/'
-#plot_analytical_human_GPmodel_rewards_all_prev_epochs(work_dir)
+#desired_cutting_behavior = 'quality_cut'
+
+#work_dir = '/home/sony/Documents/cutting_RL_experiments/data/Jan-2021-HIL-ARL-exps/normal/potato/exp_2/'
+#desired_cutting_behavior = 'fast'
+
+#plot_analytical_human_GPmodel_rewards_all_prev_epochs(work_dir, desired_cutting_behavior)
 
 
 #pol_param_data_filepath = '/home/sony/Documents/cutting_RL_experiments/data/Jan-2021-HIL-ARL-exps/scoring/tomato/exp_1/all_polParamRew_data/polParamsRews_epoch_1_ep_24.npy'

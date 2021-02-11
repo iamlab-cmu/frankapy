@@ -83,11 +83,13 @@ class RewardLearner:
         sampled_params_pi_current = np.array(sampled_params_pi_current)
 
         pi_star_wi = multivariate_normal.pdf(sampled_params_pi_star, mean=pi_star_mean, cov=pi_star_cov, allow_singular=True)
+        # originally sampling from pi_tilda but not doing importance sampling ... need to fix!
         pi_tilda_wi = multivariate_normal.pdf(sampled_params_pi_tilda, mean=pi_tilda_mean, cov=pi_tilda_cov, allow_singular=True)
-        pi_current_wi = multivariate_normal.pdf(sampled_params_pi_current, mean=pi_current_mean, cov=pi_current_cov, allow_singular=True)
+        #pi_tilda_wi = multivariate_normal.pdf(sampled_params_pi_star, mean=pi_tilda_mean, cov=pi_tilda_cov, allow_singular=True)
 
-        star_div_current = (pi_star_wi/pi_current_wi)
+        #star_div_current = (pi_star_wi/pi_current_wi)
         star_div_tilda = (pi_star_wi/pi_tilda_wi)
+        disc_prob = (pi_star_wi + pi_tilda_wi)/2
 
         # debug
         tilda_vals,tilda_vecs = np.linalg.eig(pi_tilda_cov)
@@ -95,12 +97,9 @@ class RewardLearner:
         print('tilda_vals', tilda_vals)
         print('star_vals', star_vals)
 
-        # import pdb; pdb.set_trace()
-        #approx_sampling_KLdiv = (1/num_samples)*np.sum(star_div_current*np.log(star_div_tilda))
-        #approx_sampling_KLdiv = (1/num_samples)*np.sum(star_div_current*(np.log(pi_star_wi) - np.log(pi_tilda_wi)))
-
-        # removed pi_current
-        approx_sampling_KLdiv = (1/num_samples)*np.sum(star_div_tilda*np.log(star_div_tilda))
+        approx_sampling_KLdiv = (1/num_samples)*np.sum((pi_star_wi/disc_prob)*np.log(star_div_tilda))
+        #approx_sampling_KLdiv = (1/num_samples)*np.sum(pi_star_wi*np.log(star_div_tilda))
+        #approx_sampling_KLdiv = (1/num_samples)*np.sum(star_div_tilda*np.log(star_div_tilda))
 
         # import pdb; pdb.set_trace()
         return approx_sampling_KLdiv
@@ -127,8 +126,8 @@ class RewardLearner:
                 # print updated covar matrix 
                 if epoch % 20 == 0:
                 #print('updated covariance matrix', output.lazy_covariance_matrix.evaluate())
-                #print('model noise', model.likelihood.noise.item())
-                # save updated covariance_matrix
+                    print('model noise', model.likelihood.noise.item())
+                #   save updated covariance_matrix
                     covmat_np = output.lazy_covariance_matrix.evaluate().detach().numpy()
                     np.savetxt(work_dir + '/' + 'GP_reward_model_data' + '/' + 'GP_cov_mat/' + 'epoch%i_numTrainSamples%i.txt'%(epoch, train_x.shape[0]), covmat_np)
 
@@ -139,6 +138,7 @@ class RewardLearner:
         print('done training')
 
         self.num_reward_features = model.num_features
+        # import pdb; pdb.set_trace()
         return model
 
     def calc_expected_reward_for_observed_outcome_w_GPmodel(self, model, likelihood, new_outcomes):
@@ -224,7 +224,8 @@ class RewardLearner:
         prior_training_data_expect_rewards_sig = np.sqrt(np.array(prior_training_data_expect_rewards_sig)) # NOTE: add sqrt to get std from variance!!
         prior_training_data_policy_params = np.array(prior_training_data_policy_params)
 
-        import pdb; pdb.set_trace()
+        print('TODO: need to update prior_training_data_expect_rewards_sig and prior_training_data_expect_rewards_mean when testing out new training set sizes!!!!!')
+        import pdb; pdb.set_trace() 
         '''
         prior_training_data_o: nx7 arr (7 reward features)
         prior_training_data_expect_rewards_mean: (n,) arr
@@ -234,13 +235,17 @@ class RewardLearner:
 
         num_samples = len(prior_training_data)       
         samples_to_query, KL_div_all, KL_div_all_wts = [], [], []
-
-        if current_epoch == 1:
-            start_sample_to_check = num_samples_each_epoch        
-        elif current_epoch == 2:
-            start_sample_to_check = 2*num_samples_each_epoch   
-        elif current_epoch == 3:
-            start_sample_to_check = 3*num_samples_each_epoch  
+        
+        # -----------------FOR DEBUGGING------------------------------
+        import pdb; pdb.set_trace()
+        queried_samples_all = np.arange(5).tolist()
+        fp = 'gp_rewsVars_trainingSize_5_sigVar_4.npy'
+        testdir = '/home/sony/Documents/cutting_RL_experiments/data/Jan-2021-HIL-ARL-exps/normal/potato/exp_2/GP_reward_model_data/2-11-21-GP-training-size-eval/'
+        prior_training_data_expect_rewards_mean = np.load(testdir+fp)[:,0]
+        prior_training_data_expect_rewards_sig = np.sqrt(np.load(testdir+fp)[:,1])
+        diff_rews = []
+        # import pdb; pdb.set_trace()
+        #--------------------------------------------------------------
 
         # iterate through all samples in current epoch in training data set
         for i in range(0, num_samples):       
@@ -258,6 +263,7 @@ class RewardLearner:
 
                 #### SHOULD be using sigma points to estimate UPDATED reward model!
                 # TODO: should be updating reward model separately for each sigma pt??
+                # import pdb; pdb.set_trace()
                 outcomes_to_update = np.vstack((outcome, outcome))
                 rewards_to_update = np.array([sigma_pt_1, sigma_pt_2])
                 
@@ -277,12 +283,32 @@ class RewardLearner:
                 #hypoth_likelihood = gpytorch.likelihoods.FixedNoiseGaussianLikelihood(torch.ones(updated_train_x.shape[0]) * beta)
 
                 #update hypoth reward model with this outcome
-                continue_training = False
-                hypoth_reward_model = self.update_reward_GPmodel(work_dir, continue_training, num_training_epochs, hypoth_optimizer, hypoth_reward_model, hypoth_likelihood, hypoth_mll, updated_train_x, updated_train_y)
+                # original
+                #continue_training = False
+                #hypoth_reward_model = self.update_reward_GPmodel(work_dir, continue_training, num_training_epochs, hypoth_optimizer, hypoth_reward_model, hypoth_likelihood, hypoth_mll, updated_train_x, updated_train_y)
                 
-                #calculate rewards for training data under updated reward model                   
+                #--------------------------------------- debugging!!!!
+                likelihood = gpytorch.likelihoods.GaussianLikelihood() 
+                gpr_reward_model = GPRegressionModel(torch.from_numpy(updated_train_x), torch.from_numpy(updated_train_y), likelihood) 
+                #gpr_reward_model.covar_module.outputscale = args.GPsignal_var_initial
+
+                import pdb; pdb.set_trace()
+                optimizer = torch.optim.Adam([                
+                    {'params': gpr_reward_model.covar_module.parameters()},
+                    {'params': gpr_reward_model.mean_module.parameters()},
+                    {'params': gpr_reward_model.likelihood.parameters()},
+                ], lr=0.01) # lr = 0.01 originally 
+                mll = gpytorch.mlls.ExactMarginalLogLikelihood(likelihood, gpr_reward_model)
+                hypoth_reward_model = self.train_GPmodel(work_dir, 100, optimizer, gpr_reward_model, likelihood, mll, \
+                    torch.from_numpy(updated_train_x), torch.from_numpy(updated_train_y)
+        
+        
+                #calculate rewards for training data under updated reward model                 
                 mean_exp_rewards, var_exp_rewards = self.calc_expected_reward_for_observed_outcome_w_GPmodel(hypoth_reward_model, \
                     hypoth_likelihood, prior_training_data_o)
+                import pdb; pdb.set_trace()
+
+                print('diff rews', (np.abs(prior_training_data_expect_rewards_mean-mean_exp_rewards)))
                 # import pdb; pdb.set_trace()
                 #Calculate policy update under updated reward model            
                 # NOTE: 2/4/21 update: lower rel_entropy_bound so new policy cov doesn't deviate too far 
@@ -294,14 +320,16 @@ class RewardLearner:
                     prior_training_data_policy_params_scaled, rel_entropy_bound = 1.5, min_temperature=0.001) #rel_entropy_bound = 0.4
                 
                 if self.scale_pol_params:
-                    pi_star_wts = reps_wts_scaled
+                    #pi_star_wts = reps_wts_scaled
                     pi_star_mean = pi_star_mean_scaled 
                     pi_star_cov = pi_star_cov_scaled
                 else:
                     # UNSCALED
                     pi_star_mean, pi_star_cov, reps_wts = agent.update_policy_REPS(mean_exp_rewards, \
                         prior_training_data_policy_params, rel_entropy_bound = 1.5, min_temperature=0.001) #rel_entropy_bound = 0.4
-                    pi_star_wts = reps_wts
+                    #pi_star_wts = reps_wts
+
+                pi_star_wts = agent.calculate_REPS_wts(mean_exp_rewards, rel_entropy_bound = 1.5, min_temperature=0.001)
 
                 print('pi_current_mean (policy before updating)' , pi_current_mean)
                 print('pi_tilda_mean (new policy under current reward model)' , pi_tilda_mean)
@@ -318,20 +346,23 @@ class RewardLearner:
                 ######### KL DIV ANALYTICAL
                 #print('computing KL div analytical')
                 # import pdb; pdb.set_trace()
-                #KL_div = self.compute_kl_divergence(pi_tilda_mean, pi_tilda_cov, pi_star_mean, pi_star_cov)
+                #KL_div = self.compute_kl_divergence(pi_tilda_mean, pi_tilda_cov, pi_star_mean, pi_star_cov)[0][0]
                 #print('KLdiv_analytical', KL_div)
 
                 if self.sampl_or_weight_kld_calc == 'sampling':
                     ######### KL DIV SAMPLING
                     print('computing KL div')
-                    n_samples = 10000 #20 #10000 #20
+                    n_samples = 5000 # 1000 # 10000 #20 #10000 #20
                     KL_div = self.compute_KL_div_sampling_updated(agent, n_samples, pi_tilda_mean, pi_tilda_cov, \
                         pi_star_mean, pi_star_cov, pi_current_mean, pi_current_cov, initial_wts, cut_type, S)
                     print('KLdiv_sampling', KL_div)     
 
                 elif self.sampl_or_weight_kld_calc == 'weight':          
                     # ############ KL DIV WEIGHTS SPACE
-                    KL_div = self.compute_kl_divergence_wts(pi_star_wts, pi_tilda_wts)                   
+                    KL_div = self.compute_kl_divergence_wts(pi_star_wts, pi_tilda_wts)   
+                    #np.savetxt('/home/sony/Documents/cutting_RL_experiments/data/Jan-2021-HIL-ARL-exps/scoring/tomato/exp_1/GP_reward_model_data/KLD_debug_new/2-10-21/pi_star_rews_updated_reward_model_sample' + str(i) +'.txt', mean_exp_rewards)
+                    #np.savetxt('/home/sony/Documents/cutting_RL_experiments/data/Jan-2021-HIL-ARL-exps/scoring/tomato/exp_1/GP_reward_model_data/KLD_debug_new/2-10-21/pi_tilda_pi_star_wts_sample' + str(i) +'.txt', \
+                        #np.concatenate((np.expand_dims(pi_tilda_wts,axis=1),np.expand_dims(pi_star_wts, axis=1)),axis=1))
                     print('KLdiv_weights', KL_div)
 
                 # save to buffer
@@ -449,6 +480,8 @@ class RewardLearner:
         det_q = np.linalg.det(qv)
         inv_p = np.linalg.pinv(pv)
         inv_q = np.linalg.pinv(qv)
+        #inv_p = np.linalg.inv(pv)
+        #inv_q = np.linalg.inv(qv)
 
         log_det1_det2 = np.log(det_q) - np.log(det_p)
         trace_pq = np.trace(inv_q*pv)

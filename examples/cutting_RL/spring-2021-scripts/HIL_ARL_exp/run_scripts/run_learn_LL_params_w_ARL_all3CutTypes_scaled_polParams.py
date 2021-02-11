@@ -110,7 +110,7 @@ if __name__ == "__main__":
     parser.add_argument('--standardize_reward_feats', type=bool, default = True)
     parser.add_argument('--scale_pol_params_for_KLD', type=bool, default = True)
     parser.add_argument('--add_ridge_to_pol_cov_for_KLD', type=bool, default = False)
-    parser.add_argument('--sampl_or_weight_kld_calc', type=str, default = 'sampling', help = 'sampling or weight')
+    parser.add_argument('--sampl_or_weight_kld_calc', type=str, default = 'weight', help = 'sampling or weight')
 
     args = parser.parse_args()
 
@@ -807,7 +807,11 @@ if __name__ == "__main__":
             else:  # unscaled
                 pi_tilda_mean = policy_params_mean
                 pi_tilda_cov = policy_params_sigma           
-            pi_tilda_wts, temp = reps_agent.weights_from_rewards(np.array(training_data_list)[:,-3].tolist())
+
+            # calculate GP model rewards for all samples in training set under current reward model
+            GP_mean_rewards_all_data_for_pi_tilda_wt_calc, GP_var_rewards_all_data_for_pi_tilda_wt_calc = reward_learner.calc_expected_reward_for_observed_outcome_w_GPmodel(gpr_reward_model, likelihood, \
+                np.array(np.array(training_data_list)[:,0].tolist()))
+            pi_tilda_wts, temp = reps_agent.weights_from_rewards(GP_mean_rewards_all_data_for_pi_tilda_wt_calc)
             
             # save policy mean and cov to buffers
             mean_params_each_epoch.append(policy_params_mean)
