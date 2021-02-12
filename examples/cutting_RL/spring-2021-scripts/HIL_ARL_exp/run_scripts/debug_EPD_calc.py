@@ -353,9 +353,7 @@ if __name__ == "__main__":
         s25 = np.load(test_dir + 'gp_rewsVars_trainingSize_25' + '_sigVar_'+str(args.GPsignal_var_initial)+'.npy')
 
         human_reward = np.load(test_dir + 'human_rewards.npy')
-        #plt.figure()
-        fig, axs = plt.subplots(2, 1, sharey=True, tight_layout=True)
-        
+        fig, axs = plt.subplots(2, 1, sharey=True, tight_layout=True)        
         axs[0].plot(s5[:,0],'-o')
         axs[0].plot(s10[:,0],'-o')
         axs[0].plot(s15[:,0],'-o')
@@ -367,9 +365,8 @@ if __name__ == "__main__":
         axs[0].set_ylabel('rewards')
         axs[0].legend(('GP model rews, s=5', 'GP model rews, s=10', 'GP model rews, s=15','GP model rews, s=20','GP model rews, s=25', 'human rews'))
         axs[0].set_title('human rewards vs. GP model rewards with different training set sizes')
-        #plt.show()
-
-        #plt.figure()
+        
+        #axs[1].vlines(np.array(queried),ymin=0,ymax=3,colors = ['r']*len(queried))
         axs[1].plot(s5[:,1],'-o')
         axs[1].plot(s10[:,1],'-o')
         axs[1].plot(s15[:,1],'-o')
@@ -379,11 +376,75 @@ if __name__ == "__main__":
         axs[1].set_xticks(np.arange(s10.shape[0]))
         axs[1].set_ylabel('variance - GP rewards')
         axs[1].legend(('GP model rews, s=5', 'GP model, s=10', 'GP model, s=15','GP model, s=20','GP model, s=25'))
-        axs[1].set_title('GP model reward variance with different training set sizes')
+        axs[1].set_title('GP model reward variance with different training set sizes')        
+        plt.show()
+
+        #import pdb; pdb.set_trace()
+        # plot queried samples on same axis w/ variance
+        queried_5 = [16, 20, 30, 41, 42, 44]
+        queried_10 = [16, 20, 30, 39, 41, 42, 44]
+        queried_15 = [15, 16, 20, 29, 30, 39, 41, 42, 44, 45, 49]
+        queried_20 = [20, 29, 30, 39, 41, 42, 44, 45, 49]
+        queried_25 = [29, 30, 39, 41, 42, 44, 45, 49]
+
+        fig, axs = plt.subplots(2, 5, sharey=True, tight_layout=True)
+
+        axs[0,0].plot(s5[:,0],'-o')
+        axs[0,1].plot(s10[:,0],'-o')
+        axs[0,2].plot(s15[:,0],'-o')
+        axs[0,3].plot(s20[:,0],'-o')
+        axs[0,4].plot(s25[:,0],'-o')
+        axs[0,0].plot(human_reward[:,1],'-o')
+        axs[0,1].plot(human_reward[:,1],'-o')
+        axs[0,2].plot(human_reward[:,1],'-o')
+        axs[0,3].plot(human_reward[:,1],'-o')
+        axs[0,4].plot(human_reward[:,1],'-o')
+
+        for i in range(5):
+            axs[0,i].set_xlabel('samples')
+            axs[0,i].set_xticks(np.arange(s10.shape[0]))
+        
+        axs[0,0].set_ylabel('rewards')        
+        axs[0,2].set_title('human rewards vs. GP model rewards with different training set sizes')     
+
+        axs[0,0].legend(('GP model rews, s=5', 'human rews'))
+        axs[0,1].legend(('GP model rews, s=10', 'human rews'))
+        axs[0,2].legend(('GP model rews, s=15', 'human rews'))
+        axs[0,3].legend(('GP model rews, s=20', 'human rews'))
+        axs[0,4].legend(('GP model rews, s=25', 'human rews'))
+         
+
+        axs[1,0].plot(s5[:,1],'-o')
+        axs[1,1].plot(s10[:,1],'-o')
+        axs[1,2].plot(s15[:,1],'-o')
+        axs[1,3].plot(s20[:,1],'-o')
+        axs[1,4].plot(s25[:,1],'-o')
+
+        for i in range(5):
+            axs[1,i].set_xlabel('samples')
+            axs[1,i].set_xticks(np.arange(s10.shape[0]))
+        
+        axs[1,0].set_ylabel('variance - GP rewards')        
+        axs[1,2].set_title('GP model reward variance with different training set sizes')
+
+        axs[1,0].legend(('GP model variance, s=5', 'human rews'))
+        axs[1,1].legend(('GP model variance, s=10', 'human rews'))
+        axs[1,2].legend(('GP model variance, s=15', 'human rews'))
+        axs[1,3].legend(('GP model variance, s=20', 'human rews'))
+        axs[1,4].legend(('GP model variance, s=25', 'human rews'))
+        
+        axs[1,0].vlines(np.array(queried_5),ymin=-2,ymax=3,colors = ['r']*len(queried_5),linestyles='dashed')
+        axs[1,1].vlines(np.array(queried_10),ymin=-2,ymax=3,colors = ['r']*len(queried_10),linestyles='dashed')
+        axs[1,2].vlines(np.array(queried_15),ymin=-2,ymax=3,colors = ['r']*len(queried_15),linestyles='dashed')
+        axs[1,3].vlines(np.array(queried_20),ymin=-2,ymax=3,colors = ['r']*len(queried_20),linestyles='dashed')
+        axs[1,4].vlines(np.array(queried_25),ymin=-2,ymax=3,colors = ['r']*len(queried_25),linestyles='dashed')
+
         
         plt.show()
 
-    import pdb; pdb.set_trace()
+        import pdb; pdb.set_trace()
+    
+
 
     #pi_tilda_wts, temp = reps_agent.weights_from_rewards(np.array(training_data_list)[:,-3].tolist())
     #np.savetxt('/home/sony/Documents/cutting_RL_experiments/data/Jan-2021-HIL-ARL-exps/scoring/tomato/exp_1/GP_reward_model_data/KLD_debug_new/2-10-21/pi_tilda_rews_current_reward_model.txt', updated_mean_exp_rewards)
@@ -409,8 +470,10 @@ if __name__ == "__main__":
 
     # determine outcomes to query using EPD
     current_epoch = args.starting_epoch_num
+    # adding this to account for trying out different amounts of training data
     GP_training_data_x_all = GP_training_data_x_all[0:args.num_GP_training_samples,:]
     GP_training_data_y_all = GP_training_data_y_all[0:args.num_GP_training_samples]
+    
     samples_to_query, queried_outcomes  = reward_learner.compute_EPD_for_each_sample_updated(current_epoch, args.num_samples, work_dir, num_EPD_epochs, optimizer, \
         gpr_reward_model, likelihood, mll, agent, pi_tilda_mean, pi_tilda_cov, pi_tilda_wts, pi_current_mean, pi_current_cov, \
             training_data_list, queried_samples_all, GP_training_data_x_all, GP_training_data_y_all, beta, initial_wts, args.cut_type, S) 
