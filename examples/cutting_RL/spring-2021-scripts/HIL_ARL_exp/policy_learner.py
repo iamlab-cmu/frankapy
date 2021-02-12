@@ -33,7 +33,8 @@ class REPSPolicyLearner:
     def initialize_gaussian_policy(self, init_dmp_info_dict, work_dir, position_dmp_weights_file_path):
 
         use_all_dmp_dims = False
-        if self.start_from_previous and self.starting_epoch_num > 1: # load previous data collected and start from updated policy and/or sample/epoch        
+        if self.start_from_previous and self.starting_epoch_num > 0:
+        # if self.start_from_previous and self.starting_epoch_num > 1: # load previous data collected and start from updated policy and/or sample/epoch        
             # starting_epoch_num should be > 1 to update policy w/ REPS b/c w/ HIL ARL, we don't update policy until after 1st epoch
             prev_data_dir = self.previous_datadir
             if use_all_dmp_dims:
