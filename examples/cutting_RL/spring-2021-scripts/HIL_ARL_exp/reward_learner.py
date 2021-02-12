@@ -30,11 +30,16 @@ from policy_learner import REPSPolicyLearner
 class RewardLearner:
     '''Reward_Learner for ARL using GPytorch for GP implementation 
     '''
-    def __init__(self, kappa):
+    def __init__(self, work_dir, kappa, cut_type, food_type, desired_cutting_behavior):
+        self.work_dir = work_dir
         self.kappa = kappa #EPD sampling threshold
         self.scale_pol_params = None
         self.add_ridge_to_pol_cov = True
         self.sampl_or_weight_kld_calc = None #'sampling' or 'weight'
+        self.n_GP_training_samples = None
+        self.cut_type = cut_type
+        self.food_type = food_type
+        self.desired_cutting_behavior = desired_cutting_behavior
 
     def plot_rewardModel_vs_oracle_rewards(self, reward_model_rewards_all_mean_buffer, automated_expert_rewards_all):
         plt.plot(reward_model_rewards_all_mean_buffer)
@@ -59,11 +64,88 @@ class RewardLearner:
         for i in range(0,len(outcomes_list)):
             outcomes_arr[i,:] = np.array(outcomes_list[i])
         return outcomes_arr
+    
+    def query_expert_rewards_and_update_GP_training_data(self, epoch, GP_training_data_x_all, GP_training_data_y_all, \
+        samples_to_query, queried_outcomes, expert_rewards_all_epochs):
+        
+        if samples_to_query!=[]:
+            print('querying samples: ', samples_to_query)
+            # import pdb; pdb.set_trace()       
+            if self.desired_cutting_behavior == 'slow' or self.desired_cutting_behavior == 'fast':
+                queried_expert_rewards_slow = (np.array(expert_rewards_all_epochs)[samples_to_query, 0])
+                queried_expert_rewards_fast = (np.array(expert_rewards_all_epochs)[samples_to_query, 1])
+
+                if self.desired_cutting_behavior == 'slow':
+                    queried_expert_rewards = queried_expert_rewards_slow
+
+                elif self.desired_cutting_behavior == 'fast':
+                    queried_expert_rewards = queried_expert_rewards_fast
+           
+            else:
+                queried_expert_rewards = np.array(expert_rewards_all_epochs)[samples_to_query]
+            import pdb; pdb.set_trace()
+        
+        else: 
+            print('No samples to query from human')
+        
+        '''save all queried outcomes and queried rewards in buffer to send to GPytorch model as training data everytime it get updated:
+        train_x is queried_outcomes ((nxD) arr), train_y is queried_expert_rewards ((n,) arr)'''
+
+        # stack reward features (GP model x training data)
+        GP_training_data_x_all = np.vstack((GP_training_data_x_all, queried_outcomes))
+        print('shape GP_training_data_x_all', GP_training_data_x_all.shape)
+        import pdb; pdb.set_trace()
+
+        # get GP model y training data (expert rewards) based on desired cutting behavior
+        if self.desired_cutting_behavior == 'slow' or self.desired_cutting_behavior == 'fast':
+            GP_training_data_y_all_slow = np.concatenate((GP_training_data_y_all_slow, queried_expert_rewards_slow))
+            GP_training_data_y_all_fast = np.concatenate((GP_training_data_y_all_fast, queried_expert_rewards_fast))
+            # save both slow and fast for post-processing later
+            np.savez(self.work_dir + '/' 'GP_reward_model_data/' + 'GP_reward_model_training_data_slowCut_epoch_'+str(epoch) + '.npz', GP_training_data_x_all = GP_training_data_x_all, \
+                        GP_training_data_y_all = GP_training_data_y_all_slow)
+            np.savez(self.work_dir + '/' 'GP_reward_model_data/' + 'GP_reward_model_training_data_fastCut_epoch_'+str(epoch) + '.npz', GP_training_data_x_all = GP_training_data_x_all, \
+                        GP_training_data_y_all = GP_training_data_y_all_fast)
+            import pdb; pdb.set_trace()
+
+            if self.desired_cutting_behavior == 'slow':                
+                GP_training_data_y_all = np.concatenate((GP_training_data_y_all, queried_expert_rewards_slow))
+                import pdb; pdb.set_trace()
+
+            elif self.desired_cutting_behavior == 'fast':                 
+                GP_training_data_y_all = np.concatenate((GP_training_data_y_all, queried_expert_rewards_fast))
+                import pdb; pdb.set_trace()
+        
+        else:
+            GP_training_data_y_all = np.concatenate((GP_training_data_y_all, queried_expert_rewards))
+            np.savez(self.work_dir + '/' 'GP_reward_model_data/' + 'GP_reward_model_training_data_qualityCut_epoch_'+str(epoch) + '.npz', GP_training_data_x_all = GP_training_data_x_all, \
+                    GP_training_data_y_all = GP_training_data_y_all)
+            import pdb; pdb.set_trace()
+        
+        print('GP_training_data_x_all', GP_training_data_x_all.shape)
+        print('GP_training_data_y_all', GP_training_data_y_all.shape)
+        import pdb; pdb.set_trace()          
+
+        return GP_training_data_x_all, GP_training_data_y_all, queried_expert_rewards
+        
+    
+    def save_reward_learning_data_to_np_arrays(self, work_dir, time_to_complete_cut, task_success, \
+        task_success_more_granular, reward_features_all_samples, expert_rewards_all_epochs, training_data_list):
+        # save training data list  
+        np.save(work_dir + '/' + 'GP_reward_model_data/' + 'training_data_list.npy', np.array(training_data_list))
+        # save expert rewards all epochs
+        np.save(work_dir + '/' + 'GP_reward_model_data/' + 'expert_rewards_all_epochs.npy', np.array(expert_rewards_all_epochs))  
+
+        # save task success metrics           
+        np.save(os.path.join(work_dir, 'cut_times_all_samples.npy'), np.array(time_to_complete_cut))
+        np.save(os.path.join(work_dir, 'task_success_all_samples.npy'), np.array(task_success)) 
+        np.save(os.path.join(work_dir, 'task_success_more_granular_all_samples.npy'), np.array(task_success_more_granular))
+        # save reward features each samples
+        np.save(os.path.join(work_dir, 'reward_features_all_samples.npy'), np.array(reward_features_all_samples))
        
 
     def compute_KL_div_sampling_updated(self, agent, num_samples, pi_tilda_mean, pi_tilda_cov, \
-        pi_star_mean, pi_star_cov, pi_current_mean, pi_current_cov, initial_wts, cut_type, S): #taking samples from policies pi_star and pi_tilda
-        sampled_params_pi_tilda, sampled_params_pi_star, sampled_params_pi_current = [], [], []
+        pi_star_mean, pi_star_cov, initial_wts, cut_type, S): #taking samples from policies pi_star and pi_tilda
+        sampled_params_pi_tilda, sampled_params_pi_star = [], []
 
         # ADDING TO DEBUG NUM INSTAB
         if self.add_ridge_to_pol_cov:
@@ -73,23 +155,18 @@ class RewardLearner:
         for i in range(0, num_samples):
             new_params_pi_tilda = agent.sample_new_params_from_policy_only_mu_sigma(self.scale_pol_params, pi_tilda_mean, pi_tilda_cov, initial_wts, cut_type, S)
             new_params_pi_star = agent.sample_new_params_from_policy_only_mu_sigma(self.scale_pol_params, pi_star_mean, pi_star_cov, initial_wts, cut_type, S)
-            new_params_pi_current = agent.sample_new_params_from_policy_only_mu_sigma(self.scale_pol_params, pi_current_mean, pi_current_cov, initial_wts, cut_type, S)
             #import pdb; pdb.set_trace()
 
             sampled_params_pi_tilda.append(new_params_pi_tilda)
             sampled_params_pi_star.append(new_params_pi_star)
-            sampled_params_pi_current.append(new_params_pi_current)
 
         sampled_params_pi_tilda = np.array(sampled_params_pi_tilda)
         sampled_params_pi_star = np.array(sampled_params_pi_star)
-        sampled_params_pi_current = np.array(sampled_params_pi_current)
 
         pi_star_wi = multivariate_normal.pdf(sampled_params_pi_star, mean=pi_star_mean, cov=pi_star_cov, allow_singular=True)
         # originally sampling from pi_tilda but not doing importance sampling ... need to fix!
         pi_tilda_wi = multivariate_normal.pdf(sampled_params_pi_tilda, mean=pi_tilda_mean, cov=pi_tilda_cov, allow_singular=True)
-        #pi_tilda_wi = multivariate_normal.pdf(sampled_params_pi_star, mean=pi_tilda_mean, cov=pi_tilda_cov, allow_singular=True)
 
-        #star_div_current = (pi_star_wi/pi_current_wi)
         star_div_tilda = (pi_star_wi/pi_tilda_wi)
         disc_prob = (pi_star_wi + pi_tilda_wi)/2
 
@@ -167,51 +244,51 @@ class RewardLearner:
         # import pdb; pdb.set_trace()
         return mean_expected_rewards, var_expected_rewards
     
-    def calc_PI_all_outcomes(self, prior_training_data, queried_samples_all, lambda_thresh, eps=0.01, beta = 0.5):
-        prior_training_data_expect_rewards_mean, prior_training_data_policy_params, \
-            prior_training_data_expect_rewards_sig = [], [], []        
-        prior_training_data_o = np.empty([0,self.num_reward_features])
+    # def calc_PI_all_outcomes(self, prior_training_data, queried_samples_all, lambda_thresh, eps=0.01, beta = 0.5):
+    #     prior_training_data_expect_rewards_mean, prior_training_data_policy_params, \
+    #         prior_training_data_expect_rewards_sig = [], [], []        
+    #     prior_training_data_o = np.empty([0,self.num_reward_features])
         
-        for i in range(len(prior_training_data)):
-            prior_training_data_o = np.vstack((prior_training_data_o, prior_training_data[i][0]))
-            prior_training_data_expect_rewards_mean.append(prior_training_data[i][1])
-            prior_training_data_expect_rewards_sig.append(prior_training_data[i][2])
-            prior_training_data_policy_params.append(prior_training_data[i][3])      
+    #     for i in range(len(prior_training_data)):
+    #         prior_training_data_o = np.vstack((prior_training_data_o, prior_training_data[i][0]))
+    #         prior_training_data_expect_rewards_mean.append(prior_training_data[i][1])
+    #         prior_training_data_expect_rewards_sig.append(prior_training_data[i][2])
+    #         prior_training_data_policy_params.append(prior_training_data[i][3])      
        
-        prior_training_data_expect_rewards_mean = np.array(prior_training_data_expect_rewards_mean)
-        prior_training_data_expect_rewards_sig = np.sqrt(np.array(prior_training_data_expect_rewards_sig)) # NOTE: add sqrt to get std from variance!!
-        prior_training_data_policy_params = np.array(prior_training_data_policy_params)
+    #     prior_training_data_expect_rewards_mean = np.array(prior_training_data_expect_rewards_mean)
+    #     prior_training_data_expect_rewards_sig = np.sqrt(np.array(prior_training_data_expect_rewards_sig)) # NOTE: add sqrt to get std from variance!!
+    #     prior_training_data_policy_params = np.array(prior_training_data_policy_params)
 
-        import pdb; pdb.set_trace()
-        num_samples = len(prior_training_data)       
-        samples_to_query, PI_o_all = [], []
-        f_oStar = np.max(prior_training_data_expect_rewards_mean)
+    #     import pdb; pdb.set_trace()
+    #     num_samples = len(prior_training_data)       
+    #     samples_to_query, PI_o_all = [], []
+    #     f_oStar = np.max(prior_training_data_expect_rewards_mean)
         
-        # import pdb; pdb.set_trace()
-        for i in range(0, num_samples):       
-            mu_o = prior_training_data_expect_rewards_mean[i]
-            sigma_o = prior_training_data_expect_rewards_sig[i]  
-            PI_o = norm.cdf((mu_o - f_oStar - eps)/sigma_o)
-            PI_o_all.append(PI_o)
+    #     # import pdb; pdb.set_trace()
+    #     for i in range(0, num_samples):       
+    #         mu_o = prior_training_data_expect_rewards_mean[i]
+    #         sigma_o = prior_training_data_expect_rewards_sig[i]  
+    #         PI_o = norm.cdf((mu_o - f_oStar - eps)/sigma_o)
+    #         PI_o_all.append(PI_o)
         
-        max_PI_o = np.max(PI_o_all)
-        max_PI_outcome_idx = np.argmax(PI_o_all) 
-        import pdb; pdb.set_trace()
+    #     max_PI_o = np.max(PI_o_all)
+    #     max_PI_outcome_idx = np.argmax(PI_o_all) 
+    #     import pdb; pdb.set_trace()
 
-        if max_PI_outcome_idx not in queried_samples_all:         
-            uncertaint_thresh =  prior_training_data_expect_rewards_sig[max_PI_outcome_idx]/np.sqrt(beta)
-            if uncertaint_thresh > lambda_thresh:
-                samples_to_query.append(max_PI_outcome_idx)
+    #     if max_PI_outcome_idx not in queried_samples_all:         
+    #         uncertaint_thresh =  prior_training_data_expect_rewards_sig[max_PI_outcome_idx]/np.sqrt(beta)
+    #         if uncertaint_thresh > lambda_thresh:
+    #             samples_to_query.append(max_PI_outcome_idx)
 
-        queried_outcomes_arr = prior_training_data_o[samples_to_query]  
-        print('samples_to_query', samples_to_query)            
-        import pdb; pdb.set_trace()
-        return samples_to_query, queried_outcomes_arr
+    #     queried_outcomes_arr = prior_training_data_o[samples_to_query]  
+    #     print('samples_to_query', samples_to_query)            
+    #     import pdb; pdb.set_trace()
+    #     return samples_to_query, queried_outcomes_arr
     
     # DEBUGGING ISSUE W/ SIGMA PTS NOT UPDATING!!!!!!
     def compute_EPD_for_each_sample_updated(self, GP_mean_rews_all_data_current_reward_model, GP_var_rews_all_data_current_reward_model, \
         current_epoch, num_samples_each_epoch, work_dir, num_training_epochs, optimizer, current_reward_model, likelihood, mll, \
-            agent, pi_tilda_mean, pi_tilda_cov, pi_tilda_wts, pi_current_mean, pi_current_cov, prior_training_data, \
+            agent, pi_tilda_mean, pi_tilda_cov, pi_tilda_wts, prior_training_data, \
                 queried_samples_all, GP_training_data_x_all, GP_training_data_y_all, beta, initial_wts, cut_type, S):
 
         prior_training_data_expect_rewards_mean, prior_training_data_policy_params, \
@@ -319,7 +396,6 @@ class RewardLearner:
 
                     pi_star_wts = agent.calculate_REPS_wts(mean_exp_rewards, rel_entropy_bound = 1.5, min_temperature=0.001)
 
-                    print('pi_current_mean (policy before updating)' , pi_current_mean)
                     print('pi_tilda_mean (new policy under current reward model)' , pi_tilda_mean)
                     print('pi_star_mean (new policy under updated reward model)' , pi_star_mean)
                     # import pdb; pdb.set_trace()
@@ -329,7 +405,7 @@ class RewardLearner:
                         print('computing KL div')
                         n_samples = 5000 # 1000 # 10000 #20 #10000 #20
                         KL_div = self.compute_KL_div_sampling_updated(agent, n_samples, pi_tilda_mean, pi_tilda_cov, \
-                            pi_star_mean, pi_star_cov, pi_current_mean, pi_current_cov, initial_wts, cut_type, S)
+                            pi_star_mean, pi_star_cov, initial_wts, cut_type, S)
                         print('KLdiv_sampling', KL_div)     
 
                     elif self.sampl_or_weight_kld_calc == 'weight':          
@@ -358,7 +434,7 @@ class RewardLearner:
         if self.sampl_or_weight_kld_calc == 'sampling':
             plt.title('histogram of KLD values calculated w/ sampling - %i pol param samples'%n_samples)
         elif self.sampl_or_weight_kld_calc == 'weight':
-            plt.title('histogram of KLD values calculated in weight space - GP training samples n = %i'%n_GP_training_samples)
+            plt.title('histogram of KLD values calculated in weight space - GP training samples n = %i'%self.n_GP_training_samples)
         plt.xlabel('KLD values')
         plt.ylabel('freq')
         plt.show()
