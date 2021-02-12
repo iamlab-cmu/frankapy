@@ -25,6 +25,7 @@ class REPSPolicyLearner:
         self.prev_epochs_to_calc_pol_update = prev_epochs_to_calc_pol_update
         self.starting_epoch_num = starting_epoch_num
         self.dmp_traject_time = dmp_traject_time
+        self.GP_mean_rews_all_data_current_reward_model = None
     
     def scale_pol_params(self, pol_params):
         pol_params_scaled = (pol_params-self.init_mu_0)/np.sqrt(np.diag(self.init_cov_0))        
@@ -38,9 +39,9 @@ class REPSPolicyLearner:
             # starting_epoch_num should be > 1 to update policy w/ REPS b/c w/ HIL ARL, we don't update policy until after 1st epoch
             prev_data_dir = self.previous_datadir
             if use_all_dmp_dims:
-                policy_params_mean, policy_params_sigma = parse_policy_params_and_rews_from_file_HIL_ARL(self.num_expert_rews_each_sample, prev_data_dir, self.prev_epochs_to_calc_pol_update, hfpc = False)
+                policy_params_mean, policy_params_sigma = parse_policy_params_and_rews_from_file_HIL_ARL(self.GP_mean_rews_all_data_current_reward_model, self.num_expert_rews_each_sample, prev_data_dir, self.prev_epochs_to_calc_pol_update, hfpc = False)
             else:
-                policy_params_mean, policy_params_sigma = parse_policy_params_and_rews_from_file_HIL_ARL(self.num_expert_rews_each_sample, prev_data_dir, self.prev_epochs_to_calc_pol_update)
+                policy_params_mean, policy_params_sigma = parse_policy_params_and_rews_from_file_HIL_ARL(self.GP_mean_rews_all_data_current_reward_model, self.num_expert_rews_each_sample, prev_data_dir, self.prev_epochs_to_calc_pol_update)
 
             initial_mu, initial_sigma = policy_params_mean, policy_params_sigma
             mu, sigma = initial_mu, initial_sigma
@@ -135,7 +136,7 @@ class REPSPolicyLearner:
         elif S[2] == 1:
             control_type_z_axis = 'position'
         
-        if self.starting_epoch_num in [0,1]:
+        if self.starting_epoch_num == 0: # in [0,1]:
             self.init_mu_0 = initial_mu
             self.init_cov_0 = initial_sigma
         return initial_wts, initial_mu, initial_sigma, S, control_type_z_axis

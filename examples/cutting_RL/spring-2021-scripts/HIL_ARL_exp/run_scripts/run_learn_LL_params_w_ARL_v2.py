@@ -198,27 +198,16 @@ if __name__ == "__main__":
         else:
             fa.goto_pose_delta(move_down_to_contact, duration=5, use_impedance=False, force_thresholds=[10.0, 10.0, 3.0, 10.0, 10.0, 10.0], ignore_virtual_walls=True)    
                
-    # Initialize Gaussian policy params (DMP weights) - mean and sigma
-    initial_wts, initial_mu, initial_sigma, S, control_type_z_axis = agent.initialize_gaussian_policy(init_dmp_info_dict, work_dir, dmp_wts_file)
-    print('initial mu', initial_mu)        
-    mu, sigma = initial_mu, initial_sigma   
+    # # Initialize Gaussian policy params (DMP weights) - mean and sigma
+    # initial_wts, initial_mu, initial_sigma, S, control_type_z_axis = agent.initialize_gaussian_policy(init_dmp_info_dict, work_dir, dmp_wts_file)
+    # print('initial mu', initial_mu)        
+    # mu, sigma = initial_mu, initial_sigma   
 
-    import pdb; pdb.set_trace()
+    # import pdb; pdb.set_trace()
 
     mean_params_each_epoch, cov_each_epoch = [], []
     #import pdb; pdb.set_trace()
-    # if starting from a later epoch: load previous data    
-    if os.path.isfile(os.path.join(work_dir, 'policy_mean_each_epoch.npy')):
-        mean_params_each_epoch = np.load(os.path.join(work_dir, 'policy_mean_each_epoch.npy')).tolist()
-        cov_each_epoch = np.load(os.path.join(work_dir, 'policy_cov_each_epoch.npy')).tolist()
-    else:   
-        mean_params_each_epoch.append(initial_mu)   
-        cov_each_epoch.append(initial_sigma) 
-
-    if args.starting_epoch_num > 1:
-        agent.init_mu_0 = np.array(mean_params_each_epoch[0])
-        agent.init_cov_0 = np.array(cov_each_epoch[0])
-    
+        
     # Buffers for GP reward model data
     total_queried_samples_each_epoch, mean_reward_model_rewards_all_epochs = [], [] #track number of queries to expert for rewards and average rewards for each epoch
     training_data_list, queried_samples_all = [], []
@@ -318,6 +307,31 @@ if __name__ == "__main__":
 
         print('shape GP_training_data_x_all', GP_training_data_x_all.shape)
         print('shape GP_training_data_y_all', GP_training_data_y_all.shape)
+        
+        # calculate GP model rewards for ALL samples in training set under current reward model
+        GP_mean_rews_all_data_current_reward_model, GP_var_rews_all_data_current_reward_model = reward_learner.calc_expected_reward_for_observed_outcome_w_GPmodel \
+            (gpr_reward_model, likelihood, np.array(np.array(training_data_list)[:,0].tolist()))     
+        agent.GP_mean_rews_all_data_current_reward_model = GP_mean_rews_all_data_current_reward_model
+        
+    import pdb; pdb.set_trace()
+
+    # Initialize Gaussian policy params (DMP weights) - mean and sigma
+    initial_wts, initial_mu, initial_sigma, S, control_type_z_axis = agent.initialize_gaussian_policy(init_dmp_info_dict, work_dir, dmp_wts_file)
+    print('initial mu', initial_mu)        
+    mu, sigma = initial_mu, initial_sigma   
+    import pdb; pdb.set_trace()
+
+    # if starting from a later epoch: load previous data    
+    if os.path.isfile(os.path.join(work_dir, 'policy_mean_each_epoch.npy')):
+        mean_params_each_epoch = np.load(os.path.join(work_dir, 'policy_mean_each_epoch.npy')).tolist()
+        cov_each_epoch = np.load(os.path.join(work_dir, 'policy_cov_each_epoch.npy')).tolist()
+    else:   
+        mean_params_each_epoch.append(initial_mu)   
+        cov_each_epoch.append(initial_sigma) 
+
+    if args.starting_epoch_num > 1:
+        agent.init_mu_0 = np.array(mean_params_each_epoch[0])
+        agent.init_cov_0 = np.array(cov_each_epoch[0])
     import pdb; pdb.set_trace()
 
     for epoch in range(args.starting_epoch_num, args.num_epochs):

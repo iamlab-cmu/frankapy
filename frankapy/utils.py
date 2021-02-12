@@ -479,7 +479,7 @@ def parse_policy_params_and_rews_from_file(work_dir, prev_epochs_to_calc_pol_upd
 
     return policy_params_mean, policy_params_sigma
 
-def parse_policy_params_and_rews_from_file_HIL_ARL(num_expert_rews_each_sample, work_dir, prev_epochs_to_calc_pol_update, hfpc=True):
+def parse_policy_params_and_rews_from_file_HIL_ARL(GP_mean_rews_all_data_current_reward_model, num_expert_rews_each_sample, work_dir, prev_epochs_to_calc_pol_update, hfpc=True):
     '''
     calculate updated policy from previous data and plot rewards from previous data
 
@@ -513,14 +513,23 @@ def parse_policy_params_and_rews_from_file_HIL_ARL(num_expert_rews_each_sample, 
         data = np.load(data_file)
         if num_expert_rews_each_sample == 1:  
             pol_params = data[:,0:-3] 
-            rewards = data[:,-2]# reward model rewards
+            # rewards = data[:,-2]# reward model rewards
             
         elif num_expert_rews_each_sample == 2:  
             pol_params = data[:,0:-4] 
-            rewards = data[:,-3]# reward model rewards
+            # rewards = data[:,-3]# reward model rewards
 
-        # pol_params = data[:,0:-1]
-        # rewards = data[:,-1]  
+        if str(i) == 0:
+            rewards = np.array(GP_mean_rews_all_data_current_reward_model[0:25])
+        elif str(i) == 1:
+            rewards = np.array(GP_mean_rews_all_data_current_reward_model[25:50])
+        elif str(i) == 2:
+            rewards = np.array(GP_mean_rews_all_data_current_reward_model[50:75])
+        elif str(i) == 3:
+            rewards = np.array(GP_mean_rews_all_data_current_reward_model[75:95])
+        elif str(i) == 4:
+            rewards = np.array(GP_mean_rews_all_data_current_reward_model[95:])
+
         avg_rews_each_epoch.append(np.mean(rewards))
         rews_all_epochs = np.concatenate((rews_all_epochs, rewards),axis=0)
         pol_params_all_epochs = np.concatenate((pol_params_all_epochs, pol_params),axis=0)
