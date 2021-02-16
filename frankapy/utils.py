@@ -518,7 +518,7 @@ def parse_policy_params_and_rews_from_file_HIL_ARL(GP_mean_rews_all_data_current
         elif num_expert_rews_each_sample == 2:  
             pol_params = data[:,0:-4] 
             # rewards = data[:,-3]# reward model rewards
-
+        #import pdb; pdb.set_trace()
         if i == 0:
             rewards = np.array(GP_mean_rews_all_data_current_reward_model[0:25])
         elif i == 1:

@@ -97,23 +97,18 @@ class RewardLearner:
         #import pdb; pdb.set_trace()
 
         # get GP model y training data (expert rewards) based on desired cutting behavior
-        if self.desired_cutting_behavior == 'slow' or self.desired_cutting_behavior == 'fast':
-            GP_training_data_y_all_slow = np.concatenate((GP_training_data_y_all_slow, queried_expert_rewards_slow))
-            GP_training_data_y_all_fast = np.concatenate((GP_training_data_y_all_fast, queried_expert_rewards_fast))
-            # save both slow and fast for post-processing later
+        if self.desired_cutting_behavior == 'slow':
+            GP_training_data_y_all = np.concatenate((GP_training_data_y_all, queried_expert_rewards_slow))
             np.savez(self.work_dir + '/' 'GP_reward_model_data/' + 'GP_reward_model_training_data_slowCut_epoch_'+str(epoch) + '.npz', GP_training_data_x_all = GP_training_data_x_all, \
-                        GP_training_data_y_all = GP_training_data_y_all_slow)
+                        GP_training_data_y_all = GP_training_data_y_all)
+            
+
+        elif self.desired_cutting_behavior == 'fast':        
+            GP_training_data_y_all = np.concatenate((GP_training_data_y_all, queried_expert_rewards_fast))    
             np.savez(self.work_dir + '/' 'GP_reward_model_data/' + 'GP_reward_model_training_data_fastCut_epoch_'+str(epoch) + '.npz', GP_training_data_x_all = GP_training_data_x_all, \
-                        GP_training_data_y_all = GP_training_data_y_all_fast)
-            #import pdb; pdb.set_trace()
-
-            if self.desired_cutting_behavior == 'slow':                
-                GP_training_data_y_all = np.concatenate((GP_training_data_y_all, queried_expert_rewards_slow))
-                #import pdb; pdb.set_trace()
-
-            elif self.desired_cutting_behavior == 'fast':                 
-                GP_training_data_y_all = np.concatenate((GP_training_data_y_all, queried_expert_rewards_fast))
-                #import pdb; pdb.set_trace()
+                        GP_training_data_y_all = GP_training_data_y_all)
+            
+            #import pdb; pdb.set_trace()           
         
         else:
             GP_training_data_y_all = np.concatenate((GP_training_data_y_all, queried_expert_rewards))
@@ -437,7 +432,7 @@ class RewardLearner:
         if self.sampl_or_weight_kld_calc == 'sampling':
             plt.title('histogram of KLD values calculated w/ sampling - %i pol param samples'%n_samples)
         elif self.sampl_or_weight_kld_calc == 'weight':
-            plt.title('histogram of KLD values calculated in weight space - GP training samples n = %i'%self.n_GP_training_samples)
+            plt.title('histogram of KLD values calculated in weight space - initial GP training samples n = %i'%self.n_GP_training_samples)
         plt.xlabel('KLD values')
         plt.ylabel('freq')
         plt.show()

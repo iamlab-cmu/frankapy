@@ -72,7 +72,7 @@ class REPSPolicyLearner:
             #     init_dmp_info_dict, initial_wts, mu)
             # plot_updated_policy_mean_traject_HIL_ARL(work_dir, fa, args.cut_type, dmp_wts_file, epoch, args.dmp_traject_time, control_type_z_axis, init_dmp_info_dict,\
             #     initial_wts, policy_params_mean)
-            import pdb; pdb.set_trace()
+            #import pdb; pdb.set_trace()
 
         else: # start w/ initial DMP weights from IL
             initial_wts = np.array(init_dmp_info_dict['weights'])

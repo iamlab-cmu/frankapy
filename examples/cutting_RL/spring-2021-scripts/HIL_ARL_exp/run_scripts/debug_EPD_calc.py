@@ -1,3 +1,8 @@
+'''
+ex. CL args:
+python -m pdb debug_EPD_calc.py --exp_num 4 --food_type hard --food_name potato --cut_type normal --start_from_previous True --previous_datadir /home/sony/Documents/cutting_RL_experiments/data/Jan-2021-HIL-ARL-exps/normal/potato/exp_4/ --starting_epoch_num 1 --num_samples 25 --desired_cutting_behavior fast --num_GP_training_samples 15
+'''
+
 import argparse
 
 import torch
@@ -70,6 +75,7 @@ if __name__ == "__main__":
     parser.add_argument('--sampl_or_weight_kld_calc', type=str, default = 'weight', help = 'sampling or weight')
 
     # for GP evaluation/debugging    
+    parser.add_argument('--use_all_GP_training_samples', type=bool, default = False)
     parser.add_argument('--num_GP_training_samples', type=int, default = 25)
     parser.add_argument('--save_var_mean_GP_rews', type=bool, default = False)
     parser.add_argument('--GPsignal_var_initial', type=int, default = 4)
@@ -173,21 +179,21 @@ if __name__ == "__main__":
 
         # load prev queried_samples_all
         if args.desired_cutting_behavior == 'slow':
-            prev_queried_samples_all = np.load(work_dir + '/' + 'GP_reward_model_data/' + 'queried_samples_all_slowCut.npy')
+            prev_queried_samples_all = np.load(work_dir + '/' + 'GP_reward_model_data/' + 'queried_samples_all_slowCut_epoch_'+str(args.starting_epoch_num-1)+'.npy')
             queried_samples_all = prev_queried_samples_all.tolist()
 
             prev_total_queried_samples_each_epoch = np.load(work_dir + '/' 'GP_reward_model_data/' + 'total_queried_samples_each_epoch_slowCut.npy')
             total_queried_samples_each_epoch = prev_total_queried_samples_each_epoch.tolist()    
 
         elif args.desired_cutting_behavior == 'fast':
-            prev_queried_samples_all = np.load(work_dir + '/' + 'GP_reward_model_data/' + 'queried_samples_all_fastCut.npy')
+            prev_queried_samples_all = np.load(work_dir + '/' + 'GP_reward_model_data/' + 'queried_samples_all_fastCut_epoch_'+str(args.starting_epoch_num-1)+'.npy')
             queried_samples_all = prev_queried_samples_all.tolist()
 
             prev_total_queried_samples_each_epoch = np.load(work_dir + '/' 'GP_reward_model_data/' + 'total_queried_samples_each_epoch_fastCut.npy')
             total_queried_samples_each_epoch = prev_total_queried_samples_each_epoch.tolist()    
 
         else:    
-            prev_queried_samples_all = np.load(work_dir + '/' + 'GP_reward_model_data/' + 'queried_samples_all_qualityCut.npy')
+            prev_queried_samples_all = np.load(work_dir + '/' + 'GP_reward_model_data/' + 'queried_samples_all_qualityCut_epoch_'+str(args.starting_epoch_num-1)+'.npy')
             queried_samples_all = prev_queried_samples_all.tolist()
 
             prev_total_queried_samples_each_epoch = np.load(work_dir + '/' 'GP_reward_model_data/' + 'total_queried_samples_each_epoch_qualityCut.npy')
@@ -244,9 +250,11 @@ if __name__ == "__main__":
         print('train_y variance', train_y.var())
 
         # adding to eval different training set sizes
-        train_x = train_x[0:args.num_GP_training_samples]
-        train_y = train_y[0:args.num_GP_training_samples]
-
+        if not args.use_all_GP_training_samples:        
+            train_x = train_x[0:args.num_GP_training_samples]
+            train_y = train_y[0:args.num_GP_training_samples]
+        import pdb; pdb.set_trace()
+        
         if args.add_noise_to_expert_rews:
             train_y = train_y + np.random.normal(0, 0.2)
         likelihood = gpytorch.likelihoods.GaussianLikelihood() 
@@ -276,7 +284,7 @@ if __name__ == "__main__":
 
         print('shape train_x', train_x.shape)
         print('shape train_y', train_y.shape)
-    #import pdb; pdb.set_trace()
+    import pdb; pdb.set_trace()
 
     # Initialize Gaussian policy params (DMP weights) - mean and sigma
     initial_wts, initial_mu, initial_sigma, S, control_type_z_axis = agent.initialize_gaussian_policy(init_dmp_info_dict, work_dir, dmp_wts_file)
@@ -420,11 +428,11 @@ if __name__ == "__main__":
         # queried_25 = [29, 30, 39, 41, 42, 44, 45, 49]
 
         # TOMATO SCORING
-        queried_5 = [7, 10, 11, 13, 14, 15, 16, 17, 18, 20, 21, 24]
-        queried_10 = [13, 14, 17, 21]
-        queried_15 = [16, 17, 18, 22]
-        queried_20 = [23]
-        queried_25 = []
+        # queried_5 = [7, 10, 11, 13, 14, 15, 16, 17, 18, 20, 21, 24]
+        # queried_10 = [13, 14, 17, 21]
+        # queried_15 = [16, 17, 18, 22]
+        # queried_20 = [23]
+        # queried_25 = []
 
         fig, axs = plt.subplots(2, 5, sharey=True, tight_layout=True)
 
@@ -515,17 +523,25 @@ if __name__ == "__main__":
     # import pdb; pdb.set_trace()
 
     # determine outcomes to query using EPD
-    current_epoch = args.starting_epoch_num
+    current_epoch = args.starting_epoch_num # 0
     # adding this to account for trying out different amounts of training data
-    GP_training_data_x_all = GP_training_data_x_all[0:args.num_GP_training_samples,:]
-    GP_training_data_y_all = GP_training_data_y_all[0:args.num_GP_training_samples]
+    if not args.use_all_GP_training_samples:
+        GP_training_data_x_all = GP_training_data_x_all[0:args.num_GP_training_samples,:]
+        GP_training_data_y_all = GP_training_data_y_all[0:args.num_GP_training_samples]
+        queried_samples_all = queried_samples_all[0:args.num_GP_training_samples]
     import pdb; pdb.set_trace()
-    queried_samples_all = queried_samples_all[0:args.num_GP_training_samples]
+    
+    print('shape GP_training_data_x_all', GP_training_data_x_all.shape)
+    print('shape GP_training_data_y_all', GP_training_data_y_all.shape)
+    print('shape queried_samples_all', len(queried_samples_all))
     import pdb; pdb.set_trace()    
+
+    # compute EPD for each sample
     samples_to_query, queried_outcomes  = reward_learner.compute_EPD_for_each_sample_updated \
         (GP_mean_rews_all_data_current_reward_model, GP_var_rews_all_data_current_reward_model, current_epoch, args.num_samples, work_dir, num_EPD_epochs, optimizer, \
             gpr_reward_model, likelihood, mll, agent, pi_tilda_mean, pi_tilda_cov, pi_tilda_wts, training_data_list, queried_samples_all, \
                 GP_training_data_x_all, GP_training_data_y_all, beta, initial_wts, args.cut_type, S) 
+    print('CHECK SAMPLES TO QUERY')
     import pdb; pdb.set_trace()
 
     #-----------------ONLY DO BELOW IF WANT TO UPDATE REWARD MODEL!!!!!!!!!!!!!!!!!!

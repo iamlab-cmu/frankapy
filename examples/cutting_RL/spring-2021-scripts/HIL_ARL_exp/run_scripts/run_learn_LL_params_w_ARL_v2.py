@@ -41,9 +41,8 @@ polParamsRews_epoch_ep saved as: [polParams, analytical_reward, GP_reward_model_
 
 outcomes/reward features: [avg_peak_y_force, avg_peak_z_force, avg_x_mvmt, avg_y_mvmt, avg_z_mvmt, avg_upward_z_penalty, total_cut_time_all_dmps]
 
-ex. CL args: python run_learn_LL_params_w_ARL_all3CutTypes.py --exp_num 1 --food_type hard --food_name celery --num_samples 5 --cut_type normal --desired_cutting_behavior fast --standardize_reward_feats False
-python run_learn_LL_params_w_ARL_all3CutTypes.py --exp_num 1 --food_type hard --food_name celery --num_samples 5 --cut_type normal --desired_cutting_behavior quality_cut --standardize_reward_feats True
-
+ex. CL args: 
+python -m pdb run_learn_LL_params_w_ARL_v2.py --exp_num 3 --food_type soft --food_name tomato --cut_type scoring --start_from_previous True --previous_datadir /home/sony/Documents/cutting_RL_experiments/data/Jan-2021-HIL-ARL-exps/scoring/tomato/exp_3/ --starting_epoch_num 3 --num_samples 20 --desired_cutting_behavior quality_cut --num_GP_training_samples 19
 
 '''
 import argparse
@@ -185,7 +184,7 @@ if __name__ == "__main__":
 
     # go to initial cutting pose
     starting_position = RigidTransform(rotation=knife_orientation, \
-        translation=np.array([0.509, 0.108, 0.15]), #z=0.05
+        translation=np.array([0.512, 0.149, 0.145]), #z=0.05
         from_frame='franka_tool', to_frame='world')    
     fa.goto_pose(starting_position, duration = 5, use_impedance=False)
 
@@ -758,10 +757,21 @@ if __name__ == "__main__":
             import pdb; pdb.set_trace()
             # calculate GP model rewards for ALL samples in training set under current reward model
             GP_mean_rews_all_data_current_reward_model, GP_var_rews_all_data_current_reward_model = reward_learner.calc_expected_reward_for_observed_outcome_w_GPmodel \
-                (gpr_reward_model, likelihood, np.array(np.array(training_data_list)[:,0].tolist()))                 
+                (gpr_reward_model, likelihood, np.array(np.array(training_data_list)[:,0].tolist()))        
+
+            # plot reward before and after GP reward model EPD update
+            fig, axs = plt.subplots(2, 1, sharey=True, tight_layout=True)
+            axs[0].plot(expert_rewards_all_epochs,'-o')  
+            axs[0].plot(GP_mean_rews_all_data_current_reward_model,'-o') 
+            axs[1].plot(GP_var_rews_all_data_current_reward_model) 
+            
+
             # calculate pi_tilda wts based on current reward model rewards for EPD computation
             reps_agent = reps.Reps(rel_entropy_bound=rel_entropy_bound,min_temperature=0.001) #Create REPS object
             pi_tilda_wts, temp = reps_agent.weights_from_rewards(GP_mean_rews_all_data_current_reward_model) 
+            
+            # NOTE: adding this b/c not currently using sampling-based KLD calc
+            pi_tilda_mean, pi_tilda_cov = mu, sigma
         
             current_epoch = epoch
             samples_to_query, queried_outcomes  = reward_learner.compute_EPD_for_each_sample_updated \
@@ -913,7 +923,26 @@ if __name__ == "__main__":
 
         # calculate GP model rewards for ALL samples in training set under current reward model
         GP_mean_rews_all_data_current_reward_model, GP_var_rews_all_data_current_reward_model = reward_learner.calc_expected_reward_for_observed_outcome_w_GPmodel \
-            (gpr_reward_model, likelihood, np.array(np.array(training_data_list)[:,0].tolist()))                   
+            (gpr_reward_model, likelihood, np.array(np.array(training_data_list)[:,0].tolist()))         
+
+        # save all training data rewards under current reward model
+        np.save(work_dir + '/' + 'GP_reward_model_data/all_training_data_rewards_under_latest_reward_model.npy', np.array(GP_mean_rews_all_data_current_reward_model))          
+
+        # plot post-EPD updated rewards over pre-EPD rewards
+        axs[0].plot(GP_mean_rews_all_data_current_reward_model,'-o')
+        axs[1].plot(GP_var_rews_all_data_current_reward_model,'-o')
+
+        axs[0].set_xlabel('samples')
+        axs[0].set_ylabel('rewards')
+        axs[0].set_title('human vs. GP model rewards - epoch %i'%epoch)
+
+        axs[1].set_xlabel('samples') 
+        axs[1].set_ylabel('variance')
+        axs[1].set_title('GP model variances - epoch %i'%epoch)
+
+        axs[0].legend(('human rewards', 'GP rewards pre-EPD update','GP rewards post-EPD update'))
+        axs[1].legend(('GP variance pre-EPD update', 'GP variance post-EPD update'))
+        plt.show()
 
         # get reward model rewards for samples from only THIS epoch for REPS - NOTE: updated this from previous loading them in from saved npy to prevent discrepancies in already saved data w/ diff reward model 
         import pdb; pdb.set_trace()
@@ -977,7 +1006,7 @@ if __name__ == "__main__":
         np.save(os.path.join(work_dir, 'policy_mean_each_epoch.npy'),np.array(mean_params_each_epoch))
         np.save(os.path.join(work_dir, 'policy_cov_each_epoch.npy'),np.array(cov_each_epoch))
 
-        # calculate pi_tilda wts based on current reward model rewards
+        # calculate pi_tilda wts based on current reward model rewards - TODO - take this out (already done above)
         pi_tilda_wts, temp = reps_agent.weights_from_rewards(GP_mean_rews_all_data_current_reward_model) 
 
         # plot updated policy mean trajectory to visualize
