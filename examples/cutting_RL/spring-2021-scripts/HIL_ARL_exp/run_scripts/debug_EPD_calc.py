@@ -69,7 +69,7 @@ if __name__ == "__main__":
     parser.add_argument('--add_ridge_to_pol_cov_for_KLD', type=bool, default = False)
     parser.add_argument('--sampl_or_weight_kld_calc', type=str, default = 'weight', help = 'sampling or weight')
 
-    # for GP evaluation/debugging
+    # for GP evaluation/debugging    
     parser.add_argument('--num_GP_training_samples', type=int, default = 25)
     parser.add_argument('--save_var_mean_GP_rews', type=bool, default = False)
     parser.add_argument('--GPsignal_var_initial', type=int, default = 4)
@@ -92,17 +92,7 @@ if __name__ == "__main__":
         num_expert_rews_each_sample = 2
     elif args.desired_cutting_behavior == 'quality_cut':
         num_expert_rews_each_sample = 1
-
-    # Instantiate Policy Learner (agent)
-    agent = REPSPolicyLearner()
-
-    # Instantiate reward learner - note: GPR model not instantiated yet
-    reward_learner = RewardLearner(kappa)
-    reward_learner.scale_pol_params = args.scale_pol_params_for_KLD   
-    reward_learner.add_ridge_to_pol_cov = args.add_ridge_to_pol_cov_for_KLD 
-    reward_learner.sampl_or_weight_kld_calc = args.sampl_or_weight_kld_calc
-    beta = 0.001 # fixed gaussian noise likelihood
-    
+        
     # create folders to save data
     if not os.path.isdir(args.data_savedir + args.cut_type + '/' + args.food_name + '/'):
         createFolder(args.data_savedir + args.cut_type + '/' + args.food_name + '/')
@@ -134,26 +124,24 @@ if __name__ == "__main__":
     init_dmp_info_dict = pickle.load(position_dmp_pkl)
 
     # Initialize Gaussian policy params (DMP weights) - mean and sigma
-    initial_wts, initial_mu, initial_sigma, S, control_type_z_axis = agent.initialize_gaussian_policy(num_expert_rews_each_sample, args.cut_type, args.food_type, args.dmp_wt_sampling_var, args.start_from_previous, \
-        args.previous_datadir, args.prev_epochs_to_calc_pol_update, init_dmp_info_dict, work_dir, dmp_wts_file, args.starting_epoch_num, args.dmp_traject_time)
-    print('initial mu', initial_mu)        
-    mu, sigma = initial_mu, initial_sigma
+    # initial_wts, initial_mu, initial_sigma, S, control_type_z_axis = agent.initialize_gaussian_policy(init_dmp_info_dict, work_dir, dmp_wts_file)
+    # print('initial mu', initial_mu)        
+    # mu, sigma = initial_mu, initial_sigma
 
-    import pdb; pdb.set_trace()
+    # Instantiate Policy Learner (agent)
+    agent = REPSPolicyLearner(num_expert_rews_each_sample, args.cut_type, args.food_type, args.dmp_wt_sampling_var, args.start_from_previous, args.previous_datadir,\
+        args.prev_epochs_to_calc_pol_update, args.starting_epoch_num, args.dmp_traject_time)
 
-    mean_params_each_epoch, cov_each_epoch = [], []
-    # if starting from a later epoch: load previous data    
-    if os.path.isfile(os.path.join(work_dir, 'policy_mean_each_epoch.npy')):
-        mean_params_each_epoch = np.load(os.path.join(work_dir, 'policy_mean_each_epoch.npy')).tolist()
-        cov_each_epoch = np.load(os.path.join(work_dir, 'policy_cov_each_epoch.npy')).tolist()
-    else:   
-        mean_params_each_epoch.append(initial_mu)   
-        cov_each_epoch.append(initial_sigma) 
     
-    # if not starting from initial mean and sigma, load these and save them to the policy learner for scaling params later
-    if args.starting_epoch_num > 1:        
-        agent.init_mu_0 = np.array(mean_params_each_epoch[0])
-        agent.init_cov_0 = np.array(cov_each_epoch[0])
+    # Instantiate reward learner - note: GPR model not instantiated yet
+    reward_learner = RewardLearner(work_dir, kappa, args.cut_type, args.food_type, args.desired_cutting_behavior)
+    reward_learner.scale_pol_params = args.scale_pol_params_for_KLD   
+    reward_learner.add_ridge_to_pol_cov = args.add_ridge_to_pol_cov_for_KLD 
+    reward_learner.sampl_or_weight_kld_calc = args.sampl_or_weight_kld_calc
+    reward_learner.n_GP_training_samples = args.num_GP_training_samples
+    beta = 0.001 # fixed gaussian noise likelihood
+
+    import pdb; pdb.set_trace()    
         
     # Buffers for GP reward model data
     total_queried_samples_each_epoch, mean_reward_model_rewards_all_epochs = [], [] #track number of queries to expert for rewards and average rewards for each epoch
@@ -261,7 +249,6 @@ if __name__ == "__main__":
 
         if args.add_noise_to_expert_rews:
             train_y = train_y + np.random.normal(0, 0.2)
-        import pdb; pdb.set_trace()
         likelihood = gpytorch.likelihoods.GaussianLikelihood() 
         # add white noise 
         #likelihood = gpytorch.likelihoods.GaussianLikelihood(noise_prior = gpytorch.priors.NormalPrior(0,0.5)) 
@@ -269,7 +256,6 @@ if __name__ == "__main__":
         gpr_reward_model = GPRegressionModel(train_x, train_y, likelihood) 
         gpr_reward_model.covar_module.outputscale = args.GPsignal_var_initial
 
-        import pdb; pdb.set_trace()
         optimizer = torch.optim.Adam([                
             {'params': gpr_reward_model.covar_module.parameters()},
             {'params': gpr_reward_model.mean_module.parameters()},
@@ -279,38 +265,82 @@ if __name__ == "__main__":
         # train reward GP model given initial train_x and train_y data (voxel_data, queried human rewards)
         # using gpytorch 
         gpr_reward_model = reward_learner.train_GPmodel(work_dir, GP_training_epochs_initial, optimizer, gpr_reward_model, likelihood, mll, train_x, train_y)
+                        
+        # calculate GP model rewards for ALL samples in training set under current reward model
+        GP_mean_rews_all_data_current_reward_model, GP_var_rews_all_data_current_reward_model = reward_learner.calc_expected_reward_for_observed_outcome_w_GPmodel \
+            (gpr_reward_model, likelihood, np.array(np.array(training_data_list)[:,0].tolist()))     
+        agent.GP_mean_rews_all_data_current_reward_model = GP_mean_rews_all_data_current_reward_model
         
-        # # using sklearn
-        # length_scale_initial = 4 
-        # signal_var_initial = 4  
-        # kernel = gp.kernels.ConstantKernel(signal_var_initial) \
-        #     * gp.kernels.RBF(length_scale = np.array([5,5,5,5,5,5,2.8]))
-        # #import pdb; pdb.set_trace()
-        # gpr_reward_model = gp.GaussianProcessRegressor(kernel=kernel, n_restarts_optimizer=100, alpha=0.05).fit(train_x.numpy(),train_y.numpy())
-        
+        agent.GP_mean_rews_all_data_current_reward_model = GP_mean_rews_all_data_current_reward_model
+        print('CHECK size GP_mean_rews_all_data_current_reward_model', len(GP_mean_rews_all_data_current_reward_model))
+
+        print('shape train_x', train_x.shape)
+        print('shape train_y', train_y.shape)
+    #import pdb; pdb.set_trace()
+
+    # Initialize Gaussian policy params (DMP weights) - mean and sigma
+    initial_wts, initial_mu, initial_sigma, S, control_type_z_axis = agent.initialize_gaussian_policy(init_dmp_info_dict, work_dir, dmp_wts_file)
+    print('initial mu', initial_mu)        
+    mu, sigma = initial_mu, initial_sigma   
     import pdb; pdb.set_trace()
+
     pi_current_mean = mu
     pi_current_cov = sigma
 
-    # pi_tilda_mean = np.load(os.path.join(work_dir, 'REPSupdatedMean_' + 'epoch_2.npz'))['updated_mean']
-    # pi_tilda_cov = np.load(os.path.join(work_dir, 'REPSupdatedMean_' + 'epoch_2.npz'))['updated_cov']
+    mean_params_each_epoch, cov_each_epoch = [], []
+    # if starting from a later epoch: load previous data    
+    if os.path.isfile(os.path.join(work_dir, 'policy_mean_each_epoch.npy')):
+        test = np.load(os.path.join(work_dir, 'policy_mean_each_epoch.npy'))
+        if len(test.shape) == 1:            
+            mean_params_each_epoch.append(np.load(os.path.join(work_dir, 'policy_mean_each_epoch.npy')))
+            cov_each_epoch.append(np.load(os.path.join(work_dir, 'policy_cov_each_epoch.npy')))
+        else:
+            mean_params_each_epoch = np.load(os.path.join(work_dir, 'policy_mean_each_epoch.npy')).tolist()
+            cov_each_epoch = np.load(os.path.join(work_dir, 'policy_cov_each_epoch.npy')).tolist()
+    else:   
+        mean_params_each_epoch.append(initial_mu)   
+        cov_each_epoch.append(initial_sigma) 
+    
+    # if not starting from initial mean and sigma, load these and save them to the policy learner for scaling params later
+    if args.starting_epoch_num > 0:    
+        # import pdb; pdb.set_trace()
+        if len(np.array(mean_params_each_epoch).shape) == 1: 
+            agent.init_mu_0 = np.array(mean_params_each_epoch)
+            agent.init_cov_0 = np.array(cov_each_epoch)   
+        else:
+            agent.init_mu_0 = np.array(mean_params_each_epoch[0])
+            agent.init_cov_0 = np.array(cov_each_epoch[0])
+
     reps_agent = reps.Reps(rel_entropy_bound=1.5, min_temperature=0.001) #Create REPS object
-    # import pdb; pdb.set_trace()
-    # pi_tilda_wts, temp = reps_agent.weights_from_rewards(np.array(training_data_list)[:,-3].tolist())
 
     # load prev pol params
     #training_data_list = training_data_list[0:75]
-    prev_epoch_data = np.load(work_dir + '/polParamsRews_epoch_1.npy')
+    prev_epoch_data = np.load(work_dir + '/polParamsRews_epoch_0.npy')
 
     #prev_epoch_data = np.load(work_dir + '/polParamsRews_epoch_2.npy')
     policy_params_all_samples = prev_epoch_data[:,0:9]
     policy_params_all_samples_scaled = agent.scale_pol_params(policy_params_all_samples)
 
-    if args.desired_cutting_behavior == 'quality_cut':
-        reward_model_mean_rewards_all_samples = prev_epoch_data[:,-2]   
-    else:
-        reward_model_mean_rewards_all_samples = prev_epoch_data[:,-3]  
+    # calculate weights!    
     import pdb; pdb.set_trace()
+    GP_mean_rews_all_data_current_reward_model, GP_var_rews_all_data_current_reward_model = reward_learner.calc_expected_reward_for_observed_outcome_w_GPmodel(gpr_reward_model, likelihood, \
+        np.array(np.array(training_data_list)[:,0].tolist()))
+    pi_tilda_wts, temp = reps_agent.weights_from_rewards(GP_mean_rews_all_data_current_reward_model)
+
+    if args.starting_epoch_num == 1:
+            reward_model_mean_rewards_all_samples = GP_mean_rews_all_data_current_reward_model[0:25]
+    elif args.starting_epoch_num  == 2:
+        reward_model_mean_rewards_all_samples = GP_mean_rews_all_data_current_reward_model[25:50]
+    elif args.starting_epoch_num  == 3:
+        reward_model_mean_rewards_all_samples = GP_mean_rews_all_data_current_reward_model[50:75]
+    elif args.starting_epoch_num  == 4:
+        reward_model_mean_rewards_all_samples = GP_mean_rews_all_data_current_reward_model[75:95]
+    import pdb; pdb.set_trace()        
+    # if args.desired_cutting_behavior == 'quality_cut':
+    #     reward_model_mean_rewards_all_samples = prev_epoch_data[:,-2]   
+    # else:
+    #     reward_model_mean_rewards_all_samples = prev_epoch_data[:,-3]  
+    # import pdb; pdb.set_trace()
 
     # scaled
     policy_params_mean_scaled, policy_params_sigma_scaled, reps_info_scaled = \
@@ -330,17 +360,11 @@ if __name__ == "__main__":
         pi_tilda_mean = policy_params_mean
         pi_tilda_cov = policy_params_sigma
     
-    # calculate weights!    
-    import pdb; pdb.set_trace()
-    updated_mean_exp_rewards, updated_var_exp_rewards = reward_learner.calc_expected_reward_for_observed_outcome_w_GPmodel(gpr_reward_model, likelihood, \
-        np.array(np.array(training_data_list)[:,0].tolist()))
-    pi_tilda_wts, temp = reps_agent.weights_from_rewards(updated_mean_exp_rewards)
-    
-    test_dir = '/home/sony/Documents/cutting_RL_experiments/data/Jan-2021-HIL-ARL-exps/normal/potato/exp_2/GP_reward_model_data/2-11-21-GP-training-size-eval/'
-
+        
+    test_dir = work_dir + '/'+'GP_reward_model_data/'+'2-15-21-GP-training-size-eval/' 
     if args.save_var_mean_GP_rews:
         np.save(test_dir + '/gp_rewsVars_trainingSize_'+ str(args.num_GP_training_samples) + '_sigVar_'+str(args.GPsignal_var_initial)+'.npy', \
-            np.concatenate((np.expand_dims(np.array(updated_mean_exp_rewards),axis=1),np.expand_dims(np.array(updated_var_exp_rewards), axis=1)),axis=1)) 
+            np.concatenate((np.expand_dims(np.array(GP_mean_rews_all_data_current_reward_model),axis=1),np.expand_dims(np.array(GP_var_rews_all_data_current_reward_model), axis=1)),axis=1)) 
 
 
     import pdb; pdb.set_trace()    
@@ -359,7 +383,13 @@ if __name__ == "__main__":
         axs[0].plot(s15[:,0],'-o')
         axs[0].plot(s20[:,0],'-o')
         axs[0].plot(s25[:,0],'-o')
-        axs[0].plot(human_reward[:,1],'-o')
+
+        if len(human_reward.shape) == 1:
+            axs[0].plot(human_reward, linestyle='dashed', marker='o', linewidth=4)
+
+        elif len(human_reward.shape) == 2:
+            axs[0].plot(human_reward[:,1],linestyle='dashed', marker='o', linewidth=4)
+
         axs[0].set_xlabel('samples')
         axs[0].set_xticks(np.arange(s10.shape[0]))
         axs[0].set_ylabel('rewards')
@@ -380,12 +410,21 @@ if __name__ == "__main__":
         plt.show()
 
         #import pdb; pdb.set_trace()
-        # plot queried samples on same axis w/ variance
-        queried_5 = [16, 20, 30, 41, 42, 44]
-        queried_10 = [16, 20, 30, 39, 41, 42, 44]
-        queried_15 = [15, 16, 20, 29, 30, 39, 41, 42, 44, 45, 49]
-        queried_20 = [20, 29, 30, 39, 41, 42, 44, 45, 49]
-        queried_25 = [29, 30, 39, 41, 42, 44, 45, 49]
+        ###############--------------------- plot queried samples on same axis w/ variance 
+
+        # - POTATO NORMAL CUT
+        # queried_5 = [16, 20, 30, 41, 42, 44]
+        # queried_10 = [16, 20, 30, 39, 41, 42, 44]
+        # queried_15 = [15, 16, 20, 29, 30, 39, 41, 42, 44, 45, 49]
+        # queried_20 = [20, 29, 30, 39, 41, 42, 44, 45, 49]
+        # queried_25 = [29, 30, 39, 41, 42, 44, 45, 49]
+
+        # TOMATO SCORING
+        queried_5 = [7, 10, 11, 13, 14, 15, 16, 17, 18, 20, 21, 24]
+        queried_10 = [13, 14, 17, 21]
+        queried_15 = [16, 17, 18, 22]
+        queried_20 = [23]
+        queried_25 = []
 
         fig, axs = plt.subplots(2, 5, sharey=True, tight_layout=True)
 
@@ -394,12 +433,25 @@ if __name__ == "__main__":
         axs[0,2].plot(s15[:,0],'-o')
         axs[0,3].plot(s20[:,0],'-o')
         axs[0,4].plot(s25[:,0],'-o')
-        axs[0,0].plot(human_reward[:,1],'-o')
-        axs[0,1].plot(human_reward[:,1],'-o')
-        axs[0,2].plot(human_reward[:,1],'-o')
-        axs[0,3].plot(human_reward[:,1],'-o')
-        axs[0,4].plot(human_reward[:,1],'-o')
 
+        if len(human_reward.shape) == 1:
+            # axs[0].plot(human_reward, linestyle='dashed', marker='o', linewidth=2)
+            axs[0,0].plot(human_reward,linestyle='dashed', marker='o', linewidth=2)
+            axs[0,1].plot(human_reward,linestyle='dashed', marker='o', linewidth=2)
+            axs[0,2].plot(human_reward,linestyle='dashed', marker='o', linewidth=2)
+            axs[0,3].plot(human_reward,linestyle='dashed', marker='o', linewidth=2)
+            axs[0,4].plot(human_reward,linestyle='dashed', marker='o', linewidth=2)
+
+        elif len(human_reward.shape) == 2:
+            #axs[0].plot(human_reward[:,1],linestyle='dashed', marker='o', linewidth=2)
+
+            axs[0,0].plot(human_reward[:,1],linestyle='dashed', marker='o', linewidth=2)
+            axs[0,1].plot(human_reward[:,1],linestyle='dashed', marker='o', linewidth=2)
+            axs[0,2].plot(human_reward[:,1],linestyle='dashed', marker='o', linewidth=2)
+            axs[0,3].plot(human_reward[:,1],linestyle='dashed', marker='o', linewidth=2)
+            axs[0,4].plot(human_reward[:,1],linestyle='dashed', marker='o', linewidth=2)
+
+        
         for i in range(5):
             axs[0,i].set_xlabel('samples')
             axs[0,i].set_xticks(np.arange(s10.shape[0]))
@@ -433,48 +485,151 @@ if __name__ == "__main__":
         axs[1,3].legend(('GP model variance, s=20', 'human rews'))
         axs[1,4].legend(('GP model variance, s=25', 'human rews'))
         
-        axs[1,0].vlines(np.array(queried_5),ymin=-2,ymax=3,colors = ['r']*len(queried_5),linestyles='dashed')
-        axs[1,1].vlines(np.array(queried_10),ymin=-2,ymax=3,colors = ['r']*len(queried_10),linestyles='dashed')
-        axs[1,2].vlines(np.array(queried_15),ymin=-2,ymax=3,colors = ['r']*len(queried_15),linestyles='dashed')
-        axs[1,3].vlines(np.array(queried_20),ymin=-2,ymax=3,colors = ['r']*len(queried_20),linestyles='dashed')
-        axs[1,4].vlines(np.array(queried_25),ymin=-2,ymax=3,colors = ['r']*len(queried_25),linestyles='dashed')
-
+        axs[1,0].vlines(np.array(queried_5),ymin=-2,ymax=5,colors = ['r']*len(queried_5),linestyles='dashed')
+        axs[1,1].vlines(np.array(queried_10),ymin=-2,ymax=5,colors = ['r']*len(queried_10),linestyles='dashed')
+        axs[1,2].vlines(np.array(queried_15),ymin=-2,ymax=5,colors = ['r']*len(queried_15),linestyles='dashed')
+        axs[1,3].vlines(np.array(queried_20),ymin=-2,ymax=5,colors = ['r']*len(queried_20),linestyles='dashed')
+        axs[1,4].vlines(np.array(queried_25),ymin=-2,ymax=5,colors = ['r']*len(queried_25),linestyles='dashed')
         
         plt.show()
 
-        import pdb; pdb.set_trace()
-    
+        import pdb; pdb.set_trace()    
 
+    # # PLOT REWARD MODEL INPUT FEATURES distributions
+    # x_outcomes = np.array(np.array(training_data_list)[:,0].tolist())
+    # fig, axs = plt.subplots(2, 7, sharey=True, tight_layout=True)
+    # for dim in range(7):
+    #     if dim == 6:
+    #         axs[0,dim].hist(x_outcomes[0:25,dim], bins=15, color = 'green')
+    #         axs[1,dim].hist(x_outcomes[25:,dim], bins=15, color = 'blue')
+    #     else:
+    #         axs[0,dim].hist(x_outcomes[0:25,dim], bins='auto', color = 'green')
+    #         axs[1,dim].hist(x_outcomes[25:,dim], bins='auto', color = 'blue')
+    #     axs[0,dim].set_title('std reward feat %i - training distr' %dim)
+    #     axs[1,dim].set_title('std reward feat %i - test distr' %dim)
+    #     axs[1,dim].set_xlabel('dim %i value' %dim)
+    #     axs[0,dim].set_ylabel('freq')  
+    #     axs[1,dim].set_ylabel('freq')  
+    # plt.show()
 
-    #pi_tilda_wts, temp = reps_agent.weights_from_rewards(np.array(training_data_list)[:,-3].tolist())
-    #np.savetxt('/home/sony/Documents/cutting_RL_experiments/data/Jan-2021-HIL-ARL-exps/scoring/tomato/exp_1/GP_reward_model_data/KLD_debug_new/2-10-21/pi_tilda_rews_current_reward_model.txt', updated_mean_exp_rewards)
-    
-    # PLOT REWARD MODEL INPUT FEATURES distributions
-    x_outcomes = np.array(np.array(training_data_list)[:,0].tolist())
-    fig, axs = plt.subplots(2, 7, sharey=True, tight_layout=True)
-    for dim in range(7):
-        if dim == 6:
-            axs[0,dim].hist(x_outcomes[0:25,dim], bins=15, color = 'green')
-            axs[1,dim].hist(x_outcomes[25:,dim], bins=15, color = 'blue')
-        else:
-            axs[0,dim].hist(x_outcomes[0:25,dim], bins='auto', color = 'green')
-            axs[1,dim].hist(x_outcomes[25:,dim], bins='auto', color = 'blue')
-        axs[0,dim].set_title('std reward feat %i - training distr' %dim)
-        axs[1,dim].set_title('std reward feat %i - test distr' %dim)
-        axs[1,dim].set_xlabel('dim %i value' %dim)
-        axs[0,dim].set_ylabel('freq')  
-        axs[1,dim].set_ylabel('freq')  
-    plt.show()
-
-    import pdb; pdb.set_trace()
+    # import pdb; pdb.set_trace()
 
     # determine outcomes to query using EPD
     current_epoch = args.starting_epoch_num
     # adding this to account for trying out different amounts of training data
     GP_training_data_x_all = GP_training_data_x_all[0:args.num_GP_training_samples,:]
     GP_training_data_y_all = GP_training_data_y_all[0:args.num_GP_training_samples]
+    import pdb; pdb.set_trace()
+    queried_samples_all = queried_samples_all[0:args.num_GP_training_samples]
+    import pdb; pdb.set_trace()    
+    samples_to_query, queried_outcomes  = reward_learner.compute_EPD_for_each_sample_updated \
+        (GP_mean_rews_all_data_current_reward_model, GP_var_rews_all_data_current_reward_model, current_epoch, args.num_samples, work_dir, num_EPD_epochs, optimizer, \
+            gpr_reward_model, likelihood, mll, agent, pi_tilda_mean, pi_tilda_cov, pi_tilda_wts, training_data_list, queried_samples_all, \
+                GP_training_data_x_all, GP_training_data_y_all, beta, initial_wts, args.cut_type, S) 
+    import pdb; pdb.set_trace()
+
+    #-----------------ONLY DO BELOW IF WANT TO UPDATE REWARD MODEL!!!!!!!!!!!!!!!!!!
+    # query expert rewards and update GP training x and y with new queried samples - HERE WE ARE UPDATING GP_training_data_x_all, GP_training_data_y_all
+    if samples_to_query != []:
+        GP_training_data_x_all, GP_training_data_y_all, queried_expert_rewards = reward_learner.query_expert_rewards_and_update_GP_training_data(current_epoch, \
+            GP_training_data_x_all, GP_training_data_y_all, samples_to_query, queried_outcomes, expert_rewards_all_epochs)
+        import pdb; pdb.set_trace()  
+    else:
+        print('no samples to query - will not update reward model')   
+
+    if queried_outcomes.size!=0:                 
+        print('updating reward model')
+        import pdb; pdb.set_trace()  
+        updated_train_x = GP_training_data_x_all
+        updated_train_y = GP_training_data_y_all                
+        continue_training = False 
+        gpr_reward_model = reward_learner.update_reward_GPmodel(work_dir, continue_training, GP_training_epochs_later, optimizer, gpr_reward_model, likelihood, mll, updated_train_x, updated_train_y)                                       
+    import pdb; pdb.set_trace()
     
-    samples_to_query, queried_outcomes  = reward_learner.compute_EPD_for_each_sample_updated(current_epoch, args.num_samples, work_dir, num_EPD_epochs, optimizer, \
-        gpr_reward_model, likelihood, mll, agent, pi_tilda_mean, pi_tilda_cov, pi_tilda_wts, pi_current_mean, pi_current_cov, \
-            training_data_list, queried_samples_all, GP_training_data_x_all, GP_training_data_y_all, beta, initial_wts, args.cut_type, S) 
+    # save new rewards under updated reward model from EPD queries
+    GP_mean_rews_all_data_current_reward_model_after_EPD, GP_var_rews_all_data_current_reward_model_after_EPD = reward_learner.calc_expected_reward_for_observed_outcome_w_GPmodel(gpr_reward_model, likelihood, \
+        np.array(np.array(training_data_list)[:,0].tolist()))
+
+    if args.save_var_mean_GP_rews:
+        np.save(test_dir + '/gp_rewsVars_trainingSize_'+ str(args.num_GP_training_samples) + '_sigVar_'+str(args.GPsignal_var_initial)+'_after_EPD_query_update.npy', \
+            np.concatenate((np.expand_dims(np.array(GP_mean_rews_all_data_current_reward_model_after_EPD),axis=1),np.expand_dims(np.array(GP_var_rews_all_data_current_reward_model_after_EPD), axis=1)),axis=1)) 
+    
+    if args.plot_GP_model_comparisons:
+        s5_EPDupdated = np.load(test_dir + 'gp_rewsVars_trainingSize_5' + '_sigVar_'+str(args.GPsignal_var_initial)+'_after_EPD_query_update.npy')
+        s10_EPDupdated = np.load(test_dir + 'gp_rewsVars_trainingSize_10' + '_sigVar_'+str(args.GPsignal_var_initial)+'_after_EPD_query_update.npy')
+        s15_EPDupdated = np.load(test_dir + 'gp_rewsVars_trainingSize_15' + '_sigVar_'+str(args.GPsignal_var_initial)+'_after_EPD_query_update.npy')
+        s20_EPDupdated = np.load(test_dir + 'gp_rewsVars_trainingSize_20' + '_sigVar_'+str(args.GPsignal_var_initial)+'_after_EPD_query_update.npy')
+        s25_EPDupdated = np.load(test_dir + 'gp_rewsVars_trainingSize_25' + '_sigVar_'+str(args.GPsignal_var_initial)+'_after_EPD_query_update.npy')
+
+        fig, axs = plt.subplots(2, 5, sharey=True, tight_layout=True)
+
+        axs[0,0].plot(s5[:,0],'-o')
+        axs[0,1].plot(s10[:,0],'-o')
+        axs[0,2].plot(s15[:,0],'-o')
+        axs[0,3].plot(s20[:,0],'-o')
+        axs[0,4].plot(s25[:,0],'-o')
+
+        axs[0,0].plot(s5_EPDupdated[:,0],'-o')
+        axs[0,1].plot(s10_EPDupdated[:,0],'-o')
+        axs[0,2].plot(s15_EPDupdated[:,0],'-o')
+        axs[0,3].plot(s20_EPDupdated[:,0],'-o')
+        axs[0,4].plot(s25_EPDupdated[:,0],'-o')
+
+
+        if len(human_reward.shape) == 1:
+            axs[0,0].plot(human_reward,linestyle='dashed', marker='o', linewidth=2)
+            axs[0,1].plot(human_reward,linestyle='dashed', marker='o', linewidth=2)
+            axs[0,2].plot(human_reward,linestyle='dashed', marker='o', linewidth=2)
+            axs[0,3].plot(human_reward,linestyle='dashed', marker='o', linewidth=2)
+            axs[0,4].plot(human_reward,linestyle='dashed', marker='o', linewidth=2)
+
+        elif len(human_reward.shape) == 2:
+            axs[0,0].plot(human_reward[:,1],linestyle='dashed', marker='o', linewidth=2)
+            axs[0,1].plot(human_reward[:,1],linestyle='dashed', marker='o', linewidth=2)
+            axs[0,2].plot(human_reward[:,1],linestyle='dashed', marker='o', linewidth=2)
+            axs[0,3].plot(human_reward[:,1],linestyle='dashed', marker='o', linewidth=2)
+            axs[0,4].plot(human_reward[:,1],linestyle='dashed', marker='o', linewidth=2)
+
+        
+        for i in range(5):
+            axs[0,i].set_xlabel('samples')
+            axs[0,i].set_xticks(np.arange(s10.shape[0]))
+        
+        axs[0,0].set_ylabel('rewards')        
+        axs[0,2].set_title('human rewards vs. GP model rewards with different training set sizes')     
+
+        axs[0,0].legend(('GP model rews, s=5', 'GP model rews, s=17 post EPD update', 'human rews'))
+        axs[0,1].legend(('GP model rews, s=10', 'GP model rews, s=14 post EPD update', 'human rews'))
+        axs[0,2].legend(('GP model rews, s=15', 'GP model rews, s=19 post EPD update','human rews'))
+        axs[0,3].legend(('GP model rews, s=20','GP model rews, s=21 post EPD update', 'human rews'))
+        axs[0,4].legend(('GP model rews, s=25', 'GP model rews, s=25 post EPD update','human rews'))
+         
+
+        axs[1,0].plot(s5[:,1],'-o')
+        axs[1,1].plot(s10[:,1],'-o')
+        axs[1,2].plot(s15[:,1],'-o')
+        axs[1,3].plot(s20[:,1],'-o')
+        axs[1,4].plot(s25[:,1],'-o')
+
+        axs[1,0].plot(s5_EPDupdated[:,1],'-o')
+        axs[1,1].plot(s10_EPDupdated[:,1],'-o')
+        axs[1,2].plot(s15_EPDupdated[:,1],'-o')
+        axs[1,3].plot(s20_EPDupdated[:,1],'-o')
+        axs[1,4].plot(s25_EPDupdated[:,1],'-o')
+
+        for i in range(5):
+            axs[1,i].set_xlabel('samples')
+            axs[1,i].set_xticks(np.arange(s10.shape[0]))
+        
+        axs[1,0].set_ylabel('variance - GP rewards')        
+        axs[1,2].set_title('GP model reward variance with different training set sizes')
+
+        axs[1,0].legend(('s=5', 's=17 post EPD update'))
+        axs[1,1].legend(('s=10', 's=14 post EPD update'))
+        axs[1,2].legend(('s=15', 's=19 post EPD update'))
+        axs[1,3].legend(('s=20', 's=21 post EPD update'))
+        axs[1,4].legend(('s=25', 's=25 post EPD update'))
+
+        plt.show()
+
     import pdb; pdb.set_trace()

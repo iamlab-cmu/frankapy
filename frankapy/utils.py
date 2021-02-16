@@ -519,17 +519,17 @@ def parse_policy_params_and_rews_from_file_HIL_ARL(GP_mean_rews_all_data_current
             pol_params = data[:,0:-4] 
             # rewards = data[:,-3]# reward model rewards
 
-        if str(i) == 0:
+        if i == 0:
             rewards = np.array(GP_mean_rews_all_data_current_reward_model[0:25])
-        elif str(i) == 1:
+        elif i == 1:
             rewards = np.array(GP_mean_rews_all_data_current_reward_model[25:50])
-        elif str(i) == 2:
+        elif i == 2:
             rewards = np.array(GP_mean_rews_all_data_current_reward_model[50:75])
-        elif str(i) == 3:
+        elif i == 3:
             rewards = np.array(GP_mean_rews_all_data_current_reward_model[75:95])
-        elif str(i) == 4:
+        elif i == 4:
             rewards = np.array(GP_mean_rews_all_data_current_reward_model[95:])
-
+        #import pdb; pdb.set_trace()
         avg_rews_each_epoch.append(np.mean(rewards))
         rews_all_epochs = np.concatenate((rews_all_epochs, rewards),axis=0)
         pol_params_all_epochs = np.concatenate((pol_params_all_epochs, pol_params),axis=0)

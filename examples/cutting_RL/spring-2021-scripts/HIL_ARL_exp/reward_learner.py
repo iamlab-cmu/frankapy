@@ -67,7 +67,7 @@ class RewardLearner:
     
     def query_expert_rewards_and_update_GP_training_data(self, epoch, GP_training_data_x_all, GP_training_data_y_all, \
         samples_to_query, queried_outcomes, expert_rewards_all_epochs):
-        
+
         if samples_to_query!=[]:
             print('querying samples: ', samples_to_query)
             # import pdb; pdb.set_trace()       
@@ -83,7 +83,7 @@ class RewardLearner:
            
             else:
                 queried_expert_rewards = np.array(expert_rewards_all_epochs)[samples_to_query]
-            import pdb; pdb.set_trace()
+            #import pdb; pdb.set_trace()
         
         else: 
             print('No samples to query from human')
@@ -94,7 +94,7 @@ class RewardLearner:
         # stack reward features (GP model x training data)
         GP_training_data_x_all = np.vstack((GP_training_data_x_all, queried_outcomes))
         print('shape GP_training_data_x_all', GP_training_data_x_all.shape)
-        import pdb; pdb.set_trace()
+        #import pdb; pdb.set_trace()
 
         # get GP model y training data (expert rewards) based on desired cutting behavior
         if self.desired_cutting_behavior == 'slow' or self.desired_cutting_behavior == 'fast':
@@ -105,25 +105,25 @@ class RewardLearner:
                         GP_training_data_y_all = GP_training_data_y_all_slow)
             np.savez(self.work_dir + '/' 'GP_reward_model_data/' + 'GP_reward_model_training_data_fastCut_epoch_'+str(epoch) + '.npz', GP_training_data_x_all = GP_training_data_x_all, \
                         GP_training_data_y_all = GP_training_data_y_all_fast)
-            import pdb; pdb.set_trace()
+            #import pdb; pdb.set_trace()
 
             if self.desired_cutting_behavior == 'slow':                
                 GP_training_data_y_all = np.concatenate((GP_training_data_y_all, queried_expert_rewards_slow))
-                import pdb; pdb.set_trace()
+                #import pdb; pdb.set_trace()
 
             elif self.desired_cutting_behavior == 'fast':                 
                 GP_training_data_y_all = np.concatenate((GP_training_data_y_all, queried_expert_rewards_fast))
-                import pdb; pdb.set_trace()
+                #import pdb; pdb.set_trace()
         
         else:
             GP_training_data_y_all = np.concatenate((GP_training_data_y_all, queried_expert_rewards))
             np.savez(self.work_dir + '/' 'GP_reward_model_data/' + 'GP_reward_model_training_data_qualityCut_epoch_'+str(epoch) + '.npz', GP_training_data_x_all = GP_training_data_x_all, \
                     GP_training_data_y_all = GP_training_data_y_all)
-            import pdb; pdb.set_trace()
+            #import pdb; pdb.set_trace()
         
         print('GP_training_data_x_all', GP_training_data_x_all.shape)
         print('GP_training_data_y_all', GP_training_data_y_all.shape)
-        import pdb; pdb.set_trace()          
+        #import pdb; pdb.set_trace()          
 
         return GP_training_data_x_all, GP_training_data_y_all, queried_expert_rewards
         
@@ -217,7 +217,7 @@ class RewardLearner:
         print('done training')
 
         self.num_reward_features = model.num_features
-        import pdb; pdb.set_trace()
+        # import pdb; pdb.set_trace()
         return model
 
     def calc_expected_reward_for_observed_outcome_w_GPmodel(self, model, likelihood, new_outcomes):
@@ -237,7 +237,7 @@ class RewardLearner:
             preds = model(new_outcomes)
             mean_expected_rewards = preds.mean.numpy().tolist()
             var_expected_rewards = preds.variance.numpy().tolist()
-            print('updated covariance matrix', preds.lazy_covariance_matrix.evaluate())
+            #print('updated covariance matrix', preds.lazy_covariance_matrix.evaluate())
         
         # import pdb; pdb.set_trace()
         
@@ -290,6 +290,9 @@ class RewardLearner:
         current_epoch, num_samples_each_epoch, work_dir, num_training_epochs, optimizer, current_reward_model, likelihood, mll, \
             agent, pi_tilda_mean, pi_tilda_cov, pi_tilda_wts, prior_training_data, \
                 queried_samples_all, GP_training_data_x_all, GP_training_data_y_all, beta, initial_wts, cut_type, S):
+        
+        if current_epoch > 0:
+            self.kappa = 0.7
 
         prior_training_data_expect_rewards_mean, prior_training_data_policy_params, \
             prior_training_data_expect_rewards_sig = [], [], []
