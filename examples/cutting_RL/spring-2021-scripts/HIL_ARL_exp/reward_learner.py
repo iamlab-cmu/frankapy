@@ -279,14 +279,150 @@ class RewardLearner:
     #     print('samples_to_query', samples_to_query)            
     #     import pdb; pdb.set_trace()
     #     return samples_to_query, queried_outcomes_arr
+
+    def compute_EPD_for_each_sample_iterative(self, GP_mean_rews_all_data_current_reward_model, GP_var_rews_all_data_current_reward_model, \
+        current_epoch, work_dir, num_training_epochs, optimizer, current_reward_model, likelihood, mll, agent, pi_tilda_wts, \
+            prior_training_data, queried_samples_all, GP_training_data_x_all, GP_training_data_y_all, cut_type):
+        '''
+        NOTE: updated this method to only support weight-space KLD calc (not sampling or analytical)
+        '''
+        if current_epoch > 0 and cut_type == 'scoring':
+            self.kappa = 0.7
+
+        prior_training_data_expect_rewards_mean, prior_training_data_policy_params, \
+            prior_training_data_expect_rewards_sig = [], [], []
+        
+        prior_training_data_o = np.empty([0,self.num_reward_features])
+        
+        for i in range(len(prior_training_data)):
+            prior_training_data_o = np.vstack((prior_training_data_o, prior_training_data[i][0]))
+            prior_training_data_expect_rewards_mean.append(prior_training_data[i][1])
+            prior_training_data_expect_rewards_sig.append(prior_training_data[i][2])
+            prior_training_data_policy_params.append(prior_training_data[i][3])      
+       
+        prior_training_data_expect_rewards_mean = np.array(GP_mean_rews_all_data_current_reward_model) #OLD: np.array(prior_training_data_expect_rewards_mean)
+        prior_training_data_expect_rewards_sig = np.array(np.sqrt(GP_var_rews_all_data_current_reward_model)) #OLD: np.sqrt(np.array(prior_training_data_expect_rewards_sig)) # NOTE: add sqrt to get std from variance!!
+        prior_training_data_policy_params = np.array(prior_training_data_policy_params)
+
+        print('queried_samples_all', queried_samples_all)
+        #import pdb; pdb.set_trace() 
+
+        '''TODO: directly pass in prior_training_data_expect_rewards_mean, prior_training_data_expect_rewards_sig instead
+        of getting these from prior_training_data
+        
+        prior_training_data_o: nx7 arr (7 reward features)
+        prior_training_data_expect_rewards_mean: (n,) arr
+        prior_training_data_expect_rewards_sig: (n,) arr
+        prior_training_data_policy_params: nx8 arr
+        '''
+        num_samples = len(prior_training_data)       
+        samples_to_query, KL_div_all, KL_div_all_wts, KL_div_all_queried_samples, diff_rews, all_samples = [], [], [], [], [], []
+        #--------------------------------------------------------------
+        # iterate through all samples in current epoch in training data set
+        for i in range(0, num_samples):       
+            # don't iterate through all samples, skip already queried and ones from previous rollouts (?)     
+            if i in queried_samples_all: # total_samples - samples_in_current_epoch
+                continue            
+            else:
+                outcome = np.expand_dims(prior_training_data_o[i,:],axis=0)
+                mean_expect_reward = prior_training_data_expect_rewards_mean[i]
+                sigma_expect_reward = prior_training_data_expect_rewards_sig[i]            
+
+                sigma_pt_1 = mean_expect_reward + sigma_expect_reward
+                sigma_pt_2 = mean_expect_reward - sigma_expect_reward
+                sigma_pts = [sigma_pt_1, sigma_pt_2]
+
+                # update w/ 1st sigma pt
+                KL_div_sigma_pts = []
+                for sigma_pt in sigma_pts:
+                    outcomes_to_update = outcome
+                    rewards_to_update = np.array([sigma_pt])
+                    
+                    #updating hypoth_reward_model for this sample instead of actual model           
+                    hypoth_reward_model = copy.deepcopy(current_reward_model)
+                    hypoth_likelihood = copy.deepcopy(likelihood)
+                    hypoth_optimizer = copy.deepcopy(optimizer) #TODO: need to redefine this using hypoth_reward_model?
+                    hypoth_mll = copy.deepcopy(mll)            
+                    
+                    # GP_training_data_x_all and GP_training_data_y_all are previous training data for 
+                    og_train_x = copy.deepcopy(GP_training_data_x_all)
+                    og_train_y = copy.deepcopy(GP_training_data_y_all)            
+                    updated_train_x = np.vstack((og_train_x, outcomes_to_update))
+                    updated_train_y = np.concatenate((og_train_y, rewards_to_update))  
+                    
+                    #update hypoth reward model with this outcome
+                    #-------------original
+                    continue_training = False
+                    hypoth_reward_model = self.update_reward_GPmodel(work_dir, continue_training, num_training_epochs, hypoth_optimizer, hypoth_reward_model, \
+                        hypoth_likelihood, hypoth_mll, updated_train_x, updated_train_y)
+                    # ---------------------                           
+            
+                    #calculate rewards for training data under updated reward model                 
+                    mean_exp_rewards, var_exp_rewards = self.calc_expected_reward_for_observed_outcome_w_GPmodel(hypoth_reward_model, \
+                        hypoth_likelihood, prior_training_data_o)
+                    #import pdb; pdb.set_trace()
+
+                    print('diff rews', (np.abs(prior_training_data_expect_rewards_mean-mean_exp_rewards)))
+                    print('sum diff rews', np.sum((np.abs(prior_training_data_expect_rewards_mean-mean_exp_rewards))))                   
+                    
+                    # calculate pi star wts (sample weights under updated reward model)
+                    pi_star_wts = agent.calculate_REPS_wts(mean_exp_rewards, rel_entropy_bound = 1.5, min_temperature=0.001)
+
+                    KL_div = self.compute_kl_divergence_wts(pi_star_wts, pi_tilda_wts)   
+                    
+                    KL_div_sigma_pts.append(KL_div)                
+                print('KL div both sigma pts:', KL_div_sigma_pts,', mean_KL:  ', np.mean(KL_div_sigma_pts))
+                KL_div = np.mean(KL_div_sigma_pts)
+
+                # save to buffer
+                KL_div_all.append(KL_div) 
+                all_samples.append(i)
+                # determine whether to query by checking threshold
+                if (np.all(np.isnan(KL_div)==True))==False and np.any(KL_div >= self.kappa):
+                    samples_to_query.append(i)
+                    KL_div_all_queried_samples.append(KL_div)
+
+        #import pdb; pdb.set_trace()
+        # find max of KL_div_all
+        print('max KLD value', np.max(KL_div_all))
+        print('sample w/ max KLD value', all_samples[np.argmax(KL_div_all)])
+        #import pdb; pdb.set_trace()
+
+        #Check if we've already queried these samples. If yes, remove from list:
+        # import pdb; pdb.set_trace()
+        #print('KL divs', KL_div_all)        
+        print('median KL DIV', np.median(KL_div_all))
+        print('mean KL DIV', np.mean(KL_div_all))
+        # samples_to_query_new = self.remove_already_queried_samples_from_list(samples_to_query, queried_samples_all)
+        # print('new samples_to_query', samples_to_query_new)
+        # print('num new samples to query', len(samples_to_query_new))
+
+        # fig2 = plt.figure()       
+        # plt.hist(KL_div_all)
+        # if self.sampl_or_weight_kld_calc == 'sampling':
+        #     plt.title('histogram of KLD values calculated w/ sampling - %i pol param samples'%n_samples)
+        # elif self.sampl_or_weight_kld_calc == 'weight':
+        #     plt.title('histogram of KLD values calculated in weight space - initial GP training samples n = %i'%self.n_GP_training_samples)
+        # plt.xlabel('KLD values')
+        # plt.ylabel('freq')
+        #plt.show()
+        #fig2.show()
+        #import pdb; pdb.set_trace()
+
+        sample_to_query_w_highest_KLD = all_samples[np.argmax(KL_div_all)]
+        queried_outcome_arr = np.expand_dims(prior_training_data_o[sample_to_query_w_highest_KLD],axis=0) 
+        max_KLD_val = np.max(KL_div_all)         
+        #import pdb; pdb.set_trace()
+        
+        return sample_to_query_w_highest_KLD, queried_outcome_arr, max_KLD_val #index of sample to query from expert
+        
     
-    # DEBUGGING ISSUE W/ SIGMA PTS NOT UPDATING!!!!!!
     def compute_EPD_for_each_sample_updated(self, GP_mean_rews_all_data_current_reward_model, GP_var_rews_all_data_current_reward_model, \
         current_epoch, num_samples_each_epoch, work_dir, num_training_epochs, optimizer, current_reward_model, likelihood, mll, \
             agent, pi_tilda_mean, pi_tilda_cov, pi_tilda_wts, prior_training_data, \
                 queried_samples_all, GP_training_data_x_all, GP_training_data_y_all, beta, initial_wts, cut_type, S):
         
-        if current_epoch > 0:
+        if current_epoch > 0 and cut_type == 'scoring':
             self.kappa = 0.7
 
         prior_training_data_expect_rewards_mean, prior_training_data_policy_params, \
@@ -428,6 +564,7 @@ class RewardLearner:
         samples_to_query_new = self.remove_already_queried_samples_from_list(samples_to_query, queried_samples_all)
         print('new samples_to_query', samples_to_query_new)
         print('num new samples to query', len(samples_to_query_new))
+        plt.figure()        
         plt.hist(KL_div_all)
         if self.sampl_or_weight_kld_calc == 'sampling':
             plt.title('histogram of KLD values calculated w/ sampling - %i pol param samples'%n_samples)
