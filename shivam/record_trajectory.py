@@ -5,7 +5,7 @@ import pickle as pkl
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
-    parser.add_argument('--time', '-t', type=float, default=20)
+    parser.add_argument('--time', '-t', type=float, default=10)
     parser.add_argument('--open_gripper', '-o', action='store_true')
     parser.add_argument('--file', '-f', default='franka_traj.pkl')
     args = parser.parse_args()
