@@ -96,6 +96,9 @@ class RewardLearner:
         print('shape GP_training_data_x_all', GP_training_data_x_all.shape)
         #import pdb; pdb.set_trace()
 
+        if queried_expert_rewards.shape==(): # if its a scalar b/c only 1 value
+            queried_expert_rewards = np.array([queried_expert_rewards])
+
         # get GP model y training data (expert rewards) based on desired cutting behavior
         if self.desired_cutting_behavior == 'slow':
             GP_training_data_y_all = np.concatenate((GP_training_data_y_all, queried_expert_rewards_slow))
@@ -286,8 +289,8 @@ class RewardLearner:
         '''
         NOTE: updated this method to only support weight-space KLD calc (not sampling or analytical)
         '''
-        if current_epoch > 0 and cut_type == 'scoring':
-            self.kappa = 0.7
+        # if current_epoch > 0 and cut_type == 'scoring':
+        #     self.kappa = 0.7
 
         prior_training_data_expect_rewards_mean, prior_training_data_policy_params, \
             prior_training_data_expect_rewards_sig = [], [], []

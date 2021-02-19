@@ -2,6 +2,8 @@
 UPDATED: iterative reward model updates instead of batch updates
 ex. CL args:
 python -m pdb debug_EPD_calc.py --exp_num 4 --food_type hard --food_name potato --cut_type normal --start_from_previous True --previous_datadir /home/sony/Documents/cutting_RL_experiments/data/Jan-2021-HIL-ARL-exps/normal/potato/exp_4/ --starting_epoch_num 1 --num_samples 25 --desired_cutting_behavior fast --num_GP_training_samples 15
+
+python -m pdb debug_EPD_calc_iterative_updates.py --exp_num 5 --food_type soft --food_name tomato --cut_type scoring --start_from_previous True --previous_datadir /home/sony/Documents/cutting_RL_experiments/data/Jan-2021-HIL-ARL-exps/scoring/tomato/exp_5/ --starting_epoch_num 1 --num_samples 25 --desired_cutting_behavior quality_cut --num_GP_training_samples 1 --GP_training_epochs_initial 1 --GP_training_epochs_later 0 --kappa 0.1
 '''
 
 import argparse
@@ -64,7 +66,7 @@ if __name__ == "__main__":
     parser.add_argument('--debug', type=bool, default=False)
     
     # GP reward model-related args
-    parser.add_argument('--kappa', type=float, default = 0.01) #5) # 0.005
+    parser.add_argument('--kappa', type=float, default = 0.1) #0.01) 
     parser.add_argument('--rel_entropy_bound', type=float, default = 1.2)
     parser.add_argument('--num_EPD_epochs', type=int, default = 5)
     parser.add_argument('--GP_training_epochs_initial', type=int, default = 120)
@@ -77,10 +79,10 @@ if __name__ == "__main__":
 
     # for GP evaluation/debugging    
     parser.add_argument('--use_all_GP_training_samples', type=bool, default = False)
-    parser.add_argument('--num_GP_training_samples', type=int, default = 25)
+    parser.add_argument('--num_GP_training_samples', type=int, default = 1)
     parser.add_argument('--save_var_mean_GP_rews', type=bool, default = False)
     parser.add_argument('--GPsignal_var_initial', type=int, default = 3) #4)
-    parser.add_argument('--init_GP_lengthscale_hyperparam_from_prior', type=bool, default = False) #4)
+    parser.add_argument('--init_GP_lengthscale_hyperparam_from_prior', type=bool, default = True) #4)
     parser.add_argument('--plot_GP_model_comparisons', type=bool, default = False)
     parser.add_argument('--add_noise_to_expert_rews', type=bool, default = False)
     
@@ -239,7 +241,7 @@ if __name__ == "__main__":
         if not args.use_all_GP_training_samples:        
             train_x = train_x[0:args.num_GP_training_samples]
             train_y = train_y[0:args.num_GP_training_samples]
-        # import pdb; pdb.set_trace()
+        import pdb; pdb.set_trace()
         
         if args.add_noise_to_expert_rews:
             train_y = train_y + np.random.normal(0, 0.2)
@@ -269,7 +271,6 @@ if __name__ == "__main__":
             (gpr_reward_model, likelihood, np.array(np.array(training_data_list)[:,0].tolist()))     
         agent.GP_mean_rews_all_data_current_reward_model = GP_mean_rews_all_data_current_reward_model
         
-        agent.GP_mean_rews_all_data_current_reward_model = GP_mean_rews_all_data_current_reward_model
         print('CHECK size GP_mean_rews_all_data_current_reward_model', len(GP_mean_rews_all_data_current_reward_model))
         print('shape train_x', train_x.shape)
         print('shape train_y', train_y.shape)        
@@ -288,11 +289,9 @@ if __name__ == "__main__":
         # TODO: START WHILE LOOP HERE (while max_KLD_val > thresh:)
         while max_KLD_val > kappa:
             print('max_KLD_val, start of iter %i'%iteration, max_KLD_val)
-            #import pdb; pdb.set_trace()
             # calculate GP model rewards for ALL samples in training set under current reward model
             GP_mean_rews_all_data_current_reward_model, GP_var_rews_all_data_current_reward_model = reward_learner.calc_expected_reward_for_observed_outcome_w_GPmodel \
                 (gpr_reward_model, likelihood, np.array(np.array(training_data_list)[:,0].tolist()))                    
-            agent.GP_mean_rews_all_data_current_reward_model = GP_mean_rews_all_data_current_reward_model
 
             #calc pi_tilda_wts
             pi_tilda_wts, temp = reps_agent.weights_from_rewards(GP_mean_rews_all_data_current_reward_model)
@@ -301,7 +300,6 @@ if __name__ == "__main__":
             mse_from_human_rews.append(np.linalg.norm(np.array(expert_rewards_all_epochs)- np.array(GP_mean_rews_all_data_current_reward_model)))
 
             # determine outcomes to query using EPD
-            # adding this to account for trying out different amounts of training data
             if not args.use_all_GP_training_samples and iteration ==0:
                 GP_training_data_x_all = GP_training_data_x_all[0:args.num_GP_training_samples,:]
                 GP_training_data_y_all = GP_training_data_y_all[0:args.num_GP_training_samples]
@@ -363,7 +361,10 @@ if __name__ == "__main__":
         axs[1].set_ylabel('variance - GP rewards')
         #axs[1].legend(('GP model variance','GP model variance'))
         axs[1].legend()
-        axs[1].set_title('GP model reward variance, init training size = %i, kappa = %s'%(args.num_GP_training_samples,str(kappa)))  
+        axs[1].set_title('GP model reward variance, init training size = %i, kappa = %s'%(args.num_GP_training_samples,str(kappa))) 
+        
+        axs[0].vlines(np.array(queried_samples_all),ymin=-2,ymax=5,colors = ['r']*len(queried_samples_all),linestyles='dashed') 
+        axs[1].vlines(np.array(queried_samples_all),ymin=-2,ymax=5,colors = ['r']*len(queried_samples_all),linestyles='dashed') 
         
 
         print('max_KLD_vals_all', max_KLD_vals_all)
@@ -377,6 +378,9 @@ if __name__ == "__main__":
         plt.show() 
         import pdb; pdb.set_trace()
 
+    GP_mean_rews_all_data_current_reward_model, GP_var_rews_all_data_current_reward_model = reward_learner.calc_expected_reward_for_observed_outcome_w_GPmodel \
+        (gpr_reward_model, likelihood, np.array(np.array(training_data_list)[:,0].tolist()))                    
+    agent.GP_mean_rews_all_data_current_reward_model = GP_mean_rews_all_data_current_reward_model
     import pdb; pdb.set_trace()
     
     ########################## ORIGINAL CODE BELOW
@@ -404,6 +408,7 @@ if __name__ == "__main__":
         mean_params_each_epoch.append(initial_mu)   
         cov_each_epoch.append(initial_sigma) 
     
+    import pdb; pdb.set_trace()
     # if not starting from initial mean and sigma, load these and save them to the policy learner for scaling params later
     if args.starting_epoch_num > 0:    
         # import pdb; pdb.set_trace()
