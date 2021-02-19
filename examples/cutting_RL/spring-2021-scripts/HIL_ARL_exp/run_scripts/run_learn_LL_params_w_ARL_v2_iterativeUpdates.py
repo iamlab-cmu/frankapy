@@ -750,13 +750,94 @@ if __name__ == "__main__":
                    
         # Train initial GP model with args.num_GP_training_samples      
         '''only compute EPD if epoch!=0 (i.e. reward model has been trained on initial set of data)'''
-        if epoch == 0:
-            # previously - queried all samples if epoch = 0, now querying any amt of samples 
-            samples_to_query = np.arange(args.num_GP_training_samples) # np.arange(args.num_samples).tolist() # query all samples
-            queried_outcomes = np.squeeze(np.array(outcomes_all))[0:args.num_GP_training_samples] # use all outcomes
+        if epoch == 0: # TODO: UPDATE THIS TO ITERATIVELY UPDATE in a while loop!!!
+            # train w/ just 1st sample ---> then iteratively update based on sample w/ max KLD 
+            samples_to_query = np.arange(1)
+            queried_outcomes = np.squeeze(np.array(outcomes_all))[0:1] 
+
+            # query expert rewards and update GP training x and y with new queried samples - HERE WE ARE UPDATING GP_training_data_x_all, GP_training_data_y_all
+            if samples_to_query != []:
+                GP_training_data_x_all, GP_training_data_y_all, queried_expert_rewards = reward_learner.query_expert_rewards_and_update_GP_training_data(epoch, \
+                    GP_training_data_x_all, GP_training_data_y_all, samples_to_query, queried_outcomes, expert_rewards_all_epochs)
+            else:
+                print('no samples to query - reward model will not be updated')
+            
+            print('new GP_training_data_x_all shape', GP_training_data_x_all.shape)
+            print('new GP_training_data_y_all shape', GP_training_data_y_all.shape)
+            import pdb; pdb.set_trace()                                          
+
+            # --------------train with initial number of training samples
+            print('initializing and training GP reward model')
+            likelihood = gpytorch.likelihoods.GaussianLikelihood()      
+            # import pdb; pdb.set_trace()      
+            train_x = torch.from_numpy(queried_outcomes)
+            train_x = train_x.float()
+            train_y = torch.from_numpy(queried_expert_rewards)
+            train_y = train_y.float()
             import pdb; pdb.set_trace()
 
-        else: # compute EPD if not 1st epoch
+            # add white noise 
+            #likelihood = gpytorch.likelihoods.FixedNoiseGaussianLikelihood(torch.ones(train_x.shape[0]) * beta)
+            gpr_reward_model = GPRegressionModel(train_x, train_y, likelihood) 
+            optimizer = torch.optim.Adam([                
+                {'params': gpr_reward_model.covar_module.parameters()},
+                {'params': gpr_reward_model.mean_module.parameters()},
+                {'params': gpr_reward_model.likelihood.parameters()},
+            ], lr=0.01) # lr = 0.01 originally 
+            mll = gpytorch.mlls.ExactMarginalLogLikelihood(likelihood, gpr_reward_model)
+            # train reward GP model given initial train_x and train_y data (voxel_data, queried human rewards)
+            gpr_reward_model = reward_learner.train_GPmodel(work_dir, GP_training_epochs_initial, optimizer, gpr_reward_model, likelihood, mll, train_x, train_y)
+
+            # -------------once trained, compute EPD for remaining samples in epoch to see if any others should be queried
+            print('computing EPD for each sample')
+            import pdb; pdb.set_trace()
+            # calculate GP model rewards for ALL samples in training set under current reward model
+            GP_mean_rews_all_data_current_reward_model, GP_var_rews_all_data_current_reward_model = reward_learner.calc_expected_reward_for_observed_outcome_w_GPmodel \
+                (gpr_reward_model, likelihood, np.array(np.array(training_data_list)[:,0].tolist()))                 
+            
+            # calculate pi_tilda wts based on current reward model rewards for EPD computation
+            pi_tilda_wts, temp = reps_agent.weights_from_rewards(GP_mean_rews_all_data_current_reward_model) 
+        
+            current_epoch = epoch
+            pi_tilda_mean, pi_tilda_cov = mu, sigma # not using these w/ weight-based KLD calc
+            samples_to_query, queried_outcomes  = reward_learner.compute_EPD_for_each_sample_updated \
+                (GP_mean_rews_all_data_current_reward_model, GP_var_rews_all_data_current_reward_model, current_epoch, args.num_samples, work_dir, num_EPD_epochs, optimizer, \
+                    gpr_reward_model, likelihood, mll, agent, pi_tilda_mean, pi_tilda_cov, pi_tilda_wts, training_data_list, queried_samples_all, \
+                        GP_training_data_x_all, GP_training_data_y_all, beta, initial_wts, args.cut_type, S) 
+            import pdb; pdb.set_trace()
+
+            # query expert rewards and update GP training x and y with new queried samples (if any)
+            # TODO: UPDATE THIS SO THAT WE'RE NOT RESAVING NEW GP_training_data_x_all, GP_training_data_y_all each time???
+            if samples_to_query != []:
+                GP_training_data_x_all, GP_training_data_y_all, queried_expert_rewards = reward_learner.query_expert_rewards_and_update_GP_training_data(epoch, \
+                    GP_training_data_x_all, GP_training_data_y_all, samples_to_query, queried_outcomes, expert_rewards_all_epochs)
+                print('check if GP_reward_model_training_data saved correctly')
+            else: 
+                print('no samples to query - will not update reward model')
+            import pdb; pdb.set_trace()   
+
+            # Add samples to query to running list of queried_samples if any
+            if samples_to_query!=[]: 
+                queried_samples_all = queried_samples_all + samples_to_query # running list of queried samples
+                if args.desired_cutting_behavior == 'slow':
+                    np.save(work_dir + '/' + 'GP_reward_model_data/' + 'queried_samples_all_slowCut_epoch_'+str(epoch)+'.npy', np.array(queried_samples_all))
+
+                elif args.desired_cutting_behavior == 'fast':
+                    np.save(work_dir + '/' + 'GP_reward_model_data/' + 'queried_samples_all_fastCut_epoch_'+str(epoch)+'.npy', np.array(queried_samples_all))
+
+                else:
+                    np.save(work_dir + '/' + 'GP_reward_model_data/' + 'queried_samples_all_qualityCut_epoch_'+str(epoch)+'.npy', np.array(queried_samples_all))
+                                
+                print('updating reward model with new samples in 1st epoch after computing EPD')
+                import pdb; pdb.set_trace()  
+                updated_train_x = GP_training_data_x_all
+                updated_train_y = GP_training_data_y_all                
+                continue_training = False 
+                gpr_reward_model = reward_learner.update_reward_GPmodel(work_dir, continue_training, GP_training_epochs_later, optimizer, gpr_reward_model, likelihood, mll, updated_train_x, updated_train_y)                                       
+                import pdb; pdb.set_trace() 
+
+        else:  # TODO: UPDATE THIS TO ITERATIVELY UPDATE!!!
+            # compute EPD if not 1st epoch
             print('computing EPD for each sample')
             import pdb; pdb.set_trace()
             # calculate GP model rewards for ALL samples in training set under current reward model
@@ -824,75 +905,75 @@ if __name__ == "__main__":
         import pdb; pdb.set_trace()
         
         # initialize reward GP model if 0th epoch - UPDATED THIS To first train w/ specifed num samples, then compute EPD to determine whether to query further
-        if epoch == 0:
-            # --------------train with initial number of training samples
-            print('initializing and training GP reward model')
-            likelihood = gpytorch.likelihoods.GaussianLikelihood()      
-            # import pdb; pdb.set_trace()      
-            train_x = torch.from_numpy(queried_outcomes)
-            train_x = train_x.float()
-            train_y = torch.from_numpy(queried_expert_rewards)
-            train_y = train_y.float()
-            import pdb; pdb.set_trace()
-            print('train_y variance', train_y.var())
-            # add white noise 
-            #likelihood = gpytorch.likelihoods.FixedNoiseGaussianLikelihood(torch.ones(train_x.shape[0]) * beta)
-            gpr_reward_model = GPRegressionModel(train_x, train_y, likelihood) 
-            optimizer = torch.optim.Adam([                
-                {'params': gpr_reward_model.covar_module.parameters()},
-                {'params': gpr_reward_model.mean_module.parameters()},
-                {'params': gpr_reward_model.likelihood.parameters()},
-            ], lr=0.01) # lr = 0.01 originally 
-            mll = gpytorch.mlls.ExactMarginalLogLikelihood(likelihood, gpr_reward_model)
-            # train reward GP model given initial train_x and train_y data (voxel_data, queried human rewards)
-            gpr_reward_model = reward_learner.train_GPmodel(work_dir, GP_training_epochs_initial, optimizer, gpr_reward_model, likelihood, mll, train_x, train_y)
+        #if epoch == 0:
+            # # --------------train with initial number of training samples
+            # print('initializing and training GP reward model')
+            # likelihood = gpytorch.likelihoods.GaussianLikelihood()      
+            # # import pdb; pdb.set_trace()      
+            # train_x = torch.from_numpy(queried_outcomes)
+            # train_x = train_x.float()
+            # train_y = torch.from_numpy(queried_expert_rewards)
+            # train_y = train_y.float()
+            # import pdb; pdb.set_trace()
+            # print('train_y variance', train_y.var())
+            # # add white noise 
+            # #likelihood = gpytorch.likelihoods.FixedNoiseGaussianLikelihood(torch.ones(train_x.shape[0]) * beta)
+            # gpr_reward_model = GPRegressionModel(train_x, train_y, likelihood) 
+            # optimizer = torch.optim.Adam([                
+            #     {'params': gpr_reward_model.covar_module.parameters()},
+            #     {'params': gpr_reward_model.mean_module.parameters()},
+            #     {'params': gpr_reward_model.likelihood.parameters()},
+            # ], lr=0.01) # lr = 0.01 originally 
+            # mll = gpytorch.mlls.ExactMarginalLogLikelihood(likelihood, gpr_reward_model)
+            # # train reward GP model given initial train_x and train_y data (voxel_data, queried human rewards)
+            # gpr_reward_model = reward_learner.train_GPmodel(work_dir, GP_training_epochs_initial, optimizer, gpr_reward_model, likelihood, mll, train_x, train_y)
 
-            # -------------once trained, compute EPD for remaining samples in epoch to see if any others should be queried
-            print('computing EPD for each sample')
-            import pdb; pdb.set_trace()
-            # calculate GP model rewards for ALL samples in training set under current reward model
-            GP_mean_rews_all_data_current_reward_model, GP_var_rews_all_data_current_reward_model = reward_learner.calc_expected_reward_for_observed_outcome_w_GPmodel \
-                (gpr_reward_model, likelihood, np.array(np.array(training_data_list)[:,0].tolist()))                 
+            # # -------------once trained, compute EPD for remaining samples in epoch to see if any others should be queried
+            # print('computing EPD for each sample')
+            # import pdb; pdb.set_trace()
+            # # calculate GP model rewards for ALL samples in training set under current reward model
+            # GP_mean_rews_all_data_current_reward_model, GP_var_rews_all_data_current_reward_model = reward_learner.calc_expected_reward_for_observed_outcome_w_GPmodel \
+            #     (gpr_reward_model, likelihood, np.array(np.array(training_data_list)[:,0].tolist()))                 
             
-            # calculate pi_tilda wts based on current reward model rewards for EPD computation
-            pi_tilda_wts, temp = reps_agent.weights_from_rewards(GP_mean_rews_all_data_current_reward_model) 
+            # # calculate pi_tilda wts based on current reward model rewards for EPD computation
+            # pi_tilda_wts, temp = reps_agent.weights_from_rewards(GP_mean_rews_all_data_current_reward_model) 
         
-            current_epoch = epoch
-            pi_tilda_mean, pi_tilda_cov = mu, sigma # not using these w/ weight-based KLD calc
-            samples_to_query, queried_outcomes  = reward_learner.compute_EPD_for_each_sample_updated \
-                (GP_mean_rews_all_data_current_reward_model, GP_var_rews_all_data_current_reward_model, current_epoch, args.num_samples, work_dir, num_EPD_epochs, optimizer, \
-                    gpr_reward_model, likelihood, mll, agent, pi_tilda_mean, pi_tilda_cov, pi_tilda_wts, training_data_list, queried_samples_all, \
-                        GP_training_data_x_all, GP_training_data_y_all, beta, initial_wts, args.cut_type, S) 
-            import pdb; pdb.set_trace()
+            # current_epoch = epoch
+            # pi_tilda_mean, pi_tilda_cov = mu, sigma # not using these w/ weight-based KLD calc
+            # samples_to_query, queried_outcomes  = reward_learner.compute_EPD_for_each_sample_updated \
+            #     (GP_mean_rews_all_data_current_reward_model, GP_var_rews_all_data_current_reward_model, current_epoch, args.num_samples, work_dir, num_EPD_epochs, optimizer, \
+            #         gpr_reward_model, likelihood, mll, agent, pi_tilda_mean, pi_tilda_cov, pi_tilda_wts, training_data_list, queried_samples_all, \
+            #             GP_training_data_x_all, GP_training_data_y_all, beta, initial_wts, args.cut_type, S) 
+            # import pdb; pdb.set_trace()
 
-            # query expert rewards and update GP training x and y with new queried samples (if any)
-            if samples_to_query != []:
-                GP_training_data_x_all, GP_training_data_y_all, queried_expert_rewards = reward_learner.query_expert_rewards_and_update_GP_training_data(epoch, \
-                    GP_training_data_x_all, GP_training_data_y_all, samples_to_query, queried_outcomes, expert_rewards_all_epochs)
-                print('check if GP_reward_model_training_data saved correctly')
-            else: 
-                print('no samples to query - will not update reward model')
-            import pdb; pdb.set_trace()   
+            # # query expert rewards and update GP training x and y with new queried samples (if any)
+            # if samples_to_query != []:
+            #     GP_training_data_x_all, GP_training_data_y_all, queried_expert_rewards = reward_learner.query_expert_rewards_and_update_GP_training_data(epoch, \
+            #         GP_training_data_x_all, GP_training_data_y_all, samples_to_query, queried_outcomes, expert_rewards_all_epochs)
+            #     print('check if GP_reward_model_training_data saved correctly')
+            # else: 
+            #     print('no samples to query - will not update reward model')
+            # import pdb; pdb.set_trace()   
 
-            # Add samples to query to running list of queried_samples if any
-            if samples_to_query!=[]: 
-                queried_samples_all = queried_samples_all + samples_to_query # running list of queried samples
-                if args.desired_cutting_behavior == 'slow':
-                    np.save(work_dir + '/' + 'GP_reward_model_data/' + 'queried_samples_all_slowCut_epoch_'+str(epoch)+'.npy', np.array(queried_samples_all))
+            # # Add samples to query to running list of queried_samples if any
+            # if samples_to_query!=[]: 
+            #     queried_samples_all = queried_samples_all + samples_to_query # running list of queried samples
+            #     if args.desired_cutting_behavior == 'slow':
+            #         np.save(work_dir + '/' + 'GP_reward_model_data/' + 'queried_samples_all_slowCut_epoch_'+str(epoch)+'.npy', np.array(queried_samples_all))
 
-                elif args.desired_cutting_behavior == 'fast':
-                    np.save(work_dir + '/' + 'GP_reward_model_data/' + 'queried_samples_all_fastCut_epoch_'+str(epoch)+'.npy', np.array(queried_samples_all))
+            #     elif args.desired_cutting_behavior == 'fast':
+            #         np.save(work_dir + '/' + 'GP_reward_model_data/' + 'queried_samples_all_fastCut_epoch_'+str(epoch)+'.npy', np.array(queried_samples_all))
 
-                else:
-                    np.save(work_dir + '/' + 'GP_reward_model_data/' + 'queried_samples_all_qualityCut_epoch_'+str(epoch)+'.npy', np.array(queried_samples_all))
+            #     else:
+            #         np.save(work_dir + '/' + 'GP_reward_model_data/' + 'queried_samples_all_qualityCut_epoch_'+str(epoch)+'.npy', np.array(queried_samples_all))
                                 
-                print('updating reward model with new samples in 1st epoch after computing EPD')
-                import pdb; pdb.set_trace()  
-                updated_train_x = GP_training_data_x_all
-                updated_train_y = GP_training_data_y_all                
-                continue_training = False 
-                gpr_reward_model = reward_learner.update_reward_GPmodel(work_dir, continue_training, GP_training_epochs_later, optimizer, gpr_reward_model, likelihood, mll, updated_train_x, updated_train_y)                                       
-                import pdb; pdb.set_trace()  
+            #     print('updating reward model with new samples in 1st epoch after computing EPD')
+            #     import pdb; pdb.set_trace()  
+            #     updated_train_x = GP_training_data_x_all
+            #     updated_train_y = GP_training_data_y_all                
+            #     continue_training = False 
+            #     gpr_reward_model = reward_learner.update_reward_GPmodel(work_dir, continue_training, GP_training_epochs_later, optimizer, gpr_reward_model, likelihood, mll, updated_train_x, updated_train_y)                                       
+            #     import pdb; pdb.set_trace()  
 
             # #Keep track of number of queried samples 
             # if epoch > 0:
