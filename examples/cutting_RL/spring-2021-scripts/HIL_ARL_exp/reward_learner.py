@@ -425,8 +425,8 @@ class RewardLearner:
             agent, pi_tilda_mean, pi_tilda_cov, pi_tilda_wts, prior_training_data, \
                 queried_samples_all, GP_training_data_x_all, GP_training_data_y_all, beta, initial_wts, cut_type, S):
         
-        if current_epoch > 0 and cut_type == 'scoring':
-            self.kappa = 0.7
+        # if current_epoch > 0 and cut_type == 'scoring':
+        #     self.kappa = 0.7
 
         prior_training_data_expect_rewards_mean, prior_training_data_policy_params, \
             prior_training_data_expect_rewards_sig = [], [], []

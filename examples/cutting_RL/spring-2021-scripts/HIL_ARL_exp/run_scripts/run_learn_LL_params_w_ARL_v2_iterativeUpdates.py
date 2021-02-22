@@ -101,7 +101,7 @@ if __name__ == "__main__":
     parser.add_argument('--debug', type=bool, default=False)
     
     # GP reward model-related args
-    parser.add_argument('--kappa', type=int, default = 0.1) #0.01) #5)
+    parser.add_argument('--kappa', type=int, default = 0.1) #0.01)
     parser.add_argument('--rel_entropy_bound', type=float, default = 1.5)
     parser.add_argument('--num_EPD_epochs', type=int, default = 5)
     parser.add_argument('--GP_training_epochs_initial', type=int, default = 1)
@@ -182,7 +182,7 @@ if __name__ == "__main__":
 
     # go to initial cutting pose
     starting_position = RigidTransform(rotation=knife_orientation, \
-        translation=np.array([0.5, 0.109, 0.144]), #z=0.05
+        translation=np.array([0.507, 0.130, 0.144]), #z=0.05
         from_frame='franka_tool', to_frame='world')    
     fa.goto_pose(starting_position, duration = 5, use_impedance=False)
 
@@ -993,7 +993,7 @@ if __name__ == "__main__":
                 print('shape GP_training_data_x_all, epoch %i, iter %i: '%(epoch, iteration), GP_training_data_x_all.shape)
                 print('shape GP_training_data_y_all, epoch %i, iter %i: '%(epoch, iteration), GP_training_data_y_all.shape)
                 print('shape queried_samples_all, epoch %i, iter %i: '%(epoch, iteration), len(queried_samples_all))        
-                import pdb; pdb.set_trace() 
+                #import pdb; pdb.set_trace() 
 
                 # plot every time we update the reward model with a sample
                 if iteration % 2 == 0:
@@ -1015,7 +1015,7 @@ if __name__ == "__main__":
 
                 # update queried samples all
                 queried_samples_all = queried_samples_all + [samples_to_query] # running list of queried samples 
-                import pdb; pdb.set_trace()
+                #import pdb; pdb.set_trace()
 
                 # update GP training data
                 #queried_expert_rewards = np.array([np.array(expert_rewards_all_epochs)[samples_to_query]])
@@ -1362,16 +1362,18 @@ if __name__ == "__main__":
     
     print('total samples', total_samples)
     # last epoch did not query samples (if policy converged), so add 0 to queried samples list
-    total_queried_samples_each_epoch.append(total_queried_samples_each_epoch[-1])
+    # total_queried_samples_each_epoch.append(total_queried_samples_each_epoch[-1])
     # total_queried_samples_each_epoch is CUMULATIVE queries samples
     print('cumulative queried samples', total_queried_samples_each_epoch)
     import pdb; pdb.set_trace()
     plt.plot(np.arange(epoch+1), total_queried_samples_each_epoch,'-o')
-    plt.xlabel('epochs')
-    plt.xticks(np.arange((epoch+1)))
-    plt.ylabel('cumulative human queried samples')
+    plt.xlabel('epochs', fontsize=22)
+    plt.xticks(np.arange((epoch+1)),fontsize=22)
+    plt.tick_params(axis="x", labelsize=15)
+    plt.tick_params(axis="y", labelsize=15)
+    plt.ylabel('cumulative human queried samples', fontsize=22)
     plt.ylim([0, np.max(total_queried_samples_each_epoch)+3])
-    plt.title('cumulative human queries vs epochs, total samples = %i, %s, %s'%(115, args.cut_type, args.food_name))
+    plt.title('cumulative human queries vs epochs, total queries = %i, total samples = %i, %s, %s'%(len(queried_samples_all),115, args.cut_type, args.food_name), fontsize=22)
     plt.show()  
     import pdb; pdb.set_trace()       
 

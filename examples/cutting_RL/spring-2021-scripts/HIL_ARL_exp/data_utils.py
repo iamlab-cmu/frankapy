@@ -95,6 +95,7 @@ def plot_analytical_human_GPmodel_rewards_all_prev_epochs(work_dir, desired_cutt
     plt.plot(avg_GP_rews_each_epoch, '-o')
     plt.plot(avg_human_rews_each_epoch, '-o')
     plt.xlabel('epoch', fontsize = 22)
+    plt.xticks(np.arange(5),fontsize=22)
     plt.ylabel('avg rewards each epoch',fontsize = 22)
     # plt.ylim(-60, 0)
     plt.title('avg reward vs epochs',fontsize = 22)
@@ -116,11 +117,14 @@ def plot_task_success_analyticalRew_vs_HIL(analyt_work_dir, HIL_work_dir):
     plt.figure()
     plt.plot(epochs,mean_task_success_HIL,'-o')
     plt.plot(epochs,mean_task_success_analyt,'-o')
-    plt.xlabel('epoch')
-    plt.ylabel('average task success each epoch')
+    plt.xlabel('epoch', fontsize=20)
+    plt.ylabel('average task success each epoch', fontsize=20)
     plt.ylim([0,2.02])
-    plt.title('average task success (0,1,2) vs. epoch - analytical reward experiment vs. HIL RL - scoring, tomato')
-    plt.legend(('HIL RL', 'analytical reward'))
+    plt.xticks(np.arange(5),fontsize=22)
+    plt.tick_params(axis="x", labelsize=15)
+    plt.tick_params(axis="y", labelsize=15)
+    plt.title('average task success (0,1,2) vs. epoch - analytical reward experiment vs. HIL RL - scoring, tomato', fontsize=20)
+    plt.legend(('HIL RL', 'analytical reward'), fontsize=20)
 
     perc_succ_HIL = [(25 - np.where(np.array(task_success_HIL[0:25])==0)[0].shape[0])/25, 
         (25 - np.where(np.array(task_success_HIL[25:50])==0)[0].shape[0])/25,
@@ -140,6 +144,7 @@ def plot_task_success_analyticalRew_vs_HIL(analyt_work_dir, HIL_work_dir):
     plt.xlabel('epoch', fontsize=20)
     plt.ylabel('% task success each epoch', fontsize=20)
     plt.ylim([0,102])
+    plt.xticks(np.arange(5),fontsize=22)
     plt.tick_params(axis='both', which='major', labelsize=20)
     plt.title('% task success vs. epoch - analytical reward experiment vs. HIL RL - scoring, tomato', fontsize=20)
     plt.legend(('HIL RL', 'analytical reward'), fontsize=20)
@@ -149,17 +154,17 @@ def plot_task_success_analyticalRew_vs_HIL(analyt_work_dir, HIL_work_dir):
     print('HIL task success', 100*np.array(perc_succ_HIL))
     print('analyt task success', 100*np.array(perc_succ_analyt))
    
-#analyt_work_dir = '/home/sony/Documents/cutting_RL_experiments/data/Jan-2021-LL-param-exps/scoring/tomato/exp_18/'
-#HIL_work_dir = '/home/sony/Documents/cutting_RL_experiments/data/Jan-2021-HIL-ARL-exps/scoring/tomato/exp_3/'
-#plot_task_success_analyticalRew_vs_HIL(analyt_work_dir, HIL_work_dir)
+analyt_work_dir = '/home/sony/Documents/cutting_RL_experiments/data/Jan-2021-LL-param-exps/scoring/tomato/exp_18/'
+HIL_work_dir = '/home/sony/Documents/cutting_RL_experiments/data/Jan-2021-HIL-ARL-exps/scoring/tomato/exp_5/'
+plot_task_success_analyticalRew_vs_HIL(analyt_work_dir, HIL_work_dir)
 
 
 # work_dir = '/home/sony/Documents/cutting_RL_experiments/data/Jan-2021-HIL-ARL-exps/scoring/tomato/exp_1/'
 # desired_cutting_behavior = 'quality_cut'
 
-#work_dir = '/home/sony/Documents/cutting_RL_experiments/data/Jan-2021-HIL-ARL-exps/scoring/tomato/exp_3/'
-#desired_cutting_behavior = 'quality_cut'
-#plot_analytical_human_GPmodel_rewards_all_prev_epochs(work_dir, desired_cutting_behavior)
+# work_dir = '/home/sony/Documents/cutting_RL_experiments/data/Jan-2021-HIL-ARL-exps/scoring/tomato/exp_5/'
+# desired_cutting_behavior = 'quality_cut'
+# plot_analytical_human_GPmodel_rewards_all_prev_epochs(work_dir, desired_cutting_behavior)
 
 
 #pol_param_data_filepath = '/home/sony/Documents/cutting_RL_experiments/data/Jan-2021-HIL-ARL-exps/scoring/tomato/exp_1/all_polParamRew_data/polParamsRews_epoch_1_ep_24.npy'
