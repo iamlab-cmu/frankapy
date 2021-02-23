@@ -101,7 +101,7 @@ if __name__ == "__main__":
     parser.add_argument('--debug', type=bool, default=False)
     
     # GP reward model-related args
-    parser.add_argument('--kappa', type=int, default = 0.1) #0.01)
+    parser.add_argument('--kappa', type=float, default = 0.1) 
     parser.add_argument('--rel_entropy_bound', type=float, default = 1.5)
     parser.add_argument('--num_EPD_epochs', type=int, default = 5)
     parser.add_argument('--GP_training_epochs_initial', type=int, default = 1)
@@ -182,7 +182,7 @@ if __name__ == "__main__":
 
     # go to initial cutting pose
     starting_position = RigidTransform(rotation=knife_orientation, \
-        translation=np.array([0.507, 0.130, 0.144]), #z=0.05
+        translation=np.array([0.507, 0.127, 0.144]), #z=0.05
         from_frame='franka_tool', to_frame='world')    
     fa.goto_pose(starting_position, duration = 5, use_impedance=False)
 
@@ -720,11 +720,12 @@ if __name__ == "__main__":
             import pdb; pdb.set_trace()
             # reset to starting cut position            
             new_position = copy.deepcopy(starting_position)
-            new_position.translation[1] = fa.get_pose().translation[1]
+            #new_position.translation[1] = fa.get_pose().translation[1]
+            new_position.translation[1] = fa.get_pose().translation[1] - 0.003
             fa.goto_pose(new_position, duration=5, use_impedance=False)
 
             # move over a bit (y dir)       
-            y_shift = 0.004 #float(input('enter how far to shift in y dir (m): '))
+            y_shift = 0.006 #0.004 #float(input('enter how far to shift in y dir (m): '))
             move_over_slice_thickness = RigidTransform(translation=np.array([0.0, y_shift, 0.0]),
                 from_frame='world', to_frame='world')       
             fa.goto_pose_delta(move_over_slice_thickness, duration=3, use_impedance=False)
