@@ -35,6 +35,15 @@ class FrankaArm:
                 '/get_current_robot_state_server_node_{}/get_current_robot_state_server'.format(robot_num)
         self._franka_interface_status_server_name = \
                 '/get_current_franka_interface_status_server_node_{}/get_current_franka_interface_status_server'.format(robot_num)
+        self._gripper_homing_action_server_name = \
+                '/franka_gripper_{}/homing'.format(robot_num)
+        self._gripper_move_action_server_name = \
+                '/franka_gripper_{}/move'.format(robot_num)
+        self._gripper_stop_action_server_name = \
+                '/franka_gripper_{}/stop'.format(robot_num)
+        self._gripper_grasp_action_server_name = \
+                '/franka_gripper_{}/grasp'.format(robot_num)
+
 
         self._connected = False
         self._in_skill = False
