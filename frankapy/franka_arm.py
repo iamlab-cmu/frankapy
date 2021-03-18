@@ -28,7 +28,8 @@ class FrankaArm:
             self,
             rosnode_name='franka_arm_client', ros_log_level=rospy.INFO,
             robot_num=1,
-            with_gripper=1,
+            with_gripper=True,
+            old_gripper=False,
             offline=False):
 
         self._execute_skill_action_server_name = \
@@ -52,6 +53,7 @@ class FrankaArm:
         self._in_skill = False
         self._offline = offline
         self._with_gripper = with_gripper
+        self._old_gripper = old_gripper
         self._last_gripper_command = None
 
         # init ROS
@@ -923,37 +925,39 @@ class FrankaArm:
             ValueError: If width is less than 0 or greater than TODO(jacky)
                 the maximum gripper opening
         '''
-        # skill = Skill(SkillType.GripperSkill, 
-        #               TrajectoryGeneratorType.GripperTrajectoryGenerator, 
-        #               skill_desc=skill_desc)
 
-        # skill.add_initial_sensor_values(FC.EMPTY_SENSOR_VALUES)
+        if self._old_gripper:
+            skill = Skill(SkillType.GripperSkill, 
+                          TrajectoryGeneratorType.GripperTrajectoryGenerator, 
+                          skill_desc=skill_desc)
 
-        # skill.add_gripper_params(grasp, width, speed, force)
+            skill.add_initial_sensor_values(FC.EMPTY_SENSOR_VALUES)
 
-        # goal = skill.create_goal()
+            skill.add_gripper_params(grasp, width, speed, force)
 
-        # self._send_goal(goal,
-        #                 cb=lambda x: skill.feedback_callback(x),
-        #                 block=block,
-        #                 ignore_errors=ignore_errors)
-        # # this is so the gripper state can be updated, which happens with a
-        # # small lag
-        # sleep(FC.GRIPPER_CMD_SLEEP_TIME)
+            goal = skill.create_goal()
 
-        if grasp:
-            grasp_skill = GraspGoal()
-            grasp_skill.width = width
-            grasp_skill.speed = speed
-            grasp_skill.force = force
-            self._gripper_grasp_client.send_goal(grasp_skill)
+            self._send_goal(goal,
+                            cb=lambda x: skill.feedback_callback(x),
+                            block=block,
+                            ignore_errors=ignore_errors)
+            # this is so the gripper state can be updated, which happens with a
+            # small lag
+            sleep(FC.GRIPPER_CMD_SLEEP_TIME)
         else:
-            move_skill = MoveGoal()
-            move_skill.width = width
-            move_skill.speed = speed
-            self._gripper_move_client.send_goal(move_skill)
-        if block:
-            self.wait_for_gripper()
+            if grasp:
+                grasp_skill = GraspGoal()
+                grasp_skill.width = width
+                grasp_skill.speed = speed
+                grasp_skill.force = force
+                self._gripper_grasp_client.send_goal(grasp_skill)
+            else:
+                move_skill = MoveGoal()
+                move_skill.width = width
+                move_skill.speed = speed
+                self._gripper_move_client.send_goal(move_skill)
+            if block:
+                self.wait_for_gripper()
 
     def selective_guidance_mode(self, 
                                 duration=5,
@@ -1222,10 +1226,11 @@ class FrankaArm:
         Returns:
             float of gripper width in meters
         '''
-        gripper_data = rospy.wait_for_message(self._gripper_joint_states_name, JointState)
-        return gripper_data.position[0] + gripper_data.position[1]
-
-        #return self._state_client.get_gripper_width()
+        if self._old_gripper:
+            return self._state_client.get_gripper_width()
+        else:
+            gripper_data = rospy.wait_for_message(self._gripper_joint_states_name, JointState)
+            return gripper_data.position[0] + gripper_data.position[1]
 
     def get_gripper_is_grasped(self):
         '''
