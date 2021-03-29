@@ -37,7 +37,7 @@ See detailed instructions [here](https://github.com/protocolbuffers/protobuf/blo
 1. Clone Repo and its Submodules:
 
    ```bash
-   git clone --recurse-submodules https://github.com/iamlab-cmu/frankapy.git
+   git clone --recurse-submodules git@github.com:iamlab-cmu/frankapy.git   
    ```
 All directories below are given relative to `/frankapy`.
 
