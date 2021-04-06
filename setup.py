@@ -8,7 +8,8 @@ requirements = [
     'numpy-quaternion',
     'numba',
     'rospkg',
-    'catkin-tools'
+    'catkin-tools',
+    'protobuf'
 ]
 
 setup(name='frankapy',
