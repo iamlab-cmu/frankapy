@@ -36,10 +36,10 @@ if __name__ == '__main__':
 
     #fa.reset_pose()
 
-    # fa.goto_pose_with_cartesian_control(random_position, cartesian_impedances=[3000, 3000, 100, 300, 300, 300])
+    # fa.goto_pose(random_position, use_impedance=False, cartesian_impedances=[3000, 3000, 100, 300, 300, 300])
 
-    fa.goto_joints_with_joint_control(desired_joints_1, joint_impedances=[100, 100, 100, 50, 50, 100, 100])
+    fa.goto_joints(desired_joints_1, joint_impedances=[100, 100, 100, 50, 50, 100, 100])
 
-    fa.goto_joints_with_joint_control(desired_joints_2, joint_impedances=[100, 100, 100, 50, 50, 100, 100])
+    fa.goto_joints(desired_joints_2, joint_impedances=[100, 100, 100, 50, 50, 100, 100])
 
     #fa.apply_effector_forces_torques(10.0, 0, 0, 0)

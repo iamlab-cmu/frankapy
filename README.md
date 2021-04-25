@@ -51,7 +51,12 @@ All directories below are given relative to `/frankapy`.
    ./bash_scripts/make_catkin.sh
    ```
 
-4. To make the protobufs use the following script (**you don't need to do this if you haven't modified the proto messages**):
+4. To allow asynchronous gripper commands, we use the franka\_ros package, so install libfranka and franka\_ros using the following command (Change melodic to kinetic if you are on Ubuntu 16.04:
+   ```bash
+   sudo apt install ros-melodic-libfranka ros-melodic-franka-ros
+   ```
+
+5. To make the protobufs use the following script (**you don't need to do this if you haven't modified the proto messages**):
 	```bash
    ./bash_scripts/make_proto.sh
    ```
