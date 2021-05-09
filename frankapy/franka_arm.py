@@ -1262,6 +1262,26 @@ class FrankaArm:
     def get_ee_force_torque(self):
         return self._state_client.get_ee_force_torque()
 
+    def get_finger_poses(self):
+        '''
+        Returns:
+            A tuple of 2 RigidTransforms for the left and right finger respectively.
+
+            The left finger is +y from the gripper pose, right finger is -y
+        '''
+        ee_pose = self.get_pose()
+        delta_gripper_width = self.get_gripper_width() / 2
+
+        left_finger_pose = ee_pose * RigidTransform(
+            translation=np.array([0, delta_gripper_width, 0]),
+            from_frame='finger_left', to_frame=ee_pose.from_frame
+        )
+        right_finger_pose = ee_pose * RigidTransform(
+            translation=np.array([0, -delta_gripper_width, 0]),
+            from_frame='finger_right', to_frame=ee_pose.from_frame
+        )
+        return left_finger_pose, right_finger_pose
+
     '''
     Sets
     '''

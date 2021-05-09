@@ -1,11 +1,11 @@
-import sys, logging
-from time import sleep
+import logging
 
 import numpy as np
 import rospy
 from franka_interface_msgs.srv import GetCurrentRobotStateCmd
 
 from .utils import franka_pose_to_rigid_transform
+
 
 class FrankaArmStateClient:
 
