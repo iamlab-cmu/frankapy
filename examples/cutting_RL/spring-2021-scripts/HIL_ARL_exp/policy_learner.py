@@ -35,8 +35,6 @@ class REPSPolicyLearner:
 
         use_all_dmp_dims = False
         if self.start_from_previous and self.starting_epoch_num > 0:
-        # if self.start_from_previous and self.starting_epoch_num > 1: # load previous data collected and start from updated policy and/or sample/epoch        
-            # starting_epoch_num should be > 1 to update policy w/ REPS b/c w/ HIL ARL, we don't update policy until after 1st epoch
             prev_data_dir = self.previous_datadir
             if use_all_dmp_dims:
                 policy_params_mean, policy_params_sigma = parse_policy_params_and_rews_from_file_HIL_ARL(self.GP_mean_rews_all_data_current_reward_model, self.num_expert_rews_each_sample, prev_data_dir, self.prev_epochs_to_calc_pol_update, hfpc = False)
@@ -64,16 +62,8 @@ class REPSPolicyLearner:
                 if self.food_type == 'hard':
                     S = [1,0,0,1,1,1] 
                 elif self.food_type == 'soft':
-                    S = [1,1,0,1,1,1]           
-            
-            # plot updated policy mean trajectory to visualize
-            # print('plotting REPS updated mean trajectory')
-            # plot_updated_policy_mean_traject(work_dir, cut_type, position_dmp_weights_file_path, starting_epoch_num, dmp_traject_time, control_type_z_axis,\
-            #     init_dmp_info_dict, initial_wts, mu)
-            # plot_updated_policy_mean_traject_HIL_ARL(work_dir, fa, args.cut_type, dmp_wts_file, epoch, args.dmp_traject_time, control_type_z_axis, init_dmp_info_dict,\
-            #     initial_wts, policy_params_mean)
-            #import pdb; pdb.set_trace()
-
+                    S = [1,1,0,1,1,1]         
+                     
         else: # start w/ initial DMP weights from IL
             initial_wts = np.array(init_dmp_info_dict['weights'])
             if self.cut_type == 'normal' or self.cut_type == 'scoring':
