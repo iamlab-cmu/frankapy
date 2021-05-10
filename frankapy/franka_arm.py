@@ -8,9 +8,9 @@ from itertools import product
 import roslib
 roslib.load_manifest('franka_interface_msgs')
 import rospy
-import actionlib
+from actionlib import SimpleActionClient
 from sensor_msgs.msg import JointState
-from franka_interface_msgs.msg import ExecuteSkillAction, FrankaInterfaceStatus
+from franka_interface_msgs.msg import ExecuteSkillAction
 from franka_interface_msgs.srv import GetCurrentFrankaInterfaceStatusCmd
 from franka_gripper.msg import *
 
@@ -76,22 +76,22 @@ class FrankaArm:
             self._get_current_franka_interface_status = rospy.ServiceProxy(
                     self._franka_interface_status_server_name, GetCurrentFrankaInterfaceStatusCmd)
 
-            self._client = actionlib.SimpleActionClient(
+            self._client = SimpleActionClient(
                     self._execute_skill_action_server_name, ExecuteSkillAction)
             self._client.wait_for_server()
             self.wait_for_franka_interface()
 
-            if self._with_gripper:
-                self._gripper_homing_client = actionlib.SimpleActionClient(
+            if self._with_gripper and not self._old_gripper:
+                self._gripper_homing_client = SimpleActionClient(
                     self._gripper_homing_action_server_name, HomingAction)
                 self._gripper_homing_client.wait_for_server()
-                self._gripper_move_client = actionlib.SimpleActionClient(
+                self._gripper_move_client = SimpleActionClient(
                     self._gripper_move_action_server_name, MoveAction)
                 self._gripper_move_client.wait_for_server()
-                self._gripper_grasp_client = actionlib.SimpleActionClient(
+                self._gripper_grasp_client = SimpleActionClient(
                     self._gripper_grasp_action_server_name, GraspAction)
                 self._gripper_grasp_client.wait_for_server()
-                self._gripper_stop_client = actionlib.SimpleActionClient(
+                self._gripper_stop_client = SimpleActionClient(
                     self._gripper_stop_action_server_name, StopAction)
                 self._gripper_stop_client.wait_for_server()
 
