@@ -17,7 +17,7 @@ import sys
 sys.path.append('/home/test2/Documents/frankapy/examples/cutting_RL/spring-2021-scripts/HIL_ARL_exp/')
 
 from reward_learner import RewardLearner
-from policy_learner import REPSPolicyLearner
+#from policy_learner import REPSPolicyLearner
 from gp_regression_model import GPRegressionModel
 from data_utils import *
 import sklearn.gaussian_process as gp
@@ -31,15 +31,15 @@ import rospy
 import argparse
 import pickle
 from autolab_core import RigidTransform, Point
-from frankapy import FrankaArm
-from cv_bridge import CvBridge
+# from frankapy import FrankaArm
+# from cv_bridge import CvBridge
 
-from frankapy import FrankaArm, SensorDataMessageType
-from frankapy import FrankaConstants as FC
-from frankapy.proto_utils import sensor_proto2ros_msg, make_sensor_group_msg
-from frankapy.proto import ForcePositionSensorMessage, ForcePositionControllerSensorMessage, ShouldTerminateSensorMessage
-from franka_interface_msgs.msg import SensorDataGroup
-from frankapy.utils import *
+# from frankapy import FrankaArm, SensorDataMessageType
+# from frankapy import FrankaConstants as FC
+# from frankapy.proto_utils import sensor_proto2ros_msg, make_sensor_group_msg
+# from frankapy.proto import ForcePositionSensorMessage, ForcePositionControllerSensorMessage, ShouldTerminateSensorMessage
+# from franka_interface_msgs.msg import SensorDataGroup
+# from frankapy.utils import *
 
 from tqdm import trange
 from rl_utils import reps
@@ -104,44 +104,44 @@ if __name__ == "__main__":
     elif args.desired_cutting_behavior == 'quality_cut':
         num_expert_rews_each_sample = 1
         
-    # create folders to save data
-    if not os.path.isdir(args.data_savedir + args.cut_type + '/' + args.food_name + '/'):
-        createFolder(args.data_savedir + args.cut_type + '/' + args.food_name + '/')
-    args.data_savedir = args.data_savedir + args.cut_type + '/' + args.food_name + '/'
-    if not os.path.isdir(args.data_savedir + 'exp_' + str(args.exp_num)):
-        createFolder(args.data_savedir + 'exp_' + str(args.exp_num))
+    # # create folders to save data
+    # if not os.path.isdir(args.data_savedir + args.cut_type + '/' + args.food_name + '/'):
+    #     createFolder(args.data_savedir + args.cut_type + '/' + args.food_name + '/')
+    # args.data_savedir = args.data_savedir + args.cut_type + '/' + args.food_name + '/'
+    # if not os.path.isdir(args.data_savedir + 'exp_' + str(args.exp_num)):
+    #     createFolder(args.data_savedir + 'exp_' + str(args.exp_num))
 
-    work_dir = args.data_savedir + 'exp_' + str(args.exp_num)
+    work_dir = args.data_savedir + args.cut_type + '/' + args.food_name + '/' + 'exp_' + str(args.exp_num)
     
-    if not os.path.isdir(work_dir + '/' + 'all_polParamRew_data'):
-        createFolder(work_dir + '/' + 'all_polParamRew_data')
-    if not os.path.isdir(work_dir + '/' + 'GP_reward_model_data'):
-        createFolder(work_dir + '/' + 'GP_reward_model_data')
-    if not os.path.isdir(work_dir + '/' + 'GP_reward_model_data' + '/' + 'GP_cov_mat'):
-        createFolder(work_dir + '/' + 'GP_reward_model_data' + '/' + 'GP_cov_mat')
-    if not os.path.isdir(work_dir + '/' + 'GP_reward_model_data' + '/' + 'policy_pi_star_tilda_data'):
-        createFolder(work_dir + '/' + 'GP_reward_model_data' + '/' + 'policy_pi_star_tilda_data')
-    if not os.path.isdir(work_dir + '/' + 'dmp_traject_plots'):
-        createFolder(work_dir + '/' + 'dmp_traject_plots')    
-    if not os.path.isdir(work_dir + '/' + 'dmp_wts'):
-        createFolder(work_dir + '/' + 'dmp_wts')
-    if not os.path.isdir(work_dir + '/' + 'forces_positions'):
-        createFolder(work_dir + '/' + 'forces_positions')
+    # if not os.path.isdir(work_dir + '/' + 'all_polParamRew_data'):
+    #     createFolder(work_dir + '/' + 'all_polParamRew_data')
+    # if not os.path.isdir(work_dir + '/' + 'GP_reward_model_data'):
+    #     createFolder(work_dir + '/' + 'GP_reward_model_data')
+    # if not os.path.isdir(work_dir + '/' + 'GP_reward_model_data' + '/' + 'GP_cov_mat'):
+    #     createFolder(work_dir + '/' + 'GP_reward_model_data' + '/' + 'GP_cov_mat')
+    # if not os.path.isdir(work_dir + '/' + 'GP_reward_model_data' + '/' + 'policy_pi_star_tilda_data'):
+    #     createFolder(work_dir + '/' + 'GP_reward_model_data' + '/' + 'policy_pi_star_tilda_data')
+    # if not os.path.isdir(work_dir + '/' + 'dmp_traject_plots'):
+    #     createFolder(work_dir + '/' + 'dmp_traject_plots')    
+    # if not os.path.isdir(work_dir + '/' + 'dmp_wts'):
+    #     createFolder(work_dir + '/' + 'dmp_wts')
+    # if not os.path.isdir(work_dir + '/' + 'forces_positions'):
+    #     createFolder(work_dir + '/' + 'forces_positions')
  
-    # load dmp weights and starting knife orientation
-    dmp_wts_file, knife_orientation = load_dmp_wts_and_knife_orientation(args.cut_type)
+    # # load dmp weights and starting knife orientation
+    # dmp_wts_file, knife_orientation = load_dmp_wts_and_knife_orientation(args.cut_type)
     
-    position_dmp_pkl = open(dmp_wts_file,"rb")
-    init_dmp_info_dict = pickle.load(position_dmp_pkl)
+    # position_dmp_pkl = open(dmp_wts_file,"rb")
+    # init_dmp_info_dict = pickle.load(position_dmp_pkl)
 
     # Initialize Gaussian policy params (DMP weights) - mean and sigma
     # initial_wts, initial_mu, initial_sigma, S, control_type_z_axis = agent.initialize_gaussian_policy(init_dmp_info_dict, work_dir, dmp_wts_file)
     # print('initial mu', initial_mu)        
     # mu, sigma = initial_mu, initial_sigma
 
-    # Instantiate Policy Learner (agent)
-    agent = REPSPolicyLearner(num_expert_rews_each_sample, args.cut_type, args.food_type, args.dmp_wt_sampling_var, args.start_from_previous, args.previous_datadir,\
-        args.prev_epochs_to_calc_pol_update, args.starting_epoch_num, args.dmp_traject_time)
+    # # Instantiate Policy Learner (agent)
+    # agent = REPSPolicyLearner(num_expert_rews_each_sample, args.cut_type, args.food_type, args.dmp_wt_sampling_var, args.start_from_previous, args.previous_datadir,\
+    #     args.prev_epochs_to_calc_pol_update, args.starting_epoch_num, args.dmp_traject_time)
 
     
     # Instantiate reward learner - note: GPR model not instantiated yet
@@ -154,26 +154,26 @@ if __name__ == "__main__":
 
     import pdb; pdb.set_trace()    
         
-    # Buffers for GP reward model data
-    total_queried_samples_each_epoch, mean_reward_model_rewards_all_epochs = [], [] #track number of queries to expert for rewards and average rewards for each epoch
-    training_data_list, queried_samples_all = [], []
-    GP_training_data_x_all = np.empty([0,7])
-    GP_training_data_y_all, GP_training_data_y_all_slow, GP_training_data_y_all_fast =  np.empty([0]), np.empty([0]), np.empty([0]) 
-    queried_outcomes, queried_expert_rewards, policy_params_all_epochs, block_poses_all_epochs = [], [], [], []
-    reward_model_rewards_all_mean_buffer, expert_rewards_all_epochs = [], [] # TODO: update expert_rewards_all_epochs to load previous data 
-    total_samples = 0
+    # # Buffers for GP reward model data
+    # total_queried_samples_each_epoch, mean_reward_model_rewards_all_epochs = [], [] #track number of queries to expert for rewards and average rewards for each epoch
+    # training_data_list, queried_samples_all = [], []
+    # GP_training_data_x_all = np.empty([0,7])
+    # GP_training_data_y_all, GP_training_data_y_all_slow, GP_training_data_y_all_fast =  np.empty([0]), np.empty([0]), np.empty([0]) 
+    # queried_outcomes, queried_expert_rewards, policy_params_all_epochs, block_poses_all_epochs = [], [], [], []
+    # reward_model_rewards_all_mean_buffer, expert_rewards_all_epochs = [], [] # TODO: update expert_rewards_all_epochs to load previous data 
+    # total_samples = 0
     
-    # Track success metrics
-    '''
-    task_success: 0 (unsuccessful cut), 1 (average cut), 2 (good cut)
-    task_success_more_granular: cut through (0/1), cut through except for small tag (0/1), housing bumped into food/pushed out of gripper (0/1)
-    '''
-    time_to_complete_cut, task_success, task_success_more_granular = [], [], []    
-    # save reward features (for easier data post-processing)
-    reward_features_all_samples = []
-    # load previous data in starting from later sample/epoch
+    # # Track success metrics
+    # '''
+    # task_success: 0 (unsuccessful cut), 1 (average cut), 2 (good cut)
+    # task_success_more_granular: cut through (0/1), cut through except for small tag (0/1), housing bumped into food/pushed out of gripper (0/1)
+    # '''
+    # time_to_complete_cut, task_success, task_success_more_granular = [], [], []    
+    # # save reward features (for easier data post-processing)
+    # reward_features_all_samples = []
+    # # load previous data in starting from later sample/epoch
     if args.starting_sample_num !=0 or args.starting_epoch_num!=0:
-        reward_features_all_samples, time_to_complete_cut, task_success, task_success_more_granular = load_prev_task_success_data(work_dir)        
+    #     reward_features_all_samples, time_to_complete_cut, task_success, task_success_more_granular = load_prev_task_success_data(work_dir)        
         
         # load prev GP training data list
         prev_GP_training_data_list = np.load(work_dir + '/' + 'GP_reward_model_data/' + 'training_data_list.npy', allow_pickle=True)
@@ -204,7 +204,7 @@ if __name__ == "__main__":
             prev_total_queried_samples_each_epoch = np.load(work_dir + '/' 'GP_reward_model_data/' + 'total_queried_samples_each_epoch_qualityCut.npy')
             total_queried_samples_each_epoch = prev_total_queried_samples_each_epoch.tolist()    
         
-        # import pdb; pdb.set_trace()
+    #     # import pdb; pdb.set_trace()
     
     # if not starting from 0-th epoch - need to load/train GP reward model based on previous data
     # TODO: pull this out to a separate function
@@ -228,6 +228,7 @@ if __name__ == "__main__":
             prev_GP_training_data = np.load(work_dir + '/' 'GP_reward_model_data/' + 'GP_reward_model_training_data_qualityCut_epoch_' +str(args.starting_epoch_num-1) + '.npz')
             GP_training_data_x_all = prev_GP_training_data['GP_training_data_x_all']
             GP_training_data_y_all = prev_GP_training_data['GP_training_data_y_all']
+            import pdb; pdb.set_trace()
 
         # train with previous data
         print('initializing and training GP reward model from previous data')             
@@ -244,6 +245,32 @@ if __name__ == "__main__":
             train_y = train_y[0:args.num_GP_training_samples]
         import pdb; pdb.set_trace()
         
+        # PLOT REWARD MODEL INPUT FEATURES distributions
+        x_outcomes = np.array(np.array(training_data_list)[:,0].tolist())
+        alpha_train = 0.8
+        alpha_test = 0.8
+        fig, axs = plt.subplots(1, 7, tight_layout=True)
+        for dim in range(7):
+            if dim == 6:
+                axs[dim].hist(x_outcomes[0:train_x.shape[0],dim], bins=15, color = 'blue', alpha=alpha_train, label='train')
+                axs[dim].hist(x_outcomes[train_x.shape[0]:,dim], bins=15, color = 'gold',alpha=alpha_test, label='test')
+                #axs[dim].set_ylim([0,80])
+            else:
+                axs[dim].hist(x_outcomes[0:train_x.shape[0],dim], bins='auto', color = 'blue',alpha=alpha_train, label='train')
+                axs[dim].hist(x_outcomes[train_x.shape[0]:,dim], bins='auto', color = 'gold',alpha=alpha_test, label='test')
+                #axs[dim].set_ylim([0,30])
+            #axs[0,dim].set_title('std reward feat %i - training distr' %dim)
+            #axs,dim].set_title('std reward feat %i - test distr' %dim)
+            axs[dim].set_xlabel('dim %i value' %(dim+1))
+            axs[dim].set_ylabel('freq') 
+
+        #axs[6].set_ylim([0,80]) 
+        plt.suptitle('Standardized Reward Features - GP Train vs. Test Distributions',y=1.001)
+        plt.tight_layout(.5)
+        plt.legend()
+        plt.show()
+        import pdb; pdb.set_trace()
+
         if args.add_noise_to_expert_rews:
             train_y = train_y + np.random.normal(0, 0.2)
         likelihood = gpytorch.likelihoods.GaussianLikelihood() 
@@ -378,10 +405,12 @@ if __name__ == "__main__":
         plt.title('MSE from human rewards vs. number of queries, kappa = %s'%str(kappa))
         plt.show() 
         import pdb; pdb.set_trace()
+    
+    
 
     GP_mean_rews_all_data_current_reward_model, GP_var_rews_all_data_current_reward_model = reward_learner.calc_expected_reward_for_observed_outcome_w_GPmodel \
         (gpr_reward_model, likelihood, np.array(np.array(training_data_list)[:,0].tolist()))                    
-    agent.GP_mean_rews_all_data_current_reward_model = GP_mean_rews_all_data_current_reward_model
+    #agent.GP_mean_rews_all_data_current_reward_model = GP_mean_rews_all_data_current_reward_model
     import pdb; pdb.set_trace()
     
     ########################## ORIGINAL CODE BELOW
@@ -604,22 +633,22 @@ if __name__ == "__main__":
 
         import pdb; pdb.set_trace()    
 
-    # # PLOT REWARD MODEL INPUT FEATURES distributions
-    # x_outcomes = np.array(np.array(training_data_list)[:,0].tolist())
-    # fig, axs = plt.subplots(2, 7, sharey=True, tight_layout=True)
-    # for dim in range(7):
-    #     if dim == 6:
-    #         axs[0,dim].hist(x_outcomes[0:25,dim], bins=15, color = 'green')
-    #         axs[1,dim].hist(x_outcomes[25:,dim], bins=15, color = 'blue')
-    #     else:
-    #         axs[0,dim].hist(x_outcomes[0:25,dim], bins='auto', color = 'green')
-    #         axs[1,dim].hist(x_outcomes[25:,dim], bins='auto', color = 'blue')
-    #     axs[0,dim].set_title('std reward feat %i - training distr' %dim)
-    #     axs[1,dim].set_title('std reward feat %i - test distr' %dim)
-    #     axs[1,dim].set_xlabel('dim %i value' %dim)
-    #     axs[0,dim].set_ylabel('freq')  
-    #     axs[1,dim].set_ylabel('freq')  
-    # plt.show()
+    # PLOT REWARD MODEL INPUT FEATURES distributions
+    x_outcomes = np.array(np.array(training_data_list)[:,0].tolist())
+    fig, axs = plt.subplots(2, 7, sharey=True, tight_layout=True)
+    for dim in range(7):
+        if dim == 6:
+            axs[0,dim].hist(x_outcomes[0:train_x.shape[0],dim], bins=15, color = 'green')
+            axs[1,dim].hist(x_outcomes[train_x.shape[0]:,dim], bins=15, color = 'blue')
+        else:
+            axs[0,dim].hist(x_outcomes[0:train_x.shape[0],dim], bins='auto', color = 'green')
+            axs[1,dim].hist(x_outcomes[train_x.shape[0]:,dim], bins='auto', color = 'blue')
+        axs[0,dim].set_title('std reward feat %i - training distr' %dim)
+        axs[1,dim].set_title('std reward feat %i - test distr' %dim)
+        axs[1,dim].set_xlabel('dim %i value' %dim)
+        axs[0,dim].set_ylabel('freq')  
+        axs[1,dim].set_ylabel('freq')  
+    plt.show()
 
     # import pdb; pdb.set_trace()
 

@@ -207,8 +207,8 @@ def plot_task_success_analyticalRew_vs_HIL_mult_HIL_exps(analyt_work_dir, HIL_wo
 
     plt.show()
 
-    print('HIL task success', 100*np.array(perc_succ_HIL))
-    print('analyt task success', 100*np.array(perc_succ_analyt))
+    #print('HIL task success', 100*np.array(perc_succ_HIL))
+    #print('analyt task success', 100*np.array(perc_succ_analyt))
    
 # analyt_work_dir = '/home/sony/Documents/cutting_RL_experiments/data/Jan-2021-LL-param-exps/scoring/tomato/exp_18/'
 # HIL_work_dir_1 = '/home/sony/Documents/cutting_RL_experiments/data/Jan-2021-HIL-ARL-exps/scoring/tomato/exp_5/'
@@ -227,7 +227,7 @@ def plot_task_success_analyticalRew_vs_HIL_mult_HIL_exps(analyt_work_dir, HIL_wo
 
 #work_dir = '/home/sony/Documents/cutting_RL_experiments/data/Jan-2021-HIL-ARL-exps/scoring/tomato/exp_6/'
 #plot_analytical_human_GPmodel_rewards_all_prev_epochs(work_dir, desired_cutting_behavior)
-import pdb; pdb.set_trace()
+#import pdb; pdb.set_trace()
 
 #pol_param_data_filepath = '/home/sony/Documents/cutting_RL_experiments/data/Jan-2021-HIL-ARL-exps/scoring/tomato/exp_1/all_polParamRew_data/polParamsRews_epoch_1_ep_24.npy'
 #plot_analytical_human_GPmodel_rewards_one_file(pol_param_data_filepath)

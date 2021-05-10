@@ -24,7 +24,7 @@ from sklearn.metrics import f1_score
 from scipy.stats import norm
 from gp_regression_model import GPRegressionModel
 
-from policy_learner import REPSPolicyLearner
+#from policy_learner import REPSPolicyLearner
 
      
 class RewardLearner:
@@ -213,7 +213,13 @@ class RewardLearner:
         print('updated outputscale: ', model.covar_module.outputscale)
         print('updated covariance matrix', output.lazy_covariance_matrix.evaluate())
         print('done training')
-
+       
+        plt.imshow(output.lazy_covariance_matrix.evaluate().detach().numpy())
+        plt.xlabel('samples')
+        plt.ylabel('samples')
+        plt.title('Gram Matrix of GP Training Data Samples')
+        plt.show()
+        import pdb; pdb.set_trace()
         self.num_reward_features = model.num_features
         # import pdb; pdb.set_trace()
         return model
