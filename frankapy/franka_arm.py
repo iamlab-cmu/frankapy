@@ -901,7 +901,9 @@ class FrankaArm:
                      width, 
                      grasp=False, 
                      speed=0.04, 
-                     force=0.0, 
+                     force=0.0,
+                     epsilon_inner=0.08,
+                     epsilon_outer=0.08, 
                      block=True, 
                      ignore_errors=True, 
                      skill_desc='GoToGripper'):
@@ -914,6 +916,10 @@ class FrankaArm:
             speed (float): Gripper operation speed in meters per sec
             force (float): Max gripper force to apply in N. Default to None,
                 which gives acceptable force
+            epsilon_inner (float): Max tolerated deviation when the actual grasped 
+                width is smaller than the commanded grasp width.
+            epsilon_outer (float): Max tolerated deviation when the actual grasped 
+                width is larger than the commanded grasp width.
             block (boolean) : Function blocks by default. If False, the function 
                 becomes asynchronous and can be preempted.
             ignore_errors (boolean) : Function ignores errors by default. 
@@ -950,6 +956,8 @@ class FrankaArm:
                 grasp_skill.width = width
                 grasp_skill.speed = speed
                 grasp_skill.force = force
+                grasp_skill.epsilon.inner = epsilon_inner
+                grasp_skill.epsilon.outer = epsilon_outer
                 self._gripper_grasp_client.send_goal(grasp_skill)
             else:
                 move_skill = MoveGoal()
