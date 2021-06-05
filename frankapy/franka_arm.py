@@ -13,6 +13,7 @@ from sensor_msgs.msg import JointState
 from franka_interface_msgs.msg import ExecuteSkillAction
 from franka_interface_msgs.srv import GetCurrentFrankaInterfaceStatusCmd
 from franka_gripper.msg import *
+from control_msgs.msg import * #GripperCommandAction
 
 from .skill_list import *
 from .exceptions import *
@@ -46,6 +47,8 @@ class FrankaArm:
                 '/franka_gripper_{}/stop'.format(robot_num)
         self._gripper_grasp_action_server_name = \
                 '/franka_gripper_{}/grasp'.format(robot_num)
+        self._gripper_moveit_action_server_name = \
+                '/franka_gripper_{}/gripper_action'.format(robot_num)
         self._gripper_joint_states_name = \
                 '/franka_gripper_{}/joint_states'.format(robot_num)
 
@@ -90,6 +93,8 @@ class FrankaArm:
                 self._gripper_move_client.wait_for_server()
                 self._gripper_grasp_client = SimpleActionClient(
                     self._gripper_grasp_action_server_name, GraspAction)
+                self._gripper_moveit_client = SimpleActionClient(
+                    self._gripper_moveit_action_server_name, GripperCommandAction)
                 self._gripper_grasp_client.wait_for_server()
                 self._gripper_stop_client = SimpleActionClient(
                     self._gripper_stop_action_server_name, StopAction)
@@ -905,6 +910,7 @@ class FrankaArm:
                      epsilon_inner=0.08,
                      epsilon_outer=0.08, 
                      block=True, 
+                     moveit=True,
                      ignore_errors=True, 
                      skill_desc='GoToGripper'):
         '''Commands gripper to goto a certain width, applying up to the given
@@ -959,6 +965,13 @@ class FrankaArm:
                 grasp_skill.epsilon.inner = epsilon_inner
                 grasp_skill.epsilon.outer = epsilon_outer
                 self._gripper_grasp_client.send_goal(grasp_skill)
+            elif moveit:
+                print("Sending moveit command")
+                moveit_skill = GripperCommandGoal()
+                moveit_skill.command.position = width
+                moveit_skill.command.max_effort = force
+                self._gripper_moveit_client.send_goal(moveit_skill)
+
             else:
                 move_skill = MoveGoal()
                 move_skill.width = width
