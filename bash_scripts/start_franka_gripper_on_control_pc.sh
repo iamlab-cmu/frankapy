@@ -12,6 +12,7 @@ rosmaster_path="bash_scripts/set_rosmaster.sh"
 catkin_ws_setup_path="catkin_ws/devel/setup.bash"
 
 if [ "$control_pc_ip_address" = "localhost" ]; then
+    pwd
     cd $control_pc_franka_interface_path
     source $catkin_ws_setup_path
     roslaunch franka_ros_interface franka_gripper.launch robot_num:=$robot_number

@@ -20,6 +20,7 @@ echo $control_pc_use_password
 echo $control_pc_password
 
 if [ "$control_pc_ip_address" = "localhost" ]; then
+    pwd
     cd $control_pc_franka_interface_path
     cd build
     ./franka_interface --with_gripper $with_gripper --log $log_on_franka_interface --stop_on_error $stop_on_error
