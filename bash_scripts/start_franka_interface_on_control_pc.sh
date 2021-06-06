@@ -19,6 +19,12 @@ echo $control_pc_franka_interface_path
 echo $control_pc_use_password
 echo $control_pc_password
 
+if [ "$control_pc_ip_address" = "localhost" ]; then
+    cd $control_pc_franka_interface_path
+    cd build
+    ./franka_interface --with_gripper $with_gripper --log $log_on_franka_interface --stop_on_error $stop_on_error
+    bash
+else
 if [ "$control_pc_use_password" = "0" ]; then
 ssh -tt $control_pc_uname@$control_pc_ip_address << EOSSH
 cd $control_pc_franka_interface_path
@@ -34,4 +40,5 @@ echo $stop_on_error
 ./franka_interface --with_gripper $with_gripper --log $log_on_franka_interface --stop_on_error $stop_on_error
 bash
 EOSSH
+fi
 fi
