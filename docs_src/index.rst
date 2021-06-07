@@ -12,9 +12,8 @@ Welcome to FrankaPy's Documentation!
    install
    network
    running
+   frankaarm
    support
-
-
 
 Indices and tables
 ==================
