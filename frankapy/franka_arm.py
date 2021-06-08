@@ -671,19 +671,6 @@ class FrankaArm:
         if dynamic:
             sleep(FC.DYNAMIC_SKILL_WAIT_TIME)
 
-    def apply_joint_torques(self, torques, duration, ignore_errors=True, skill_desc='',):
-        """
-        Commands Arm to apply given joint torques for duration seconds
-
-        Parameters
-        ----------
-            torques (list): A list of 7 numbers that correspond to torques in Nm.
-            duration (float): A float in the unit of seconds
-            skill_desc (string) : Skill description to use for logging on
-                control-pc.
-        """
-        pass
-
     def execute_joint_dmp(self, 
                           joint_dmp_info, 
                           duration, 
@@ -1411,14 +1398,6 @@ class FrankaArm:
         """
         return self._state_client.get_gripper_is_grasped()
 
-    def get_speed(self, speed):
-        """
-        Returns
-        -------
-            float of current target speed parameter
-        """
-        pass
-
     def get_tool_base_pose(self):
         """
         Returns
@@ -1470,16 +1449,6 @@ class FrankaArm:
                              'to_frame=franka_tool_base')
 
         self._tool_delta_pose = tool_delta_pose.copy()
-
-    def set_speed(self, speed):
-        """
-        Sets current target speed parameter
-
-        Parameters
-        ----------
-            speed (float)
-        """
-        pass
 
 
     """
@@ -1782,3 +1751,38 @@ class FrankaArm:
                 return False
 
         return True
+
+    """
+    Unimplemented
+    """
+
+    def apply_joint_torques(self, torques, duration, ignore_errors=True, skill_desc='',):
+        """
+        Commands Arm to apply given joint torques for duration seconds
+
+        Parameters
+        ----------
+            torques (list): A list of 7 numbers that correspond to torques in Nm.
+            duration (float): A float in the unit of seconds
+            skill_desc (string) : Skill description to use for logging on
+                control-pc.
+        """
+        pass
+
+    def set_speed(self, speed):
+        """
+        Sets current target speed parameter
+
+        Parameters
+        ----------
+            speed (float)
+        """
+        pass
+
+    def get_speed(self, speed):
+        """
+        Returns
+        -------
+            float of current target speed parameter
+        """
+        pass
