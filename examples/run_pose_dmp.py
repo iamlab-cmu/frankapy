@@ -13,9 +13,9 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
     print('Starting robot')
-    fa = FrankaArm();
+    fa = FrankaArm(with_gripper=False);
 
     pose_dmp_file = open(args.pose_dmp_weights_file_path,"rb")
     pose_dmp_info = pickle.load(pose_dmp_file)
 
-    fa.execute_pose_dmp(pose_dmp_info, duration=4.2)
+    fa.execute_pose_dmp(pose_dmp_info, duration=8)

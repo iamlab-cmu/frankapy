@@ -46,6 +46,7 @@ class TrajectoryGeneratorType:
     PassThroughJointTrajectoryGenerator = _enum_auto('TrajectoryGeneratorType')
     PassThroughPoseTrajectoryGenerator = _enum_auto('TrajectoryGeneratorType')
     PoseDmpTrajectoryGenerator = _enum_auto('TrajectoryGeneratorType')
+    QuaternionPoseDmpTrajectoryGenerator = _enum_auto('TrajectoryGeneratorType')
     RelativeLinearPoseTrajectoryGenerator = _enum_auto('TrajectoryGeneratorType')
     RelativeMinJerkPoseTrajectoryGenerator = _enum_auto('TrajectoryGeneratorType')
     SineJointTrajectoryGenerator = _enum_auto('TrajectoryGeneratorType')

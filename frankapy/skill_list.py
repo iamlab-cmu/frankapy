@@ -406,41 +406,37 @@ class Skill:
 
         self.add_trajectory_params(joint_dmp_trajectory_generator_msg_proto.SerializeToString())
 
+
+    def _check_dmp_info_parameters(self, dmp_info):
+        assert type(dmp_info['tau']) in (float, int), "Incorrect tau type. Should be int or float."
+        assert dmp_info['tau'] >= 0, "Incorrect tau. Should be non negative."
+
+        assert type(dmp_info['alpha']) in (float, int), "Incorrect alpha type. Should be int or float."
+        assert dmp_info['alpha'] >= 0, "Incorrect alpha. Should be non negative."
+
+        assert type(dmp_info['beta']) in (float, int), "Incorrect beta type. Should be int or float."
+        assert dmp_info['beta'] >= 0, "Incorrect beta. Should be non negative."
+
+        assert type(dmp_info['num_basis']) in (float, int), "Incorrect num basis type. Should be int or float."
+        assert dmp_info['num_basis'] >= 0, "Incorrect num basis. Should be non negative."
+
+        assert type(dmp_info['num_sensors']) in (float, int), "Incorrect num sensors type. Should be int or float."
+        assert dmp_info['num_sensors'] >= 0, "Incorrect num sensors. Should be non negative."
+
+        assert type(dmp_info['mu']) is list, "Incorrect basis mean type. Should be list."
+        assert len(dmp_info['mu']) == dmp_info['num_basis'], \
+                "Incorrect basis mean len. Should be equal to num basis."
+
+        assert type(dmp_info['h']) is list, "Incorrect basis std dev type. Should be list."
+        assert len(dmp_info['h']) == dmp_info['num_basis'], \
+                "Incorrect basis std dev len. Should be equal to num basis."
+
     def add_pose_dmp_params(self, orientation_only, position_only, ee_frame, run_time, pose_dmp_info, initial_sensor_values):
         assert type(run_time) is float or type(run_time) is int,\
                 "Incorrect run_time type. Should be int or float."
         assert run_time >= 0, "Incorrect run_time. Should be non negative."
-
-        assert type(pose_dmp_info['tau']) is float or type(pose_dmp_info['tau']) is int,\
-                "Incorrect tau type. Should be int or float."
-        assert pose_dmp_info['tau'] >= 0, "Incorrect tau. Should be non negative."
-
-        assert type(pose_dmp_info['alpha']) is float or type(pose_dmp_info['alpha']) is int,\
-                "Incorrect alpha type. Should be int or float."
-        assert pose_dmp_info['alpha'] >= 0, "Incorrect alpha. Should be non negative."
-
-        assert type(pose_dmp_info['beta']) is float or type(pose_dmp_info['beta']) is int,\
-                "Incorrect beta type. Should be int or float."
-        assert pose_dmp_info['beta'] >= 0, "Incorrect beta. Should be non negative."
-
-        assert type(pose_dmp_info['num_basis']) is float or type(pose_dmp_info['num_basis']) is int,\
-                "Incorrect num basis type. Should be int or float."
-        assert pose_dmp_info['num_basis'] >= 0, "Incorrect num basis. Should be non negative."
-
-        assert type(pose_dmp_info['num_sensors']) is float or type(pose_dmp_info['num_sensors']) is int,\
-                "Incorrect num sensors type. Should be int or float."
-        assert pose_dmp_info['num_sensors'] >= 0, "Incorrect num sensors. Should be non negative."
-
-        assert type(pose_dmp_info['mu']) is list, "Incorrect basis mean type. Should be list."
-        assert len(pose_dmp_info['mu']) == pose_dmp_info['num_basis'], \
-                "Incorrect basis mean len. Should be equal to num basis."
-
-        assert type(pose_dmp_info['h']) is list, "Incorrect basis std dev type. Should be list."
-        assert len(pose_dmp_info['h']) == pose_dmp_info['num_basis'], \
-                "Incorrect basis std dev len. Should be equal to num basis."
-
+        self._check_dmp_info_parameters(pose_dmp_info)
         assert type(initial_sensor_values) is list, "Incorrect initial sensor values type. Should be list."
-        
 
         weights = np.array(pose_dmp_info['weights']).reshape(-1).tolist()
 
@@ -472,6 +468,46 @@ class Skill:
                                                    initial_sensor_values=initial_sensor_values)
 
         self.add_trajectory_params(pose_dmp_trajectory_generator_msg_proto.SerializeToString())
+
+    def add_quaternion_pose_dmp_params(self, ee_frame, run_time, position_dmp_info, quat_dmp_info, initial_sensor_values):
+        assert type(run_time) is float or type(run_time) is int,\
+                "Incorrect run_time type. Should be int or float."
+        assert run_time >= 0, "Incorrect run_time. Should be non negative."
+
+        self._check_dmp_info_parameters(position_dmp_info)
+        self._check_dmp_info_parameters(quat_dmp_info)
+        assert type(initial_sensor_values) is list, "Incorrect initial sensor values type. Should be list."
+
+        pos_weights = np.array(position_dmp_info['weights']).reshape(-1).tolist()
+        num_pos_weights = 3 * int(position_dmp_info['num_basis']) * int(position_dmp_info['num_sensors'])
+        assert len(pos_weights) == num_pos_weights, \
+                "Incorrect weights len. Should be equal to 3 * num basis * num sensors."
+
+        quat_weights = np.array(quat_dmp_info['weights']).reshape(-1).tolist()
+        num_quat_weights = 4 * int(quat_dmp_info['num_basis']) * int(quat_dmp_info['num_sensors'])
+        assert len(quat_weights) == num_quat_weights, \
+                "Incorrect weights len. Should be equal to 4 * num basis * num sensors."
+
+        assert self._skill_type == SkillType.CartesianPoseSkill or \
+               self._skill_type == SkillType.ImpedanceControlSkill, \
+                "Incorrect skill type. Should be CartesianPoseSkill or ImpedanceControlSkill."
+        assert self._trajectory_generator_type == TrajectoryGeneratorType.QuaternionPoseDmpTrajectoryGenerator, \
+                "Incorrect trajectory generator type. Should be QuaternionPoseDmpTrajectoryGenerator"
+
+        quat_pose_dmp_trajectory_generator_msg_proto = QuaternionPoseDMPTrajectoryGeneratorMessage(ee_frame=ee_frame, run_time=run_time, 
+                                                   tau_pos=position_dmp_info['tau'], alpha_pos=position_dmp_info['alpha'], beta_pos=position_dmp_info['beta'],
+                                                   tau_quat=quat_dmp_info['tau'], alpha_qua=quat_dmp_info['alpha'], beta_quat=quat_dmp_info['beta'],
+                                                   num_basis_pos=position_dmp_info['num_basis'], num_sensor_values_pos=position_dmp_info['num_sensors'], 
+                                                   num_basis_quat=quat_dmp_info['num_basis'], num_sensor_values_quat=quat_dmp_info['num_sensors'], 
+                                                   pos_basis_mean=position_dmp_info['mu'], pos_basis_std=position_dmp_info['h'], 
+                                                   quat_basis_mean=quat_dmp_info['mu'], quat_basis_std=quat_dmp_info['h'], 
+                                                   pos_weights=np.array(position_dmp_info['weights']).reshape(-1).tolist(), 
+                                                   quat_weights=np.array(quat_dmp_info['weights']).reshape(-1).tolist(), 
+                                                   pos_initial_sensor_values=initial_sensor_values,
+                                                   quat_initial_sensor_values=initial_sensor_values)
+
+        self.add_trajectory_params(quat_pose_dmp_trajectory_generator_msg_proto.SerializeToString())
+ 
 
     def add_run_time(self, run_time):
         assert type(run_time) is float or type(run_time) is int, \

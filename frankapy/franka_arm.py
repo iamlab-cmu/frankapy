@@ -30,7 +30,8 @@ class FrankaArm:
             robot_num=1,
             with_gripper=True,
             old_gripper=False,
-            offline=False):
+            offline=False,
+            init_node=True):
 
         self._execute_skill_action_server_name = \
                 '/execute_skill_action_server_node_{}/execute_skill'.format(robot_num)
@@ -57,9 +58,10 @@ class FrankaArm:
         self._last_gripper_command = None
 
         # init ROS
-        rospy.init_node(rosnode_name,
-                        disable_signals=True,
-                        log_level=ros_log_level)
+        if init_node:
+            rospy.init_node(rosnode_name,
+                            disable_signals=True,
+                            log_level=ros_log_level)
         self._collision_boxes_pub = BoxesPublisher('franka_collision_boxes_{}'.format(robot_num))
         self._joint_state_pub = rospy.Publisher('franka_virtual_joints_{}'.format(robot_num), JointState, queue_size=10)
         
@@ -145,6 +147,8 @@ class FrankaArm:
             done = self._gripper_stop_client.wait_for_result()
         elif self._last_gripper_command == "Move":
             done = self._gripper_move_client.wait_for_result()
+        sleep(2)
+
 
     def is_skill_done(self, ignore_errors=True):  
         if not self._in_skill:  
@@ -727,6 +731,94 @@ class FrankaArm:
         skill.add_initial_sensor_values(initial_sensor_values)  # sensor values
 
         skill.add_pose_dmp_params(orientation_only, position_only, ee_frame, duration, pose_dmp_info, initial_sensor_values)
+
+        skill.set_cartesian_impedances(use_impedance, cartesian_impedances, joint_impedances)
+
+        if not skill.check_for_contact_params(buffer_time, force_thresholds, torque_thresholds):
+            skill.add_time_termination_params(buffer_time)
+
+        goal = skill.create_goal()
+
+        self._send_goal(goal,
+                        cb=lambda x: skill.feedback_callback(x),
+                        block=block,
+                        ignore_errors=ignore_errors)
+
+    def execute_quaternion_pose_dmp(self, 
+                                    position_dmp_info,
+                                    quat_dmp_info,
+                                    duration, 
+                                    use_goal_formulation=False,
+                                    initial_sensor_values=None,
+                                    ee_frame = False,
+                                    use_impedance=True, 
+                                    buffer_time=FC.DEFAULT_TERM_BUFFER_TIME,
+                                    force_thresholds=None,
+                                    torque_thresholds=None,
+                                    cartesian_impedances=None,
+                                    joint_impedances=None, 
+                                    block=True, 
+                                    ignore_errors=True,
+                                    skill_desc='QuaternionPoseDmp'):
+        '''Commands Arm to execute a given pose dmp
+
+        Args:
+            position_dmp_info (dict): Contains all the parameters of a pose DMP
+                (tau, alpha, beta, num_basis, num_sensors, mu, h, and weights)
+            quaternion_dmp_info (dict): Contains all the parameters of a pose DMP
+                (tau, alpha, beta, num_basis, num_sensors, mu, h, and weights)
+            duration (float): A float in the unit of seconds
+            use_goal_formulation (boolean) : Flag that represents whether to use
+                the explicit goal pose dmp formulation.
+            initial_sensor_values (list): List of initial sensor values.
+                If None it will default to ones.
+            orientation_only (boolean) : Flag that represents if the dmp weights
+                are to generate a dmp only for orientation.
+            position_only (boolean) : Flag that represents if the dmp weights
+                are to generate a dmp only for position.
+            use_impedance (boolean) : Function uses our impedance controller 
+                by default. If False, uses the Franka cartesian controller.
+            buffer_time (float): How much extra time the termination handler will wait
+                before stopping the skill after duration has passed.
+            force_thresholds (list): List of 6 floats corresponding to
+                force limits on translation (xyz) and rotation about (xyz) axes.
+                Default is None. If None then will not stop on contact.
+            torque_thresholds (list): List of 7 floats corresponding to
+                torque limits on each joint. Default is None. If None then will
+                not stop on contact.
+            cartesian impedances (list): List of 6 floats corresponding to
+                impedances on translation (xyz) and rotation about (xyz) axes.
+                Default is None. If None then will use default impedances.
+            joint impedances (list): List of 7 floats corresponding to
+                impedances on each joint. This is used when use_impedance is 
+                False. Default is None. If None then will use default impedances.
+            block (boolean) : Function blocks by default. If False, the function becomes
+                asynchronous and can be preempted.
+            ignore_errors (boolean) : Function ignores errors by default. 
+                If False, errors and some exceptions can be thrown.
+            skill_desc (string) : Skill description to use for logging on
+                control-pc.
+        '''
+
+        if use_impedance:
+            skill = Skill(SkillType.ImpedanceControlSkill, 
+                            TrajectoryGeneratorType.QuaternionPoseDmpTrajectoryGenerator,
+                            feedback_controller_type=FeedbackControllerType.CartesianImpedanceFeedbackController,
+                            termination_handler_type=TerminationHandlerType.TimeTerminationHandler, 
+                            skill_desc=skill_desc)
+        else:
+            skill = Skill(SkillType.CartesianPoseSkill, 
+                            TrajectoryGeneratorType.QuaternionPoseDmpTrajectoryGenerator,
+                            feedback_controller_type=FeedbackControllerType.SetInternalImpedanceFeedbackController,
+                            termination_handler_type=TerminationHandlerType.TimeTerminationHandler, 
+                            skill_desc=skill_desc)
+
+        if initial_sensor_values is None:
+            initial_sensor_values = np.ones(3*pose_dmp_info['num_sensors']).tolist()
+
+        skill.add_initial_sensor_values(initial_sensor_values)  # sensor values
+
+        skill.add_quaternion_pose_dmp_params(ee_frame, duration, position_dmp_info, quat_dmp_info, initial_sensor_values)
 
         skill.set_cartesian_impedances(use_impedance, cartesian_impedances, joint_impedances)
 
