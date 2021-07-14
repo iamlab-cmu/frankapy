@@ -484,7 +484,7 @@ class Skill:
                 "Incorrect weights len. Should be equal to 3 * num basis * num sensors."
 
         quat_weights = np.array(quat_dmp_info['weights']).reshape(-1).tolist()
-        num_quat_weights = 4 * int(quat_dmp_info['num_basis']) * int(quat_dmp_info['num_sensors'])
+        num_quat_weights = 3 * int(quat_dmp_info['num_basis']) * int(quat_dmp_info['num_sensors'])
         assert len(quat_weights) == num_quat_weights, \
                 "Incorrect weights len. Should be equal to 4 * num basis * num sensors."
 
@@ -496,7 +496,7 @@ class Skill:
 
         quat_pose_dmp_trajectory_generator_msg_proto = QuaternionPoseDMPTrajectoryGeneratorMessage(ee_frame=ee_frame, run_time=run_time, 
                                                    tau_pos=position_dmp_info['tau'], alpha_pos=position_dmp_info['alpha'], beta_pos=position_dmp_info['beta'],
-                                                   tau_quat=quat_dmp_info['tau'], alpha_qua=quat_dmp_info['alpha'], beta_quat=quat_dmp_info['beta'],
+                                                   tau_quat=quat_dmp_info['tau'], alpha_quat=quat_dmp_info['alpha'], beta_quat=quat_dmp_info['beta'],
                                                    num_basis_pos=position_dmp_info['num_basis'], num_sensor_values_pos=position_dmp_info['num_sensors'], 
                                                    num_basis_quat=quat_dmp_info['num_basis'], num_sensor_values_quat=quat_dmp_info['num_sensors'], 
                                                    pos_basis_mean=position_dmp_info['mu'], pos_basis_std=position_dmp_info['h'], 

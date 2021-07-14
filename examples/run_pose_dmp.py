@@ -15,7 +15,14 @@ if __name__ == '__main__':
     print('Starting robot')
     fa = FrankaArm(with_gripper=False);
 
-    pose_dmp_file = open(args.pose_dmp_weights_file_path,"rb")
-    pose_dmp_info = pickle.load(pose_dmp_file)
+    # pose_dmp_file = open(args.pose_dmp_weights_file_path,"rb")
+    # pose_dmp_info = pickle.load(pose_dmp_file)
 
-    fa.execute_pose_dmp(pose_dmp_info, duration=8)
+    position_dmp_file = open('/home/sony/data/dmp_test_July_12/data_1/robot_state_data_1_quat_position_quaternion_weights_position.pkl',"rb")
+    position_dmp_info = pickle.load(position_dmp_file)
+
+    quat_dmp_file = open('/home/sony/data/dmp_test_July_12/data_1/robot_state_data_1_quat_position_quaternion_weights_quat.pkl',"rb")
+    quat_dmp_info = pickle.load(quat_dmp_file)
+
+    # fa.execute_pose_dmp(pose_dmp_info, duration=8)
+    fa.execute_quaternion_pose_dmp(position_dmp_info, quat_dmp_info, duration=5)
