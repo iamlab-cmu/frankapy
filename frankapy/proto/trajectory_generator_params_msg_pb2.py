@@ -18,7 +18,7 @@ DESCRIPTOR = _descriptor.FileDescriptor(
   package='',
   syntax='proto2',
   serialized_options=None,
-  serialized_pb=b'\n%trajectory_generator_params_msg.proto\"_\n!GripperTrajectoryGeneratorMessage\x12\r\n\x05grasp\x18\x01 \x02(\x08\x12\r\n\x05width\x18\x02 \x02(\x01\x12\r\n\x05speed\x18\x03 \x02(\x01\x12\r\n\x05\x66orce\x18\x04 \x02(\x01\"\x8c\x01\n!ImpulseTrajectoryGeneratorMessage\x12\x10\n\x08run_time\x18\x01 \x02(\x01\x12\x10\n\x08\x61\x63\x63_time\x18\x02 \x02(\x01\x12\x11\n\tmax_trans\x18\x03 \x02(\x01\x12\x0f\n\x07max_rot\x18\x04 \x02(\x01\x12\x0e\n\x06\x66orces\x18\x05 \x03(\x01\x12\x0f\n\x07torques\x18\x06 \x03(\x01\"C\n\x1fJointTrajectoryGeneratorMessage\x12\x10\n\x08run_time\x18\x01 \x02(\x01\x12\x0e\n\x06joints\x18\x02 \x03(\x01\"f\n\x1ePoseTrajectoryGeneratorMessage\x12\x10\n\x08run_time\x18\x01 \x02(\x01\x12\x10\n\x08position\x18\x02 \x03(\x01\x12\x12\n\nquaternion\x18\x03 \x03(\x01\x12\x0c\n\x04pose\x18\x04 \x03(\x01\"\xe5\x01\n\"JointDMPTrajectoryGeneratorMessage\x12\x10\n\x08run_time\x18\x01 \x02(\x01\x12\x0b\n\x03tau\x18\x02 \x02(\x01\x12\r\n\x05\x61lpha\x18\x03 \x02(\x01\x12\x0c\n\x04\x62\x65ta\x18\x04 \x02(\x01\x12\x11\n\tnum_basis\x18\x05 \x02(\x01\x12\x19\n\x11num_sensor_values\x18\x06 \x02(\x01\x12\x12\n\nbasis_mean\x18\x07 \x03(\x01\x12\x11\n\tbasis_std\x18\x08 \x03(\x01\x12\x0f\n\x07weights\x18\t \x03(\x01\x12\x1d\n\x15initial_sensor_values\x18\n \x03(\x01\"\xa7\x02\n!PoseDMPTrajectoryGeneratorMessage\x12\x18\n\x10orientation_only\x18\x01 \x02(\x08\x12\x15\n\rposition_only\x18\x02 \x02(\x08\x12\x10\n\x08\x65\x65_frame\x18\x03 \x02(\x08\x12\x10\n\x08run_time\x18\x04 \x02(\x01\x12\x0b\n\x03tau\x18\x05 \x02(\x01\x12\r\n\x05\x61lpha\x18\x06 \x02(\x01\x12\x0c\n\x04\x62\x65ta\x18\x07 \x02(\x01\x12\x11\n\tnum_basis\x18\x08 \x02(\x01\x12\x19\n\x11num_sensor_values\x18\t \x02(\x01\x12\x12\n\nbasis_mean\x18\n \x03(\x01\x12\x11\n\tbasis_std\x18\x0b \x03(\x01\x12\x0f\n\x07weights\x18\x0c \x03(\x01\x12\x1d\n\x15initial_sensor_values\x18\r \x03(\x01\"\x80\x04\n+QuaternionPoseDMPTrajectoryGeneratorMessage\x12\x10\n\x08\x65\x65_frame\x18\x01 \x02(\x08\x12\x10\n\x08run_time\x18\x02 \x02(\x01\x12\x0f\n\x07tau_pos\x18\x03 \x02(\x01\x12\x11\n\talpha_pos\x18\x04 \x02(\x01\x12\x10\n\x08\x62\x65ta_pos\x18\x05 \x02(\x01\x12\x10\n\x08tau_quat\x18\x06 \x02(\x01\x12\x12\n\nalpha_quat\x18\x07 \x02(\x01\x12\x11\n\tbeta_quat\x18\x08 \x02(\x01\x12\x15\n\rnum_basis_pos\x18\t \x02(\x01\x12\x1d\n\x15num_sensor_values_pos\x18\n \x02(\x01\x12\x16\n\x0enum_basis_quat\x18\x0b \x02(\x01\x12\x1e\n\x16num_sensor_values_quat\x18\x0c \x02(\x01\x12\x16\n\x0epos_basis_mean\x18\r \x03(\x01\x12\x15\n\rpos_basis_std\x18\x0e \x03(\x01\x12\x13\n\x0bpos_weights\x18\x0f \x03(\x01\x12!\n\x19pos_initial_sensor_values\x18\x10 \x03(\x01\x12\x17\n\x0fquat_basis_mean\x18\x11 \x03(\x01\x12\x16\n\x0equat_basis_std\x18\x12 \x03(\x01\x12\x14\n\x0cquat_weights\x18\x13 \x03(\x01\x12\"\n\x1aquat_initial_sensor_values\x18\x14 \x03(\x01\"\"\n\x0eRunTimeMessage\x12\x10\n\x08run_time\x18\x01 \x02(\x01'
+  serialized_pb=b'\n%trajectory_generator_params_msg.proto\"_\n!GripperTrajectoryGeneratorMessage\x12\r\n\x05grasp\x18\x01 \x02(\x08\x12\r\n\x05width\x18\x02 \x02(\x01\x12\r\n\x05speed\x18\x03 \x02(\x01\x12\r\n\x05\x66orce\x18\x04 \x02(\x01\"\x8c\x01\n!ImpulseTrajectoryGeneratorMessage\x12\x10\n\x08run_time\x18\x01 \x02(\x01\x12\x10\n\x08\x61\x63\x63_time\x18\x02 \x02(\x01\x12\x11\n\tmax_trans\x18\x03 \x02(\x01\x12\x0f\n\x07max_rot\x18\x04 \x02(\x01\x12\x0e\n\x06\x66orces\x18\x05 \x03(\x01\x12\x0f\n\x07torques\x18\x06 \x03(\x01\"C\n\x1fJointTrajectoryGeneratorMessage\x12\x10\n\x08run_time\x18\x01 \x02(\x01\x12\x0e\n\x06joints\x18\x02 \x03(\x01\"f\n\x1ePoseTrajectoryGeneratorMessage\x12\x10\n\x08run_time\x18\x01 \x02(\x01\x12\x10\n\x08position\x18\x02 \x03(\x01\x12\x12\n\nquaternion\x18\x03 \x03(\x01\x12\x0c\n\x04pose\x18\x04 \x03(\x01\"\xe5\x01\n\"JointDMPTrajectoryGeneratorMessage\x12\x10\n\x08run_time\x18\x01 \x02(\x01\x12\x0b\n\x03tau\x18\x02 \x02(\x01\x12\r\n\x05\x61lpha\x18\x03 \x02(\x01\x12\x0c\n\x04\x62\x65ta\x18\x04 \x02(\x01\x12\x11\n\tnum_basis\x18\x05 \x02(\x01\x12\x19\n\x11num_sensor_values\x18\x06 \x02(\x01\x12\x12\n\nbasis_mean\x18\x07 \x03(\x01\x12\x11\n\tbasis_std\x18\x08 \x03(\x01\x12\x0f\n\x07weights\x18\t \x03(\x01\x12\x1d\n\x15initial_sensor_values\x18\n \x03(\x01\"\xa7\x02\n!PoseDMPTrajectoryGeneratorMessage\x12\x18\n\x10orientation_only\x18\x01 \x02(\x08\x12\x15\n\rposition_only\x18\x02 \x02(\x08\x12\x10\n\x08\x65\x65_frame\x18\x03 \x02(\x08\x12\x10\n\x08run_time\x18\x04 \x02(\x01\x12\x0b\n\x03tau\x18\x05 \x02(\x01\x12\r\n\x05\x61lpha\x18\x06 \x02(\x01\x12\x0c\n\x04\x62\x65ta\x18\x07 \x02(\x01\x12\x11\n\tnum_basis\x18\x08 \x02(\x01\x12\x19\n\x11num_sensor_values\x18\t \x02(\x01\x12\x12\n\nbasis_mean\x18\n \x03(\x01\x12\x11\n\tbasis_std\x18\x0b \x03(\x01\x12\x0f\n\x07weights\x18\x0c \x03(\x01\x12\x1d\n\x15initial_sensor_values\x18\r \x03(\x01\"\xec\x04\n+QuaternionPoseDMPTrajectoryGeneratorMessage\x12\x10\n\x08\x65\x65_frame\x18\x01 \x02(\x08\x12\x10\n\x08run_time\x18\x02 \x02(\x01\x12\x0f\n\x07tau_pos\x18\x03 \x02(\x01\x12\x11\n\talpha_pos\x18\x04 \x02(\x01\x12\x10\n\x08\x62\x65ta_pos\x18\x05 \x02(\x01\x12\x10\n\x08tau_quat\x18\x06 \x02(\x01\x12\x12\n\nalpha_quat\x18\x07 \x02(\x01\x12\x11\n\tbeta_quat\x18\x08 \x02(\x01\x12\x15\n\rnum_basis_pos\x18\t \x02(\x01\x12\x1d\n\x15num_sensor_values_pos\x18\n \x02(\x01\x12\x16\n\x0enum_basis_quat\x18\x0b \x02(\x01\x12\x1e\n\x16num_sensor_values_quat\x18\x0c \x02(\x01\x12\x16\n\x0epos_basis_mean\x18\r \x03(\x01\x12\x15\n\rpos_basis_std\x18\x0e \x03(\x01\x12\x13\n\x0bpos_weights\x18\x0f \x03(\x01\x12!\n\x19pos_initial_sensor_values\x18\x10 \x03(\x01\x12\x17\n\x0fquat_basis_mean\x18\x11 \x03(\x01\x12\x16\n\x0equat_basis_std\x18\x12 \x03(\x01\x12\x14\n\x0cquat_weights\x18\x13 \x03(\x01\x12\"\n\x1aquat_initial_sensor_values\x18\x14 \x03(\x01\x12\x16\n\x0egoal_time_quat\x18\x15 \x02(\x01\x12\x13\n\x0bgoal_quat_w\x18\x16 \x02(\x01\x12\x13\n\x0bgoal_quat_x\x18\x17 \x02(\x01\x12\x13\n\x0bgoal_quat_y\x18\x18 \x02(\x01\x12\x13\n\x0bgoal_quat_z\x18\x19 \x02(\x01\"\"\n\x0eRunTimeMessage\x12\x10\n\x08run_time\x18\x01 \x02(\x01'
 )
 
 
@@ -588,6 +588,41 @@ _QUATERNIONPOSEDMPTRAJECTORYGENERATORMESSAGE = _descriptor.Descriptor(
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       serialized_options=None, file=DESCRIPTOR),
+    _descriptor.FieldDescriptor(
+      name='goal_time_quat', full_name='QuaternionPoseDMPTrajectoryGeneratorMessage.goal_time_quat', index=20,
+      number=21, type=1, cpp_type=5, label=2,
+      has_default_value=False, default_value=float(0),
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR),
+    _descriptor.FieldDescriptor(
+      name='goal_quat_w', full_name='QuaternionPoseDMPTrajectoryGeneratorMessage.goal_quat_w', index=21,
+      number=22, type=1, cpp_type=5, label=2,
+      has_default_value=False, default_value=float(0),
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR),
+    _descriptor.FieldDescriptor(
+      name='goal_quat_x', full_name='QuaternionPoseDMPTrajectoryGeneratorMessage.goal_quat_x', index=22,
+      number=23, type=1, cpp_type=5, label=2,
+      has_default_value=False, default_value=float(0),
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR),
+    _descriptor.FieldDescriptor(
+      name='goal_quat_y', full_name='QuaternionPoseDMPTrajectoryGeneratorMessage.goal_quat_y', index=23,
+      number=24, type=1, cpp_type=5, label=2,
+      has_default_value=False, default_value=float(0),
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR),
+    _descriptor.FieldDescriptor(
+      name='goal_quat_z', full_name='QuaternionPoseDMPTrajectoryGeneratorMessage.goal_quat_z', index=24,
+      number=25, type=1, cpp_type=5, label=2,
+      has_default_value=False, default_value=float(0),
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR),
   ],
   extensions=[
   ],
@@ -601,7 +636,7 @@ _QUATERNIONPOSEDMPTRAJECTORYGENERATORMESSAGE = _descriptor.Descriptor(
   oneofs=[
   ],
   serialized_start=985,
-  serialized_end=1497,
+  serialized_end=1605,
 )
 
 
@@ -631,8 +666,8 @@ _RUNTIMEMESSAGE = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=1499,
-  serialized_end=1533,
+  serialized_start=1607,
+  serialized_end=1641,
 )
 
 DESCRIPTOR.message_types_by_name['GripperTrajectoryGeneratorMessage'] = _GRIPPERTRAJECTORYGENERATORMESSAGE

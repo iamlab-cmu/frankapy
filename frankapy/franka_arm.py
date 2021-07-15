@@ -747,10 +747,11 @@ class FrankaArm:
     def execute_quaternion_pose_dmp(self, 
                                     position_dmp_info,
                                     quat_dmp_info,
-                                    duration, 
+                                    duration,
+                                    goal_quat, 
                                     use_goal_formulation=False,
                                     initial_sensor_values=None,
-                                    ee_frame = False,
+                                    ee_frame=False,
                                     use_impedance=True, 
                                     buffer_time=FC.DEFAULT_TERM_BUFFER_TIME,
                                     force_thresholds=None,
@@ -818,8 +819,7 @@ class FrankaArm:
 
         skill.add_initial_sensor_values(initial_sensor_values)  # sensor values
 
-        skill.add_quaternion_pose_dmp_params(ee_frame, duration, position_dmp_info, quat_dmp_info, initial_sensor_values)
-
+        skill.add_quaternion_pose_dmp_params(ee_frame, duration, position_dmp_info, quat_dmp_info, initial_sensor_values, goal_quat)
         skill.set_cartesian_impedances(use_impedance, cartesian_impedances, joint_impedances)
 
         if not skill.check_for_contact_params(buffer_time, force_thresholds, torque_thresholds):

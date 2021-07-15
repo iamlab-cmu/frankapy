@@ -86,6 +86,12 @@ message QuaternionPoseDMPTrajectoryGeneratorMessage {
   repeated double quat_basis_std = 18;
   repeated double quat_weights = 19;
   repeated double quat_initial_sensor_values = 20;
+
+  required double goal_time_quat = 21;
+  required double goal_quat_w = 22;
+  required double goal_quat_x = 23;
+  required double goal_quat_y = 24;
+  required double goal_quat_z = 25;
 }
 
 message RunTimeMessage {
