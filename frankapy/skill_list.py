@@ -469,7 +469,7 @@ class Skill:
 
         self.add_trajectory_params(pose_dmp_trajectory_generator_msg_proto.SerializeToString())
 
-    def add_quaternion_pose_dmp_params(self, ee_frame, run_time, position_dmp_info, quat_dmp_info, initial_sensor_values, goal_quat):
+    def add_quaternion_pose_dmp_params(self, ee_frame, run_time, position_dmp_info, quat_dmp_info, initial_sensor_values, goal_quat, goal_quat_time):
         assert type(run_time) is float or type(run_time) is int,\
                 "Incorrect run_time type. Should be int or float."
         assert run_time >= 0, "Incorrect run_time. Should be non negative."
@@ -507,7 +507,7 @@ class Skill:
                                                    quat_weights=np.array(quat_dmp_info['weights']).reshape(-1).tolist(), 
                                                    pos_initial_sensor_values=initial_sensor_values,
                                                    quat_initial_sensor_values=initial_sensor_values,
-                                                   goal_time_quat=run_time,
+                                                   goal_time_quat=goal_quat_time,
                                                    goal_quat_w=goal_quat[0], goal_quat_x=goal_quat[1], goal_quat_y=goal_quat[2], goal_quat_z=goal_quat[3])
 
         self.add_trajectory_params(quat_pose_dmp_trajectory_generator_msg_proto.SerializeToString())

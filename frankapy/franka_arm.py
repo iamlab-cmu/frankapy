@@ -748,7 +748,8 @@ class FrankaArm:
                                     position_dmp_info,
                                     quat_dmp_info,
                                     duration,
-                                    goal_quat, 
+                                    goal_quat,
+                                    goal_quat_time, 
                                     use_goal_formulation=False,
                                     initial_sensor_values=None,
                                     ee_frame=False,
@@ -769,6 +770,9 @@ class FrankaArm:
             quaternion_dmp_info (dict): Contains all the parameters of a pose DMP
                 (tau, alpha, beta, num_basis, num_sensors, mu, h, and weights)
             duration (float): A float in the unit of seconds
+            goal_quat: List[float] (size 4). Quaternion goal to reach. This assumes an
+                explicit goal formulation for the quaternion DMPs.
+            quat_goal_time (float): Time to reach goal for quaternion DMPs.
             use_goal_formulation (boolean) : Flag that represents whether to use
                 the explicit goal pose dmp formulation.
             initial_sensor_values (list): List of initial sensor values.
@@ -819,7 +823,7 @@ class FrankaArm:
 
         skill.add_initial_sensor_values(initial_sensor_values)  # sensor values
 
-        skill.add_quaternion_pose_dmp_params(ee_frame, duration, position_dmp_info, quat_dmp_info, initial_sensor_values, goal_quat)
+        skill.add_quaternion_pose_dmp_params(ee_frame, duration, position_dmp_info, quat_dmp_info, initial_sensor_values, goal_quat, goal_quat_time)
         skill.set_cartesian_impedances(use_impedance, cartesian_impedances, joint_impedances)
 
         if not skill.check_for_contact_params(buffer_time, force_thresholds, torque_thresholds):
