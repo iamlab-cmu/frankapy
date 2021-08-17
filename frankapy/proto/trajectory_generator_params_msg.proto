@@ -62,6 +62,38 @@ message PoseDMPTrajectoryGeneratorMessage {
   repeated double initial_sensor_values = 13;
 }
 
+message QuaternionPoseDMPTrajectoryGeneratorMessage {
+  required bool ee_frame = 1;
+  required double run_time = 2;
+  required double tau_pos = 3;
+  required double alpha_pos = 4;
+  required double beta_pos = 5;
+  required double tau_quat = 6;
+  required double alpha_quat = 7;
+  required double beta_quat = 8;
+
+  required double num_basis_pos = 9;
+  required double num_sensor_values_pos = 10;
+  required double num_basis_quat = 11;
+  required double num_sensor_values_quat = 12;
+
+  repeated double pos_basis_mean = 13;
+  repeated double pos_basis_std = 14;
+  repeated double pos_weights = 15;
+  repeated double pos_initial_sensor_values = 16;
+
+  repeated double quat_basis_mean = 17;
+  repeated double quat_basis_std = 18;
+  repeated double quat_weights = 19;
+  repeated double quat_initial_sensor_values = 20;
+
+  required double goal_time_quat = 21;
+  required double goal_quat_w = 22;
+  required double goal_quat_x = 23;
+  required double goal_quat_y = 24;
+  required double goal_quat_z = 25;
+}
+
 message RunTimeMessage {
   required double run_time = 1;
 }
