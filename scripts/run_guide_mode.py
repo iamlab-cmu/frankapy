@@ -8,7 +8,7 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
     print('Starting robot')
-    fa = FrankaArm(old_gripper=True)
+    fa = FrankaArm()
     if args.open_gripper:
         fa.open_gripper()
     print('Applying 0 force torque control for {}s'.format(args.time))

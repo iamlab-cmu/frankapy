@@ -23,8 +23,7 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     print('Starting robot')
-    # Set this to tru for new firmware
-    fa = FrankaArm(with_gripper=False)
+    fa = FrankaArm()
     fa.reset_joints()
 
     rospy.loginfo('Loading Trajectory')
@@ -39,8 +38,6 @@ if __name__ == "__main__":
     T = float(skill_state_dict['time_since_skill_started'][-1])
     dt = 0.01
     ts = np.arange(0, T, dt)
-
-    # import pdb; pdb.set_trace()
 
     pose_traj = skill_state_dict['O_T_EE']
     # Goto the first position in the trajectory.
@@ -81,7 +78,6 @@ if __name__ == "__main__":
         dt = skill_state_dict['time_since_skill_started'][i] - skill_state_dict['time_since_skill_started'][i-1]
         rospy.loginfo('Publishing: ID {}, dt: {:.4f}'.format(traj_gen_proto_msg.id, dt))
         pub.publish(ros_msg)
-        # rate.sleep()
         time.sleep(dt)
         # Finished trajectory
         if i >= pose_traj.shape[0] - 1:

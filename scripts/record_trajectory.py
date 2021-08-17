@@ -26,8 +26,7 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
     print('Starting robot')
-    # Set this to tru for new firmware
-    fa = FrankaArm(with_gripper=False)
+    fa = FrankaArm()
     if args.open_gripper:
         fa.open_gripper()
 
@@ -50,7 +49,6 @@ if __name__ == '__main__':
         last_time = time.time()
 
     skill_dict = create_formated_skill_dict(joints, end_effector_position, time_since_skill_started)
-    # pkl.dump(end_effector_position, open(args.file, 'wb'))
     with open(args.file, 'wb') as pkl_f:
         pkl.dump(skill_dict, pkl_f)
         print("Did save skill dict: {}".format(args.file))
