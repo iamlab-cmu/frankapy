@@ -15,7 +15,7 @@ Steps
 
     git clone --recurse-submodules git@github.com:iamlab-cmu/frankapy.git
 
-2. To allow asynchronous gripper commands, we use the franka_ros package, so install libfranka and franka_ros using the following command (Change melodic to noetic if you are on Ubuntu 20.04)::
+2. To allow asynchronous gripper commands, we use the ``franka_ros`` package, so install libfranka and franka_ros using the following command (Change melodic to noetic if you are on Ubuntu 20.04)::
 
     sudo apt install ros-melodic-libfranka ros-melodic-franka-ros
 
