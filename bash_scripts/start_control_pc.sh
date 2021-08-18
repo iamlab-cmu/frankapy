@@ -16,6 +16,7 @@ where:
     -r Robot number (default 1)
     -s Start franka-interface on Control PC (0 / 1 (default))
     -g Robot has gripper (0 / 1 (default))
+    -o Using old gripper commands (0 (default) / 1)
     -l Log at 1kHz on franka-interface (0 (default) / 1)
     -e Stop franka-interface when an error has occurred (0 (default) / 1)
     
@@ -34,7 +35,7 @@ old_gripper=0
 log_on_franka_interface=0
 stop_on_error=0
 
-while getopts ':h:i:u:p:d:r:s:g:l:e' option; do
+while getopts ':h:i:u:p:d:r:s:g:o:l:e' option; do
   case "${option}" in
     h) echo "$usage"
        exit
@@ -53,6 +54,8 @@ while getopts ':h:i:u:p:d:r:s:g:l:e' option; do
     s) start_franka_interface=$OPTARG
        ;;
     g) with_gripper=$OPTARG
+       ;;
+    o) old_gripper=$OPTARG
        ;;
     l) log_on_franka_interface=$OPTARG
        ;;

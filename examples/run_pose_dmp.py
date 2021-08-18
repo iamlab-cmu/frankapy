@@ -1,4 +1,3 @@
-
 import numpy as np
 import math
 import rospy
@@ -15,7 +14,6 @@ if __name__ == '__main__':
     print('Starting robot')
     fa = FrankaArm();
 
-    pose_dmp_file = open(args.pose_dmp_weights_file_path,"rb")
-    pose_dmp_info = pickle.load(pose_dmp_file)
-
-    fa.execute_pose_dmp(pose_dmp_info, duration=4.2)
+    with open(args.pose_dmp_weights_file_path, 'rb') as pkl_f:
+        pose_dmp_info = pickle.load(pkl_f)
+    fa.execute_pose_dmp(pose_dmp_info, duration=8)
