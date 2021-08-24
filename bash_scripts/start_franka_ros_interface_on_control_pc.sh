@@ -11,6 +11,13 @@ control_pc_password=$7
 rosmaster_path="bash_scripts/set_rosmaster.sh"
 catkin_ws_setup_path="catkin_ws/devel/setup.bash"
 
+if [ "$control_pc_ip_address" = "localhost" ]; then
+    cd $HOME
+    cd $control_pc_franka_interface_path
+    source $catkin_ws_setup_path
+    roslaunch franka_ros_interface franka_ros_interface.launch robot_num:=$robot_number
+    bash
+else
 if [ "$control_pc_use_password" = "0" ]; then
 ssh -tt $control_pc_uname@$control_pc_ip_address << EOSSH
 cd $control_pc_franka_interface_path
@@ -27,4 +34,5 @@ source $catkin_ws_setup_path
 roslaunch franka_ros_interface franka_ros_interface.launch robot_num:=$robot_number
 bash
 EOSSH
+fi
 fi

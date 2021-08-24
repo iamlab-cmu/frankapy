@@ -1,5 +1,5 @@
 """
-FrankaPy Franka Panda Robot Control Wrapper
+FrankaPy Franka Panda Robot Control Library
 """
 from setuptools import setup
 
@@ -13,9 +13,9 @@ requirements = [
 ]
 
 setup(name='frankapy',
-      version='0.0.0',
-      description='FrankaPy Franka Panda Robot Control Wrapper',
-      author='Mohit Sharma, Kevin Zhang, Jacky Liang',
+      version='1.0.0',
+      description='FrankaPy Franka Panda Robot Control Library',
+      author='Kevin Zhang, Mohit Sharma, Jacky Liang, Oliver Kroemer',
       author_email='',
       package_dir = {'': '.'},
       packages=['frankapy'],

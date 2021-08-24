@@ -9,16 +9,16 @@ usage="$(basename "$0") [-h] [-i xxx.xxx.xxx.xxx] -- Start control PC from works
 
 where:
     -h show this help text
-    -i IP address for the control PC.
+    -i IP address for the Control PC. If you use localhost, it will treat the current PC as the Control PC.
     -u Username on control PC. (default iam-lab)
     -p Control PC password
-    -d Path to franka_interface on control PC (default ~/Documents/franka-interface)
+    -d Path to franka_interface on Control PC (default Documents/franka-interface)
     -r Robot number (default 1)
-    -s Start franka-interface on control PC (0 / 1 (default))
+    -s Start franka-interface on Control PC (0 / 1 (default))
     -g Robot has gripper (0 / 1 (default))
     -o Using old gripper commands (0 (default) / 1)
-    -l Log at 1kHz on franka interface (0 (default) / 1)
-    -e Stop franka interface when an error has occurred (0 (default) / 1)
+    -l Log at 1kHz on franka-interface (0 (default) / 1)
+    -e Stop franka-interface when an error has occurred (0 (default) / 1)
     
     ./start_control_pc.sh -i iam-space
     ./start_control_pc.sh -i iam-space -u iam-lab -p 12345678 -d ~/Documents/franka-interface -r 1 -s 0
@@ -27,7 +27,7 @@ where:
 control_pc_uname="iam-lab"
 control_pc_use_password=0
 control_pc_password=""
-control_pc_franka_interface_path="~/Documents/franka-interface"
+control_pc_franka_interface_path="Documents/franka-interface"
 start_franka_interface=1
 robot_number=1
 with_gripper=1
@@ -91,7 +91,7 @@ if ! pgrep -x "roscore" > /dev/null
 then
     start_rosmaster_path="$DIR/start_rosmaster.sh"
     echo "Will start ROS master in new terminal."$start_rosmaster_path
-    gnome-terminal -e "bash $start_rosmaster_path"
+    gnome-terminal --working-directory="$DIR" -- bash $start_rosmaster_path
     sleep 3
     echo "Did start ROS master in new terminal."
 else
@@ -105,24 +105,24 @@ fi
 if [ "$start_franka_interface" -eq 1 ]; then
 # ssh to the control pc and start franka_interface in a new gnome-terminal
 start_franka_interface_on_control_pc_path="$DIR/start_franka_interface_on_control_pc.sh"
-echo "Will ssh to control PC and start iam_roblib."
-gnome-terminal -e "bash $start_franka_interface_on_control_pc_path $old_gripper $log_on_franka_interface $stop_on_error $control_pc_uname $control_pc_ip_address $control_pc_franka_interface_path $control_pc_use_password $control_pc_password "
+echo "Will ssh to control PC and start franka-interface."
+gnome-terminal --working-directory="$DIR" -- bash $start_franka_interface_on_control_pc_path $old_gripper $log_on_franka_interface $stop_on_error $control_pc_uname $control_pc_ip_address $control_pc_franka_interface_path $control_pc_use_password $control_pc_password
 echo "Done"
 sleep 3
 else
-echo "Will not start franka_interface on the control pc."
+echo "Will not start franka-interface on the control pc."
 fi
 
 # ssh to the control pc and start ROS action server in a new gnome-terminal
 start_franka_ros_interface_on_control_pc_path="$DIR/start_franka_ros_interface_on_control_pc.sh"
 echo "Will ssh to control PC and start ROS action server."
-gnome-terminal -e "bash $start_franka_ros_interface_on_control_pc_path $control_pc_uname $control_pc_ip_address $workstation_ip_address $control_pc_franka_interface_path $robot_number $control_pc_use_password $control_pc_password"
+gnome-terminal --working-directory="$DIR" -- bash $start_franka_ros_interface_on_control_pc_path $control_pc_uname $control_pc_ip_address $workstation_ip_address $control_pc_franka_interface_path $robot_number $control_pc_use_password $control_pc_password
 sleep 3
 
 if [ "$with_gripper" -eq 1 ] && [ "$old_gripper" -eq 0 ]; then
 start_franka_gripper_on_control_pc_path="$DIR/start_franka_gripper_on_control_pc.sh"
 echo "Will ssh to control PC and start ROS action server."
-gnome-terminal -e "bash $start_franka_gripper_on_control_pc_path $control_pc_uname $control_pc_ip_address $workstation_ip_address $control_pc_franka_interface_path $robot_number $control_pc_use_password $control_pc_password"
+gnome-terminal --working-directory="$DIR" -- bash $start_franka_gripper_on_control_pc_path $control_pc_uname $control_pc_ip_address $workstation_ip_address $control_pc_franka_interface_path $robot_number $control_pc_use_password $control_pc_password
 sleep 3
 else
     echo "Will not start franka gripper on the control pc."
