@@ -14,12 +14,6 @@ import os
 import sys
 sys.path.insert(0, os.path.abspath('..'))
 
-import mock
- 
-MOCK_MODULES = ['numpy', 'scipy', 'matplotlib', 'matplotlib.pyplot', 'scipy.interpolate']
-for mod_name in MOCK_MODULES:
-    sys.modules[mod_name] = mock.Mock()
-
 # -- Project information -----------------------------------------------------
 
 project = 'frankapy'
@@ -46,6 +40,8 @@ extensions = ['sphinx_rtd_theme',
 autoclass_content = "class"
 autodoc_member_order = "bysource"
 autodoc_default_flags = ["members", "show-inheritance"]
+autodoc_mock_imports = ["numpy", "scipy", "matplotlib", "matplotlib.pyplot", "scipy.interpolate"]
+
 napoleon_include_special_with_doc = True
 napoleon_include_init_with_doc = True
 
