@@ -9,7 +9,7 @@ from .utils import franka_pose_to_rigid_transform
 
 class FrankaArmStateClient:
 
-    def __init__(self, new_ros_node=True, robot_state_server_name='/get_current_robot_state_server_node/get_current_robot_state_server', offline=False):
+    def __init__(self, new_ros_node=True, robot_state_server_name='/get_current_robot_state_server_node_1/get_current_robot_state_server', offline=False):
         if new_ros_node:
             rospy.init_node('FrankaArmStateClient', anonymous=True)
 
