@@ -1216,7 +1216,7 @@ class FrankaArm:
                 the maximum gripper opening
         """
 
-        if width < FC.GRIPPER_WIDTH_MIN || width > FC.GRIPPER_WIDTH_MAX:
+        if width < FC.GRIPPER_WIDTH_MIN or width > FC.GRIPPER_WIDTH_MAX:
             raise ValueError(
                     'gripper width must be within the gripper limits of ' \
                     '{} and {}'.format(FC.GRIPPER_WIDTH_MIN,FC.GRIPPER_WIDTH_MAX))
