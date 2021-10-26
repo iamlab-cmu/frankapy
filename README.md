@@ -4,6 +4,8 @@ This is a software package used for controlling and learning skills on the Frank
 
 Installation Instructions and Network Configuration Instructions are also available here: [https://iamlab-cmu.github.io/frankapy](https://iamlab-cmu.github.io/frankapy)
 
+To join the Discord community, click the link [here](https://discord.gg/jMzpGRpSN2).
+
 ## Requirements
 
 * A computer with the Ubuntu 18.04 / 20.04.
@@ -156,6 +158,16 @@ All directories below are given relative to `/frankapy`.
    python scripts/reset_arm.py
    ```
    
-   
-   
 See example scripts in the `examples/` and `scripts/` to learn how to use the `FrankaPy` python package.
+
+## Citation
+
+If this library proves useful to your research, please cite the paper below::
+```
+@article{zhang2020modular,
+title={A modular robotic arm control stack for research: Franka-interface and frankapy},
+author={Zhang, Kevin and Sharma, Mohit and Liang, Jacky and Kroemer, Oliver},
+journal={arXiv preprint arXiv:2011.02398},
+year={2020}
+}
+```
