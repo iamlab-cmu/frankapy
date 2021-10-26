@@ -47,3 +47,5 @@ Starting the FrankaPy Interface
     python scripts/reset_arm.py
 
 8. See example scripts in the ``examples/`` and ``scripts/`` folders to learn how to use the FrankaPy python package.
+
+9. Please note that if you are using a custom gripper or no gripper, please set the ``with_gripper=True`` flag in ``frankapy/franka_arm.py`` to ``False`` as well as set the ``with_gripper=1`` flag in ``bash_scripts/start_control_pc.sh`` to ``0``.
