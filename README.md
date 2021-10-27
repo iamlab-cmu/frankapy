@@ -4,7 +4,7 @@ This is a software package used for controlling and learning skills on the Frank
 
 Installation Instructions and Network Configuration Instructions are also available here: [https://iamlab-cmu.github.io/frankapy](https://iamlab-cmu.github.io/frankapy)
 
-To join the Discord community, click the link [here](https://discord.gg/jMzpGRpSN2).
+To join the Discord community, click the link [here](https://discord.gg/r6r7dttMwZ).
 
 ## Requirements
 
