@@ -1432,7 +1432,7 @@ class FrankaArm:
         """
         return self._state_client.get_data()
 
-    def get_pose(self):
+    def get_pose(self, include_tool_offset=True):
         """
         Returns
         -------
@@ -1440,9 +1440,11 @@ class FrankaArm:
         """
         tool_base_pose = self._state_client.get_pose()
 
-        tool_pose = tool_base_pose * self._tool_delta_pose
-
-        return tool_pose
+        if include_tool_offset:
+            tool_pose = tool_base_pose * self._tool_delta_pose
+            return tool_pose
+        else:
+            return tool_base_pose
 
     def get_joints(self):
         """

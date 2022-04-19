@@ -28,6 +28,7 @@ class FrankaArmStateClient:
             logging.warn('In offline mode - FrankaArmStateClient will return 0 values.')
             return {
                 'pose': franka_pose_to_rigid_transform(np.eye(4)),
+                'pose_desired': franka_pose_to_rigid_transform(np.eye(4)),
                 'joint_torques': np.zeros(7),
                 'joint_torques_derivative': np.zeros(7),
                 'joints': np.zeros(7),
@@ -42,6 +43,7 @@ class FrankaArmStateClient:
 
         data = {
             'pose': franka_pose_to_rigid_transform(ros_data.O_T_EE),
+            'pose_desired': franka_pose_to_rigid_transform(ros_data.O_T_EE_d),
             'joint_torques': np.array(ros_data.tau_J),
             'joint_torques_derivative': np.array(ros_data.dtau_J),
             'joints': np.array(ros_data.q),
