@@ -1,9 +1,15 @@
 # frankapy
 
+This is a software package used for controlling and learning skills on the Franka Emika Panda Research Robot Arm.
+
+Installation Instructions and Network Configuration Instructions are also available here: [https://iamlab-cmu.github.io/frankapy](https://iamlab-cmu.github.io/frankapy)
+
+To join the Discord community, click the link [here](https://discord.gg/r6r7dttMwZ).
+
 ## Requirements
 
-* A computer with the Ubuntu 16.04 / 18.04.
-* ROS Kinetic / Melodic
+* A computer with the Ubuntu 18.04 / 20.04.
+* ROS Melodic / Noetic
 * [Protocol Buffers](https://github.com/protocolbuffers/protobuf)
 
 ## Computer Setup Instructions
@@ -51,7 +57,7 @@ All directories below are given relative to `/frankapy`.
    ./bash_scripts/make_catkin.sh
    ```
 
-4. To allow asynchronous gripper commands, we use the franka\_ros package, so install libfranka and franka\_ros using the following command (Change melodic to kinetic if you are on Ubuntu 16.04:
+4. To allow asynchronous gripper commands, we use the franka\_ros package, so install libfranka and franka\_ros using the following command (Change melodic to noetic if you are on Ubuntu 20.04:
    ```bash
    sudo apt install ros-melodic-libfranka ros-melodic-franka-ros
    ```
@@ -152,6 +158,16 @@ All directories below are given relative to `/frankapy`.
    python scripts/reset_arm.py
    ```
    
-   
-   
 See example scripts in the `examples/` and `scripts/` to learn how to use the `FrankaPy` python package.
+
+## Citation
+
+If this library proves useful to your research, please cite the paper below::
+```
+@article{zhang2020modular,
+title={A modular robotic arm control stack for research: Franka-interface and frankapy},
+author={Zhang, Kevin and Sharma, Mohit and Liang, Jacky and Kroemer, Oliver},
+journal={arXiv preprint arXiv:2011.02398},
+year={2020}
+}
+```

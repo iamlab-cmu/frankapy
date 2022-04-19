@@ -40,7 +40,7 @@ extensions = ['sphinx_rtd_theme',
 autoclass_content = "class"
 autodoc_member_order = "bysource"
 autodoc_default_flags = ["members", "show-inheritance"]
-autodoc_mock_imports = ["numpy", "scipy", "matplotlib", "matplotlib.pyplot", "scipy.interpolate", "autolab_core", "quaternion", "itertools", "roslib", "rospy", "actionlib", "sensor_msgs", "franka_interface_msgs", "franka_gripper"]
+#autodoc_mock_imports = ["autolab_core", "quaternion", "itertools", "roslib", "rospy", "actionlib", "sensor_msgs", "franka_interface_msgs", "franka_gripper", "google"]
 
 napoleon_include_special_with_doc = True
 napoleon_include_init_with_doc = True

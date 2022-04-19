@@ -695,39 +695,50 @@ class FrankaArm:
 
         Parameters
         ----------
-            joint_dmp_info (dict): Contains all the parameters of a joint DMP
+            joint_dmp_info : :obj:`dict` 
+                Contains all the parameters of a joint DMP
                 (tau, alpha, beta, num_basis, num_sensors, mu, h, and weights)
-            duration (float): A float in the unit of seconds
-            initial_sensor_values (list): List of initial sensor values.
-                If None it will default to ones.
-            use_impedance (boolean) : Function uses the Franka joint impedance  
-                controller by default. If True, uses our joint impedance controller.
-            buffer_time (float): How much extra time the termination handler will wait
+            duration : :obj:`float` 
+                How much time this robot motion should take.
+            initial_sensor_values : :obj:`list` 
+                List of initial sensor values. If None it will default to ones.
+            use_impedance : :obj:`bool` 
+                Function uses the Franka joint impedance controller by default. 
+                If True, uses our joint impedance controller.
+            buffer_time : :obj:`float` 
+                How much extra time the termination handler will wait
                 before stopping the skill after duration has passed.
-            force_thresholds (list): List of 6 floats corresponding to
-                force limits on translation (xyz) and rotation about (xyz) axes.
+            force_thresholds : :obj:`list` 
+                List of 6 floats corresponding to force limits on translation 
+                (xyz) and rotation about (xyz) axes. Default is None. 
+                If None then will not stop on contact.
+            torque_thresholds : :obj:`list` 
+                List of 7 floats corresponding to torque limits on each joint. 
                 Default is None. If None then will not stop on contact.
-            torque_thresholds (list): List of 7 floats corresponding to
-                torque limits on each joint. Default is None. If None then will
-                not stop on contact.
-            cartesian impedances (list): List of 6 floats corresponding to
-                impedances on translation (xyz) and rotation about (xyz) axes.
-                Default is None. If None then will use default impedances.
-            joint impedances (list): List of 7 floats corresponding to
-                impedances on each joint. This is used when use_impedance is 
-                False. Default is None. If None then will use default impedances.
-            k_gains (list): List of 7 floats corresponding to the k_gains on each joint
+            cartesian_impedances : :obj:`list` 
+                List of 6 floats corresponding to impedances on translation 
+                (xyz) and rotation about (xyz) axes. Default is None. 
+                If None then will use default impedances.
+            joint_impedances : :obj:`list` 
+                List of 7 floats corresponding to impedances on each joint. 
+                This is used when use_impedance is False. Default is None. 
+                If None then will use default impedances.
+            k_gains : :obj:`list` 
+                List of 7 floats corresponding to the k_gains on each joint
                 for our impedance controller. This is used when use_impedance is 
                 True. Default is None. If None then will use default k_gains.
-            d_gains (list): List of 7 floats corresponding to the d_gains on each joint
+            d_gains : :obj:`list` 
+                List of 7 floats corresponding to the d_gains on each joint
                 for our impedance controller. This is used when use_impedance is 
                 True. Default is None. If None then will use default d_gains.
-            block (boolean) : Function blocks by default. If False, the function 
+            block : :obj:`bool`
+                Function blocks by default. If False, the function 
                 becomes asynchronous and can be preempted.
-            ignore_errors (boolean) : Function ignores errors by default. 
+            ignore_errors : :obj:`bool`
+                Function ignores errors by default. 
                 If False, errors and some exceptions can be thrown.
-            skill_desc (string) : Skill description to use for logging on
-                control-pc.
+            skill_desc : :obj:`str` 
+                Skill description to use for logging on control-pc.
         """
 
         if use_impedance:
@@ -784,39 +795,54 @@ class FrankaArm:
 
         Parameters
         ----------
-            pose_dmp_info (dict): Contains all the parameters of a pose DMP
+            pose_dmp_info : :obj:`dict`
+                Contains all the parameters of a pose DMP
                 (tau, alpha, beta, num_basis, num_sensors, mu, h, and weights)
-            duration (float): A float in the unit of seconds
-            use_goal_formulation (boolean) : Flag that represents whether to use
-                the explicit goal pose dmp formulation.
-            initial_sensor_values (list): List of initial sensor values.
-                If None it will default to ones.
-            orientation_only (boolean) : Flag that represents if the dmp weights
-                are to generate a dmp only for orientation.
-            position_only (boolean) : Flag that represents if the dmp weights
-                are to generate a dmp only for position.
-            use_impedance (boolean) : Function uses our impedance controller 
-                by default. If False, uses the Franka cartesian controller.
-            buffer_time (float): How much extra time the termination handler will wait
+            duration : :obj:`float`
+                How much time this robot motion should take.
+            use_goal_formulation : :obj:`bool`
+                Flag that represents whether to use the explicit goal pose 
+                dmp formulation.
+            initial_sensor_values : :obj:`list` 
+                List of initial sensor values. If None it will default to ones.
+            orientation_only : :obj:`bool`
+                Flag that represents if the dmp weights are to generate a dmp 
+                only for orientation.
+            position_only : :obj:`bool`
+                Flag that represents if the dmp weights are to generate a dmp 
+                only for position.
+            ee_frame : :obj:`bool`
+                Flag that indicates whether the dmp is in terms of the 
+                end-effector frame.
+            use_impedance : :obj:`bool`
+                Function uses our impedance controller by default. If False, 
+                uses the Franka cartesian controller.
+            buffer_time : :obj:`float`
+                How much extra time the termination handler will wait
                 before stopping the skill after duration has passed.
-            force_thresholds (list): List of 6 floats corresponding to
-                force limits on translation (xyz) and rotation about (xyz) axes.
+            force_thresholds : :obj:`list` 
+                List of 6 floats corresponding to force limits on translation 
+                (xyz) and rotation about (xyz) axes. Default is None. 
+                If None then will not stop on contact.
+            torque_thresholds : :obj:`list` 
+                List of 7 floats corresponding to torque limits on each joint. 
                 Default is None. If None then will not stop on contact.
-            torque_thresholds (list): List of 7 floats corresponding to
-                torque limits on each joint. Default is None. If None then will
-                not stop on contact.
-            cartesian impedances (list): List of 6 floats corresponding to
-                impedances on translation (xyz) and rotation about (xyz) axes.
-                Default is None. If None then will use default impedances.
-            joint impedances (list): List of 7 floats corresponding to
-                impedances on each joint. This is used when use_impedance is 
-                False. Default is None. If None then will use default impedances.
-            block (boolean) : Function blocks by default. If False, the function becomes
+            cartesian_impedances : :obj:`list` 
+                List of 6 floats corresponding to impedances on translation 
+                (xyz) and rotation about (xyz) axes. Default is None. 
+                If None then will use default impedances.
+            joint_impedances : :obj:`list` 
+                List of 7 floats corresponding to impedances on each joint. 
+                This is used when use_impedance is False. Default is None. 
+                If None then will use default impedances.
+            block : :obj:`bool`
+                Function blocks by default. If False, the function becomes
                 asynchronous and can be preempted.
-            ignore_errors (boolean) : Function ignores errors by default. 
-                If False, errors and some exceptions can be thrown.
-            skill_desc (string) : Skill description to use for logging on
-                control-pc.
+            ignore_errors : :obj:`bool`
+                Function ignores errors by default. If False, errors and 
+                some exceptions can be thrown.
+            skill_desc : :obj:`str` 
+                Skill description to use for logging on control-pc.
         """
 
         if use_impedance:
@@ -886,47 +912,58 @@ class FrankaArm:
                                     block=True, 
                                     ignore_errors=True,
                                     skill_desc='QuaternionPoseDmp'):
-        '''Commands Arm to execute a given pose dmp
+        '''Commands Arm to execute a given quaternion pose dmp
 
         Args:
-            position_dmp_info (dict): Contains all the parameters of a pose DMP
+            position_dmp_info : :obj:`dict`
+                Contains all the parameters of a position DMP
                 (tau, alpha, beta, num_basis, num_sensors, mu, h, and weights)
-            quaternion_dmp_info (dict): Contains all the parameters of a pose DMP
+            quat_dmp_info : :obj:`dict`
+                Contains all the parameters of a quaternion DMP
                 (tau, alpha, beta, num_basis, num_sensors, mu, h, and weights)
-            duration (float): A float in the unit of seconds
-            goal_quat: List[float] (size 4). Quaternion goal to reach. This assumes an
-                explicit goal formulation for the quaternion DMPs.
-            quat_goal_time (float): Time to reach goal for quaternion DMPs.
-            use_goal_formulation (boolean) : Flag that represents whether to use
-                the explicit goal pose dmp formulation.
-            initial_sensor_values (list): List of initial sensor values.
-                If None it will default to ones.
-            orientation_only (boolean) : Flag that represents if the dmp weights
-                are to generate a dmp only for orientation.
-            position_only (boolean) : Flag that represents if the dmp weights
-                are to generate a dmp only for position.
-            use_impedance (boolean) : Function uses our impedance controller 
-                by default. If False, uses the Franka cartesian controller.
-            buffer_time (float): How much extra time the termination handler will wait
+            duration : :obj:`float`
+                How much time this robot motion should take.
+            goal_quat : :obj:`list` 
+                List of 4 floats that represents the quaternion goal to reach. 
+                This assumes an explicit goal formulation for the quaternion DMPs.
+            goal_quat_time : :obj:`float`
+                Time to reach goal for quaternion DMPs.
+            use_goal_formulation : :obj:`bool`
+                Flag that represents whether to use the explicit goal pose dmp formulation.
+            initial_sensor_values : :obj:`list` 
+                List of initial sensor values. If None it will default to ones.
+            ee_frame : :obj:`bool`
+                Flag that indicates whether the dmp is in terms of the 
+                end-effector frame.
+            use_impedance : :obj:`bool`
+                Function uses our impedance controller by default. If False, 
+                uses the Franka cartesian controller.
+            buffer_time : :obj:`float`
+                How much extra time the termination handler will wait
                 before stopping the skill after duration has passed.
-            force_thresholds (list): List of 6 floats corresponding to
-                force limits on translation (xyz) and rotation about (xyz) axes.
+            force_thresholds : :obj:`list` 
+                List of 6 floats corresponding to force limits on translation 
+                (xyz) and rotation about (xyz) axes. Default is None. 
+                If None then will not stop on contact.
+            torque_thresholds : :obj:`list` 
+                List of 7 floats corresponding to torque limits on each joint. 
                 Default is None. If None then will not stop on contact.
-            torque_thresholds (list): List of 7 floats corresponding to
-                torque limits on each joint. Default is None. If None then will
-                not stop on contact.
-            cartesian impedances (list): List of 6 floats corresponding to
-                impedances on translation (xyz) and rotation about (xyz) axes.
-                Default is None. If None then will use default impedances.
-            joint impedances (list): List of 7 floats corresponding to
-                impedances on each joint. This is used when use_impedance is 
-                False. Default is None. If None then will use default impedances.
-            block (boolean) : Function blocks by default. If False, the function becomes
+            cartesian_impedances : :obj:`list` 
+                List of 6 floats corresponding to impedances on translation 
+                (xyz) and rotation about (xyz) axes. Default is None. 
+                If None then will use default impedances.
+            joint_impedances : :obj:`list` 
+                List of 7 floats corresponding to impedances on each joint. 
+                This is used when use_impedance is False. Default is None. 
+                If None then will use default impedances.
+            block : :obj:`bool`
+                Function blocks by default. If False, the function becomes
                 asynchronous and can be preempted.
-            ignore_errors (boolean) : Function ignores errors by default. 
-                If False, errors and some exceptions can be thrown.
-            skill_desc (string) : Skill description to use for logging on
-                control-pc.
+            ignore_errors : :obj:`bool`
+                Function ignores errors by default. If False, errors and some
+                exceptions can be thrown.
+            skill_desc : :obj:`str` 
+                Skill description to use for logging on control-pc.
         '''
 
         if use_impedance:
@@ -978,37 +1015,44 @@ class FrankaArm:
 
         Parameters
         ----------
-            run_duration (float): A float in the unit of seconds
-            acc_duration (float): A float in the unit of seconds. How long to
-                acc/de-acc to achieve desired force.
-            max_translation (float): A float in the unit of meters. Max translation 
-                before the robot deaccelerates.
-            max_rotation (float): A float in the unit of rad. Max rotation 
-                before the robot deaccelerates.
-            forces (list): Optional (defaults to None).
-                A list of 3 numbers that correspond to end-effector forces in
-                    3 directions
-            torques (list): Optional (defaults to None).
-                A list of 3 numbers that correspond to end-effector torques in
-                    3 axes
-            buffer_time (float): How much extra time the termination handler will wait
+            run_duration : :obj:`float`
+                How much time this robot motion should take.
+            acc_duration : :obj:`float`
+                How long to acc/de-acc to achieve desired force.
+            max_translation : :obj:`float`
+                A float in the unit of meters. Max translation before the 
+                robot deaccelerates.
+            max_rotation : :obj:`float`
+                A float in the unit of rad. Max rotation before the robot
+                deaccelerates.
+            forces : :obj:`list` 
+                Optional (defaults to None). A list of 3 numbers that correspond 
+                to end-effector forces in (xyz) directions.
+            torques : :obj:`list` 
+                Optional (defaults to None). A list of 3 numbers that correspond 
+                to end-effector torques in 3 rotational axes.
+            buffer_time : :obj:`float`
+                How much extra time the termination handler will wait
                 before stopping the skill after duration has passed.
-            force_thresholds (list): List of 6 floats corresponding to
-                force limits on translation (xyz) and rotation about (xyz) axes.
+            force_thresholds : :obj:`list` 
+                List of 6 floats corresponding to force limits on translation 
+                (xyz) and rotation about (xyz) axes. Default is None. 
+                If None then will not stop on contact.
+            torque_thresholds : :obj:`list` 
+                List of 7 floats corresponding to torque limits on each joint. 
                 Default is None. If None then will not stop on contact.
-            torque_thresholds (list): List of 7 floats corresponding to
-                torque limits on each joint. Default is None. If None then will
-                not stop on contact.
-            block (boolean) : Function blocks by default. If False, the function becomes
+            block : :obj:`bool`
+                Function blocks by default. If False, the function becomes
                 asynchronous and can be preempted.
-            ignore_errors (boolean) : Function ignores errors by default. 
-                If False, errors and some exceptions can be thrown.
-            skill_desc (string) : Skill description to use for logging on
-                control-pc.
+            ignore_errors : :obj:`bool`
+                Function ignores errors by default. If False, errors and some 
+                exceptions can be thrown.
+            skill_desc : :obj:`str` 
+                Skill description to use for logging on control-pc.
 
         Raises:
             ValueError if acc_duration > 0.5*run_duration, or if forces are
-                too large
+            too large
         """
         if acc_duration > 0.5 * run_duration:
             raise ValueError(
@@ -1060,32 +1104,38 @@ class FrankaArm:
 
         Parameters
         ----------
-            run_duration (float): A float in the unit of seconds
-            acc_duration (float): A float in the unit of seconds.
+            run_duration : :obj:`float`
+                How much time this robot motion should take.
+            acc_duration : :obj:`float`
                 How long to acc/de-acc to achieve desired force.
-            max_translation (float): A float in the unit of meters. Max 
-                translation before the robot deaccelerates.
-            forces (list): Optional (defaults to None).
-                A list of 3 numbers that correspond to end-effector forces in
-                    3 directions
-            buffer_time (float): How much extra time the termination handler will wait
+            max_translation : :obj:`float`
+                A float in the unit of meters. Max translation before the 
+                robot deaccelerates.
+            forces : :obj:`list` 
+                Optional (defaults to None). A list of 3 numbers that correspond 
+                to the magnitude of the end-effector forces and the axis.
+            buffer_time : :obj:`float`
+                How much extra time the termination handler will wait
                 before stopping the skill after duration has passed.
-            force_thresholds (list): List of 6 floats corresponding to
-                force limits on translation (xyz) and rotation about (xyz) axes.
+            force_thresholds : :obj:`list` 
+                List of 6 floats corresponding to force limits on translation 
+                (xyz) and rotation about (xyz) axes. Default is None. 
+                If None then will not stop on contact.
+            torque_thresholds : :obj:`list` 
+                List of 7 floats corresponding to torque limits on each joint. 
                 Default is None. If None then will not stop on contact.
-            torque_thresholds (list): List of 7 floats corresponding to
-                torque limits on each joint. Default is None. If None then will
-                not stop on contact.
-            block (boolean) : Function blocks by default. If False, the function becomes
+            block : :obj:`bool`
+                Function blocks by default. If False, the function becomes
                 asynchronous and can be preempted.
-            ignore_errors (boolean) : Function ignores errors by default. 
-                If False, errors and some exceptions can be thrown.
-            skill_desc (string) : Skill description to use for logging on
-                control-pc.
+            ignore_errors : :obj:`bool`
+                Function ignores errors by default. If False, errors and some 
+                exceptions can be thrown.
+            skill_desc : :obj:`str` 
+                Skill description to use for logging on control-pc.
                     
         Raises:
             ValueError if acc_duration > 0.5*run_duration, or if forces are
-                too large
+            too large
         """
         if acc_duration > 0.5 * run_duration:
             raise ValueError(
@@ -1137,26 +1187,39 @@ class FrankaArm:
 
         Parameters
         ----------
-            width (float): A float in the unit of meters
-            grasp (boolean): Flag that signals whether to grasp
-            speed (float): Gripper operation speed in meters per sec
-            force (float): Max gripper force to apply in N. Default to None,
-                which gives acceptable force
-            epsilon_inner (float): Max tolerated deviation when the actual grasped 
+            width : :obj:`float`
+                Desired width of the gripper in the unit of meters.
+            grasp : :obj:`bool`
+                Flag that signals whether to grasp.
+            speed : :obj:`float`
+                Gripper operation speed in meters per sec.
+            force : :obj:`float`
+                Max gripper force to apply in N. Default to None,
+                which gives acceptable force.
+            epsilon_inner : :obj:`float`
+                Max tolerated deviation when the actual grasped 
                 width is smaller than the commanded grasp width.
-            epsilon_outer (float): Max tolerated deviation when the actual grasped 
+            epsilon_outer : :obj:`float`
+                Max tolerated deviation when the actual grasped 
                 width is larger than the commanded grasp width.
-            block (boolean) : Function blocks by default. If False, the function 
+            block : :obj:`bool`
+                Function blocks by default. If False, the function 
                 becomes asynchronous and can be preempted.
-            ignore_errors (boolean) : Function ignores errors by default. 
-                If False, errors and some exceptions can be thrown.
-            skill_desc (string) : Skill description to use for logging on
-                control-pc.
+            ignore_errors : :obj:`bool`
+                Function ignores errors by default. If False, errors 
+                and some exceptions can be thrown.
+            skill_desc : :obj:`str` 
+                Skill description to use for logging on control-pc.
 
         Raises:
             ValueError: If width is less than 0 or greater than TODO(jacky)
                 the maximum gripper opening
         """
+
+        if width < FC.GRIPPER_WIDTH_MIN or width > FC.GRIPPER_WIDTH_MAX:
+            raise ValueError(
+                    'gripper width must be within the gripper limits of ' \
+                    '{} and {}'.format(FC.GRIPPER_WIDTH_MIN,FC.GRIPPER_WIDTH_MAX))
 
         if self._old_gripper:
             skill = Skill(SkillType.GripperSkill, 
@@ -1215,42 +1278,54 @@ class FrankaArm:
 
         Parameters
         ----------
-            duration (float): How much time this guidance should take
-            use_joints (boolean) : Function uses cartesian impedance  
-                controller by default. If True, it uses joint impedance.
-            use_impedance (boolean) : Function uses the Franka joint impedance  
-                controller by default. If True, uses our joint impedance controller.
-            use_ee_frame (boolean) : Function uses the end-effector cartesian feedback
-                controller only when use_impedance is True.
-            buffer_time (float): How much extra time the termination handler will wait
+            duration : :obj:`float`
+                How much time this guidance should take
+            use_joints : :obj:`bool`
+                Function uses cartesian impedance controller by default. 
+                If True, it uses joint impedance.
+            use_impedance : :obj:`bool`
+                Function uses the Franka joint impedance controller by default. 
+                If True, uses our joint impedance controller.
+            use_ee_frame : :obj:`bool`
+                Function uses the end-effector cartesian feedback controller
+                only when use_impedance is True.
+            buffer_time : :obj:`float`
+                How much extra time the termination handler will wait
                 before stopping the skill after duration has passed.
-            force_thresholds (list): List of 6 floats corresponding to
-                force limits on translation (xyz) and rotation about (xyz) axes.
+            force_thresholds : :obj:`list` 
+                List of 6 floats corresponding to force limits on translation 
+                (xyz) and rotation about (xyz) axes. Default is None. 
+                If None then will not stop on contact.
+            torque_thresholds : :obj:`list` 
+                List of 7 floats corresponding to torque limits on each joint. 
                 Default is None. If None then will not stop on contact.
-            torque_thresholds (list): List of 7 floats corresponding to
-                torque limits on each joint. Default is None. If None then will
-                not stop on contact.
-            cartesian impedances (list): List of 6 floats corresponding to
-                impedances on translation (xyz) and rotation about (xyz) axes.
-                Default is None. If None then will use default impedances.
-            joint impedances (list): List of 7 floats corresponding to
-                impedances on each joint. This is used when use_impedance is 
-                False. Default is None. If None then will use default impedances.
-            k_gains (list): List of 7 floats corresponding to the k_gains on each joint
+            cartesian_impedances : :obj:`list` 
+                List of 6 floats corresponding to impedances on translation 
+                (xyz) and rotation about (xyz) axes. Default is None. 
+                If None then will use default impedances.
+            joint_impedances : :obj:`list` 
+                List of 7 floats corresponding to impedances on each joint. 
+                This is used when use_impedance is False. Default is None. 
+                If None then will use default impedances.
+            k_gains : :obj:`list` 
+                List of 7 floats corresponding to the k_gains on each joint
                 for our impedance controller. This is used when use_impedance is 
                 True. Default is None. If None then will use default k_gains.
-            d_gains (list): List of 7 floats corresponding to the d_gains on each joint
+            d_gains : :obj:`list` 
+                List of 7 floats corresponding to the d_gains on each joint
                 for our impedance controller. This is used when use_impedance is 
                 True. Default is None. If None then will use default d_gains.
-            block (boolean) : Function blocks by default. If False, the function becomes
+            block : :obj:`bool`
+                Function blocks by default. If False, the function becomes
                 asynchronous and can be preempted.
-            ignore_errors (boolean) : Function ignores errors by default. 
-                If False, errors and some exceptions can be thrown.
-            ignore_virtual_walls (boolean): Function checks for collisions with 
-                virtual walls by default. If False, the robot no longer checks,
-                which may be dangerous.
-            skill_desc (string) : Skill description to use for logging on
-                control-pc.
+            ignore_errors : :obj:`bool`
+                Function ignores errors by default. If False, errors and some 
+                exceptions can be thrown.
+            ignore_virtual_walls : :obj:`bool`
+                Function checks for collisions with virtual walls by default. 
+                If False, the robot no longer checks, which may be dangerous.
+            skill_desc : :obj:`str` 
+                Skill description to use for logging on control-pc.
         """
         if use_joints:
             if use_impedance:
@@ -1308,12 +1383,30 @@ class FrankaArm:
     def open_gripper(self, block=True, skill_desc='OpenGripper'):
         """
         Opens gripper to maximum width
+
+        Parameters
+        ----------
+            block : :obj:`bool`
+                Function blocks by default. If False, the function becomes
+                asynchronous and can be preempted.
+            skill_desc : :obj:`str` 
+                Skill description to use for logging on control-pc.
         """
         self.goto_gripper(FC.GRIPPER_WIDTH_MAX, block=block, skill_desc=skill_desc)
 
     def close_gripper(self, grasp=True, block=True, skill_desc='CloseGripper'):
         """
         Closes the gripper as much as possible
+
+        Parameters
+        ----------
+            grasp : :obj:`bool`
+                Flag that signals whether to grasp.
+            block : :obj:`bool`
+                Function blocks by default. If False, the function becomes
+                asynchronous and can be preempted.
+            skill_desc : :obj:`str` 
+                Skill description to use for logging on control-pc.
         """
         self.goto_gripper(FC.GRIPPER_WIDTH_MIN, grasp=grasp,
                           force=FC.GRIPPER_MAX_FORCE if grasp else None,
@@ -1322,6 +1415,14 @@ class FrankaArm:
     def home_gripper(self, block=True, skill_desc='HomeGripper'):
         """
         Homes the gripper.
+
+        Parameters
+        ----------
+            block : :obj:`bool`
+                Function blocks by default. If False, the function becomes
+                asynchronous and can be preempted.
+            skill_desc : :obj:`str` 
+                Skill description to use for logging on control-pc.
         """
         self._last_gripper_command = 'Homing'
         homing_skill = HomingGoal()
@@ -1332,6 +1433,14 @@ class FrankaArm:
     def stop_gripper(self, block=True, skill_desc='StopGripper'):
         """
         Stops the gripper.
+
+        Parameters
+        ----------
+            block : :obj:`bool`
+                Function blocks by default. If False, the function becomes
+                asynchronous and can be preempted.
+            skill_desc : :obj:`str` 
+                Skill description to use for logging on control-pc.
         """
         self._last_gripper_command = 'Stop'
         stop_skill = StopGoal()
@@ -1340,6 +1449,19 @@ class FrankaArm:
             self.wait_for_gripper()
 
     def run_guide_mode(self, duration=10, block=True, skill_desc='GuideMode'):
+        """
+        Runs guide mode which allows you to move the robot freely.
+        
+        Parameters
+        ----------
+            duration : :obj:`float`
+                How much time this guidance should take
+            block : :obj:`bool`
+                Function blocks by default. If False, the function becomes
+                asynchronous and can be preempted.
+            skill_desc : :obj:`str` 
+                Skill description to use for logging on control-pc.
+        """
         self.apply_effector_forces_torques(duration, 0, 0, 0, block=block, skill_desc=skill_desc)
 
     def run_dynamic_force_position(self,
@@ -1362,37 +1484,47 @@ class FrankaArm:
 
         Parameters
         ----------
-            duration (float) : How much time this robot motion should take.
-            use_impedance (boolean) : Function uses our impedance controller 
-                by default. If False, uses the Franka cartesian controller.
-            buffer_time (float): How much extra time the termination handler will wait
+            duration : :obj:`float`
+                How much time this robot motion should take.
+            use_impedance : :obj:`bool`
+                Function uses our impedance controller by default. 
+                If False, uses the Franka cartesian controller.
+            buffer_time : :obj:`float`
+                How much extra time the termination handler will wait
                 before stopping the skill after duration has passed.
-            force_thresholds (list): List of 6 floats corresponding to
-                force limits on translation (xyz) and rotation about (xyz) axes.
+            force_thresholds : :obj:`list` 
+                List of 6 floats corresponding to force limits on translation 
+                (xyz) and rotation about (xyz) axes. Default is None. 
+                If None then will not stop on contact.
+            torque_thresholds : :obj:`list` 
+                List of 7 floats corresponding to torque limits on each joint. 
                 Default is None. If None then will not stop on contact.
-            torque_thresholds (list): List of 7 floats corresponding to
-                torque limits on each joint. Default is None. If None then will
-                not stop on contact.
-            position_kp_cart (list): List of 6 floats corresponding to 
-                proportional gain used for position errors in cartesian space.
-            force_kp_cart (list): List of 6 floats corresponding to 
-                proportional gain used for force errors in cartesian space.
-            position_kp_joint (list): List of 7 floats corresponding to 
-                proportional gain used for position errors in joint space.
-            force_kp_joint (list): List of 6 floats corresponding to 
-                proportional gain used for force errors in joint space.
-            S (list): List of 6 numbers between 0 and 1 for the HFPC selection matrix.
-            interpolate (boolean): Whether or not to perform linear interpolation
-                in between way points.
-            use_cartesian_gains (boolean): Whether to use cartesian gains or
-                joint gains.
-            ignore_errors (boolean) : Function ignores errors by default. 
-                If False, errors and some exceptions can be thrown.
-            ignore_virtual_walls (boolean): Function checks for collisions with 
-                virtual walls by default. If False, the robot no longer checks,
-                which may be dangerous.
-            skill_desc (string) : Skill description to use for logging on
-                control-pc.
+            position_kp_cart : :obj:`list` 
+                List of 6 floats corresponding to proportional gain used for 
+                position errors in cartesian space.
+            force_kp_cart : :obj:`list` 
+                List of 6 floats corresponding to proportional gain used for 
+                force errors in cartesian space.
+            position_kp_joint : :obj:`list` 
+                List of 7 floats corresponding to proportional gain used for 
+                position errors in joint space.
+            force_kp_joint : :obj:`list` 
+                List of 6 floats corresponding to proportional gain used for 
+                force errors in joint space.
+            S : :obj:`list` 
+                List of 6 numbers between 0 and 1 for the HFPC selection matrix.
+            interpolate : :obj:`bool`
+                Whether or not to perform linear interpolation in between way points.
+            use_cartesian_gains : :obj:`bool`
+                Whether to use cartesian gains or joint gains.
+            ignore_errors : :obj:`bool`
+                Function ignores errors by default. If False, errors and some 
+                exceptions can be thrown.
+            ignore_virtual_walls : :obj:`bool`
+                Function checks for collisions with virtual walls by default. 
+                If False, the robot no longer checks, which may be dangerous.
+            skill_desc : :obj:`str` 
+                Skill description to use for logging on control-pc.
         """
         if interpolate:
             traj_gen = TrajectoryGeneratorType.LinearForcePositionTrajectoryGenerator
@@ -1428,7 +1560,9 @@ class FrankaArm:
         """
         Returns
         -------
-            dict of full robot state data
+            robot_state : :obj:`dict`
+                Dict that contains all of the robot's current
+                state information.
         """
         return self._state_client.get_data()
 
@@ -1436,7 +1570,9 @@ class FrankaArm:
         """
         Returns
         -------
-            pose (RigidTransform) of the current end-effector
+            pose : :obj:`autolab_core.RigidTransform`
+                Current pose of the end-effector including the transform
+                to the end of the tool.
         """
         tool_base_pose = self._state_client.get_pose()
 
@@ -1448,33 +1584,45 @@ class FrankaArm:
 
     def get_joints(self):
         """
+        Returns the current joint positions.
+
         Returns
         -------
-            ndarray of shape (7,) of joint angles in radians
+            joint_positions : :obj:`numpy.ndarray`
+                7 floats that represent each joint's position in radians.
         """
         return self._state_client.get_joints()
 
     def get_joint_torques(self):
         """
+        Returns the current joint torques.
+
         Returns
         -------
-            ndarray of shape (7,) of joint torques in Nm
+            joint_torques : :obj:`numpy.ndarray`
+                7 floats that represent each joint's torque in Nm.
         """
         return self._state_client.get_joint_torques()
 
     def get_joint_velocities(self):
         """
+        Returns the current joint velocities.
+
         Returns
         -------
-            ndarray of shape (7,) of joint velocities in rads/s
+            joint_velocities : :obj:`numpy.ndarray`
+                7 floats that represent each joint's velocity in rads/s.
         """
         return self._state_client.get_joint_velocities()
 
     def get_gripper_width(self):
         """
+        Returns the current gripper width.
+
         Returns
         -------
-            float of gripper width in meters
+            gripper_width : :obj:`float`
+                Robot gripper width in meters.
         """
         if self._old_gripper:
             return self._state_client.get_gripper_width()
@@ -1484,6 +1632,7 @@ class FrankaArm:
 
     def get_gripper_is_grasped(self):
         """
+        Returns a flag that represents if the gripper is grasping something.
 
         WARNING: THIS FUNCTION HAS BEEN DEPRECATED WHEN WE SWITCHED
         TO THE FRANKA_ROS GRIPPER CONTROLLER BECAUSE IT DOES NOT PUBLISH
@@ -1492,28 +1641,47 @@ class FrankaArm:
 
         Returns
         -------
-            True if gripper is grasping something. False otherwise
+            is_grasped : :obj:`bool`
+                Returns True if gripper is grasping something. False otherwise.
         """
         return self._state_client.get_gripper_is_grasped()
 
     def get_tool_base_pose(self):
         """
+        Returns the tool delta pose.
+
         Returns
         -------
-            RigidTransform of current tool base pose
+            tool_delta_pose : :obj:`autolab_core.RigidTransform`
+                RigidTransform that represents the transform between the 
+                end-effector and the end of the tool.
         """
         return self._tool_delta_pose.copy()
 
     def get_ee_force_torque(self):
+        """
+        Returns the current end-effector's sensed force_torque.
+
+        Returns
+        -------
+            ee_force_torque : :obj:`numpy.ndarray`
+                A numpy ndarray of 6 floats that represents the current
+                end-effector's sensed force_torque.
+        """
         return self._state_client.get_ee_force_torque()
 
     def get_finger_poses(self):
         """
+        Returns the current poses of the left and right fingers.
+
         Returns
         -------
-            A tuple of 2 RigidTransforms for the left and right finger respectively.
-
-            The left finger is +y from the gripper pose, right finger is -y
+            left_finger_pose : :obj:`autolab_core.RigidTransform`
+                RigidTransform that represents the transform of the left finger.
+                The left finger is +y from the gripper pose
+            right_finger_pose : :obj:`autolab_core.RigidTransform`
+                RigidTransform that represents the transform of the right finger.
+                The right finger is -y from the gripper pose
         """
         ee_pose = self.get_pose()
         delta_gripper_width = self.get_gripper_width() / 2
@@ -1538,7 +1706,9 @@ class FrankaArm:
 
         Parameters
         ----------
-            tool_delta_pose (RigidTransform)
+            tool_delta_pose : :obj:`autolab_core.RigidTransform`
+                RigidTransform that represents the transform between the 
+                end-effector and the end of the tool.
         """
         if tool_delta_pose.from_frame != 'franka_tool' \
                 or tool_delta_pose.to_frame != 'franka_tool_base':
@@ -1584,14 +1754,17 @@ class FrankaArm:
 
         Parameters
         ----------
-            joints (list): A list of 7 numbers that correspond to to the joint angles in radians
-            use_rigid_transforms (bool): Optional: Defaults to False.
-                                        If True, converts result to RigidTransform objects. This is slower.
+            joints : :obj:`list` 
+                A list of 7 numbers that correspond to to the joint angles in radians
+            use_rigid_transforms : :obj:`bool`  
+                Optional: Defaults to False.
+                If True, converts result to RigidTransform objects. This is slower.
 
         Returns
         -------
-            transforms (list): A list of 9 RigidTransforms or ndarrays in panda_link0 to panda_link7, 
-                                the franka_tool_base, and franka_tool frames.
+            transforms : :obj:`list` 
+                A list of 9 RigidTransforms or ndarrays in panda_link0 to panda_link7, 
+                the franka_tool_base, and franka_tool frames.
             
         """
         transforms_matrices = np.repeat(np.expand_dims(np.eye(4), 0), len(FC.DH_PARAMS) + 3, axis=0)
@@ -1655,11 +1828,13 @@ class FrankaArm:
         
         Parameters
         ----------
-            joints (list): A list of 7 numbers that correspond to to the joint angles in radians
+            joints : :obj:`list` 
+                A list of 7 numbers that correspond to the joint angles in radians.
 
         Returns
         -------
-            jacobian (ndarray): a 6 by 7 jacobian matrix
+            jacobian : :obj:`numpy.ndarray`
+                A 6 by 7 jacobian matrix.
         """
         transforms = self.get_links_transforms(joints, use_rigid_transforms=False)
 
@@ -1677,15 +1852,18 @@ class FrankaArm:
 
         Parameters
         ----------
-            joints (list): Optional: Defaults to None
-                            A list of 7 numbers that correspond to to the joint angles in radians
-                            If None, will use current real robot joints.
-            use_rigid_transforms (bool): Optional: Defaults to False.
-                                        If True, converts result to RigidTransform objects. This is slower.
+            joints : :obj:`list` 
+                Optional: Defaults to None
+                A list of 7 numbers that correspond to to the joint angles in radians
+                If None, will use current real robot joints.
+            use_rigid_transforms : :obj:`bool` 
+                Optional: Defaults to False.
+                If True, converts result to RigidTransform objects. This is slower.
 
         Returns
         -------
-            transforms (list): A list of RigidTransforms or ndarrays for all collision boxes in world frame.
+            transforms : :obj:`list` 
+                A list of RigidTransforms or ndarrays for all collision boxes in world frame.
             
         """
         if joints is None:
@@ -1715,9 +1893,10 @@ class FrankaArm:
 
         Parameters
         ----------
-            joints (list): Optional: Defaults to None
-                            A list of 7 numbers that correspond to to the joint angles in radians
-                            If None, will use current real robot joints.
+            joints : :obj:`list` 
+                Optional: Defaults to None
+                A list of 7 numbers that correspond to to the joint angles in radians
+                If None, will use current real robot joints.
         """
         if joints is None:
             joints = self.get_joints()
@@ -1738,9 +1917,10 @@ class FrankaArm:
 
         Parameters
         ----------
-            joints (list): Optional: Defaults to None
-                            A list of 7 numbers that correspond to to the joint angles in radians
-                            If None, will use current real robot joints.
+            joints : :obj:`list` 
+                Optional: Defaults to None
+                A list of 7 numbers that correspond to to the joint angles in radians.
+                If None, will use current real robot joints.
         """
         if joints is None:
             joints = self.get_joints()
@@ -1758,19 +1938,23 @@ class FrankaArm:
 
     def check_box_collision(self, box, joints=None):
         """ 
-        Checks if the given joint configurations is in collision with a box
+        Checks if the given joint configuration is in collision with a box
 
         Parameters
         ----------
-            joints (list): Optional: Defaults to None
-                            A list of 7 numbers that correspond to to the joint angles in radians
-                            If None, will use current real robot joints.
+            joints : :obj:`list` 
+                Optional: Defaults to None
+                A list of 7 numbers that correspond to to the joint angles in radians
+                If None, will use current real robot joints.
 
-            box (list): The position of the center of the box [x, y, z, r, p, y] and the length, width, and height [l, w, h]
+            box : :obj:`list` 
+                The position of the center of the box [x, y, z, r, p, y] and the 
+                length, width, and height [l, w, h].
 
         Returns
         -------
-            in_collision (bool)
+            in_collision : :obj:`bool`
+                Flag that indicates whether the robot would be in collision. 
         """
         box_pos, box_rpy, box_hsizes = box[:3], box[3:6], box[6:]/2
         box_q = quaternion.from_euler_angles(box_rpy)
@@ -1814,6 +1998,27 @@ class FrankaArm:
         return False
 
     def is_joints_in_collision_with_boxes(self, joints=None, boxes=None):
+        """ 
+        Checks if the given joint configuration is in collision with boxes
+        or the workspace walls.
+
+        Parameters
+        ----------
+            joints : :obj:`list` 
+                Optional: Defaults to None
+                A list of 7 numbers that correspond to the joint angles in radians
+                If None, will use current real robot joints.
+
+            boxes : :obj:`list` 
+                List of boxes where each box is a list of 9 floats that contains 
+                the position of the center of the box [x, y, z, r, p, y] and the 
+                length, width, and height [l, w, h].
+
+        Returns
+        -------
+            in_collision : :obj:`bool`
+                Flag that indicates whether the robot would be in collision. 
+        """
         if boxes is None:
             boxes = FC.WORKSPACE_WALLS
 
@@ -1826,23 +2031,57 @@ class FrankaArm:
     """
     Misc
     """
-    def reset_joints(self, duration=5, skill_desc='', block=True, ignore_errors=True):
+    def reset_joints(self, duration=5, block=True, ignore_errors=True, skill_desc=''):
         """
-        Commands Arm to goto hardcoded home joint configuration
+        Commands Arm to go to hardcoded home joint configuration
+
+        Parameters
+        ----------
+            duration : :obj:`float`
+                How much time this robot motion should take.
+            block : :obj:`bool`
+                Function blocks by default. If False, the function becomes
+                asynchronous and can be preempted.
+            ignore_errors : :obj:`bool`
+                Function ignores errors by default. If False, errors and some 
+                exceptions can be thrown.
+            skill_desc : :obj:`str` 
+                Skill description to use for logging on control-pc.
         """
         self.goto_joints(FC.HOME_JOINTS, duration=duration, skill_desc=skill_desc, block=block, ignore_errors=ignore_errors)
 
-    def reset_pose(self, duration=5, skill_desc='', block=True, ignore_errors=True):
+    def reset_pose(self, duration=5, block=True, ignore_errors=True, skill_desc=''):
         """
-        Commands Arm to goto hardcoded home pose
+        Commands Arm to go to hardcoded home pose
+
+        Parameters
+        ----------
+            duration : :obj:`float`
+                How much time this robot motion should take.
+            block : :obj:`bool`
+                Function blocks by default. If False, the function becomes
+                asynchronous and can be preempted.
+            ignore_errors : :obj:`bool`
+                Function ignores errors by default. If False, errors and some 
+                exceptions can be thrown.
+            skill_desc : :obj:`str` 
+                Skill description to use for logging on control-pc.
         """
         self.goto_pose(FC.HOME_POSE, duration=duration, skill_desc=skill_desc, block=block, ignore_errors=ignore_errors)
 
     def is_joints_reachable(self, joints):
         """
+        Checks if the given joint configuration is within joint limits.
+
+        Parameters
+        ----------
+            joints : :obj:`list` 
+                A list of 7 numbers that correspond to the joint angles in radians.
+
         Returns
         -------
-            True if all joints within joint limits
+            joints_reachable : :obj:`bool`
+                Flag that is True if all joints are within joint limits.
         """
         for i, val in enumerate(joints):
             if val <= FC.JOINT_LIMITS_MIN[i] or val >= FC.JOINT_LIMITS_MAX[i]:
@@ -1856,31 +2095,43 @@ class FrankaArm:
 
     def apply_joint_torques(self, torques, duration, ignore_errors=True, skill_desc='',):
         """
-        Commands Arm to apply given joint torques for duration seconds
+        NOT IMPLEMENTED YET
+
+        Commands the arm to apply given joint torques for duration seconds.
 
         Parameters
         ----------
-            torques (list): A list of 7 numbers that correspond to torques in Nm.
-            duration (float): A float in the unit of seconds
-            skill_desc (string) : Skill description to use for logging on
-                control-pc.
+            torques : :obj:`list` 
+                A list of 7 numbers that correspond to torques in Nm.
+            duration : :obj:`float`
+                How much time this robot motion should take.
+            skill_desc : :obj:`str` 
+                Skill description to use for logging on control-pc.
         """
         pass
 
     def set_speed(self, speed):
         """
-        Sets current target speed parameter
+        NOT IMPLEMENTED YET
+
+        Sets the current target speed parameter
 
         Parameters
         ----------
-            speed (float)
+            speed : :obj:`float`
+                Current target speed parameter
         """
         pass
 
     def get_speed(self, speed):
         """
+        NOT IMPLEMENTED YET
+
+        Returns the current target speed parameter
+
         Returns
         -------
-            float of current target speed parameter
+            speed : :obj:`float`
+                Current target speed parameter
         """
         pass

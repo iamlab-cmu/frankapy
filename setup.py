@@ -5,6 +5,8 @@ from setuptools import setup
 
 requirements = [
     'autolab_core',
+    'empy',
+    'numpy',
     'numpy-quaternion',
     'numba',
     'rospkg',

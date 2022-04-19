@@ -17,7 +17,25 @@ set -x
 ###################
  
 apt-get update
-apt-get -y install git rsync python3-sphinx python3-sphinx-rtd-theme
+apt-get -y install git rsync python3-sphinx python3-sphinx-rtd-theme python3-setuptools python3-pip
+apt-get -y install ros-noetic-libfranka ros-noetic-franka-ros
+
+sudo rosdep init
+rosdep update
+
+pip3 install --upgrade pip
+pip3 install .
+pip install numpy==1.20 --upgrade
+
+source /opt/ros/noetic/setup.bash
+
+git submodule update --init --recursive
+
+cd catkin_ws
+catkin build
+cd ..
+
+source catkin_ws/devel/setup.bash
  
 #####################
 # DECLARE VARIABLES #
