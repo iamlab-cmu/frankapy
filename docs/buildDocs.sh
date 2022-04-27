@@ -31,6 +31,7 @@ source /opt/ros/noetic/setup.bash
 
 git submodule update --init --recursive
 
+git config --global --add safe.directory /__w/frankapy/frankapy
 cd catkin_ws
 catkin build
 cd ..
