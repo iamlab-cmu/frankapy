@@ -34,9 +34,8 @@ git submodule update --init --recursive
 git config --global --add safe.directory /__w/frankapy/frankapy
 cd catkin_ws
 catkin build
+source devel/setup.bash
 cd ..
-
-source catkin_ws/devel/setup.bash
  
 #####################
 # DECLARE VARIABLES #
