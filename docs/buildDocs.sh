@@ -29,9 +29,9 @@ pip install numpy==1.20 --upgrade
 
 source /opt/ros/noetic/setup.bash
 
+git config --global --add safe.directory /__w/frankapy/frankapy
 git submodule update --init --recursive
 
-git config --global --add safe.directory /__w/frankapy/frankapy
 cd catkin_ws
 catkin build
 source devel/setup.bash
