@@ -1,12 +1,12 @@
 #!/bin/bash
 
-control_pc_uname=$1
-control_pc_ip_address=$2
-workstation_ip_address=$3
-control_pc_franka_interface_path=$4
-robot_number=$5
-control_pc_use_password=$6
-control_pc_password=$7
+control_pc_uname=${1}
+control_pc_ip_address=${2}
+workstation_ip_address=${3}
+control_pc_franka_interface_path=${4}
+robot_number=${5}
+control_pc_use_password=${6}
+control_pc_password=${7}
 
 rosmaster_path="bash_scripts/set_rosmaster.sh"
 catkin_ws_setup_path="catkin_ws/devel/setup.bash"
