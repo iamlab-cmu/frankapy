@@ -11,7 +11,7 @@ requirements = [
     'numba',
     'rospkg',
     'catkin-tools',
-    'protobuf'
+    'protobuf==3.12.4'
 ]
 
 setup(name='frankapy',
