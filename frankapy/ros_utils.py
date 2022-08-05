@@ -1,12 +1,14 @@
-import rospy
+import rclpy
+from rclpy.node import Node
 from visualization_msgs.msg import Marker, MarkerArray
+from franka_interface_msgs.msg import SensorDataGroup
 import quaternion
 
+class CollisionBoxesPublisher(Node):
 
-class BoxesPublisher:
-
-    def __init__(self, name, world_frame='panda_link0'):
-        self._boxes_pub = rospy.Publisher(name, MarkerArray, queue_size=10)
+    def __init__(self, topic_name, world_frame='panda_link0'):
+        super().__init__('collision_boxes_publisher')
+        self._boxes_pub = self.create_publisher(MarkerArray, topic_name, 10)
         self._world_frame = world_frame
 
     def publish_boxes(self, boxes):
@@ -14,11 +16,11 @@ class BoxesPublisher:
         for i, box in enumerate(boxes):
             marker = Marker()
             marker.type = Marker.CUBE
-            marker.header.stamp = rospy.Time.now()
+            marker.header.stamp = self.get_clock().now()
             marker.header.frame_id = self._world_frame
             marker.id = i
 
-            marker.lifetime = rospy.Duration()
+            marker.lifetime = rclpy.time.Duration()
 
             marker.pose.position.x = box[0]
             marker.pose.position.y = box[1]

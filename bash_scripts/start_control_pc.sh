@@ -90,18 +90,6 @@ fi
 
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 
-# Start rosmaster in a new gnome-terminal if not already running
-if ! pgrep -x "roscore" > /dev/null
-then
-    start_rosmaster_path="$DIR/start_rosmaster.sh"
-    echo "Will start ROS master in new terminal."$start_rosmaster_path
-    gnome-terminal --working-directory="$DIR" -- bash $start_rosmaster_path
-    sleep 3
-    echo "Did start ROS master in new terminal."
-else
-    echo "Roscore is already running"
-fi
-
 if [ "$with_gripper" -eq 0 ]; then
 let old_gripper=0
 fi

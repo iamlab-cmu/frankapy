@@ -9,14 +9,11 @@ from franka_interface_msgs.msg import SensorDataGroup
 
 from frankapy.utils import min_jerk, min_jerk_weight
 
-import rospy
-
-
 if __name__ == "__main__":
     fa = FrankaArm()
     fa.reset_joints()
 
-    rospy.loginfo('Generating Trajectory')
+    fa.log_info('Generating Trajectory')
     p0 = fa.get_pose()
     p1 = p0.copy()
     T_delta = RigidTransform(
@@ -37,18 +34,17 @@ if __name__ == "__main__":
 
     z_stiffness_traj = [min_jerk(100, 800, t, T) for t in ts]
 
-    rospy.loginfo('Initializing Sensor Publisher')
-    pub = rospy.Publisher(FC.DEFAULT_SENSOR_PUBLISHER_TOPIC, SensorDataGroup, queue_size=1000)
-    rate = rospy.Rate(1 / dt)
+    fa.log_info('Initializing Sensor Publisher')
+    rate = fa.get_rate(1 / dt)
 
-    rospy.loginfo('Publishing pose trajectory...')
+    fa.log_info('Publishing pose trajectory...')
     # To ensure skill doesn't end before completing trajectory, make the buffer time much longer than needed
     fa.goto_pose(pose_traj[1], duration=T, dynamic=True, buffer_time=10,
         cartesian_impedances=FC.DEFAULT_TRANSLATIONAL_STIFFNESSES[:2] + [z_stiffness_traj[1]] + FC.DEFAULT_ROTATIONAL_STIFFNESSES
     )
-    init_time = rospy.Time.now().to_time()
+    init_time = fa.get_time().to_time()
     for i in range(2, len(ts)):
-        timestamp = rospy.Time.now().to_time() - init_time
+        timestamp = fa.get_time().to_time() - init_time
         traj_gen_proto_msg = PosePositionSensorMessage(
             id=i, timestamp=timestamp, 
             position=pose_traj[i].translation, quaternion=pose_traj[i].quaternion
@@ -76,17 +72,17 @@ if __name__ == "__main__":
         fa.goto_gripper(current_gripper_width, block=False)
 
         
-        rospy.loginfo('Publishing: ID {}'.format(traj_gen_proto_msg.id))
-        pub.publish(ros_msg)
+        fa.log_info('Publishing: ID {}'.format(traj_gen_proto_msg.id))
+        fa.publish_sensor_data(ros_msg)
         rate.sleep()
 
     # Stop the skill
     # Alternatively can call fa.stop_skill()
-    term_proto_msg = ShouldTerminateSensorMessage(timestamp=rospy.Time.now().to_time() - init_time, should_terminate=True)
+    term_proto_msg = ShouldTerminateSensorMessage(timestamp=fa.get_time().to_time() - init_time, should_terminate=True)
     ros_msg = make_sensor_group_msg(
         termination_handler_sensor_msg=sensor_proto2ros_msg(
             term_proto_msg, SensorDataMessageType.SHOULD_TERMINATE)
         )
-    pub.publish(ros_msg)
+    fa.publish_sensor_data(ros_msg)
 
-    rospy.loginfo('Done')
+    fa.log_info('Done')

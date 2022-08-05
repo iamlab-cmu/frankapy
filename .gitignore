@@ -126,7 +126,6 @@ dmypy.json
 .pyre/
 
 # ROS
-catkin_ws/devel
-catkin_ws/build
-catkin_ws/logs
-catkin_ws/.catkin_tools
+ros2_ws/build
+ros2_ws/install
+ros2_ws/log

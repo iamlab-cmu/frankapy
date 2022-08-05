@@ -11,45 +11,42 @@ from autolab_core import RigidTransform
 import quaternion
 from itertools import product
 
-import roslib
-roslib.load_manifest('franka_interface_msgs')
-import rospy
-from actionlib import SimpleActionClient
+import rclpy
+from rclpy.action import ActionClient
+from rclpy.node import Node
+
 from sensor_msgs.msg import JointState
-from franka_interface_msgs.msg import ExecuteSkillAction
-from franka_interface_msgs.srv import GetCurrentFrankaInterfaceStatusCmd
-from franka_gripper.msg import *
+from franka_interface_msgs.msg import SensorDataGroup
+from franka_interface_msgs.action import ExecuteSkill
+from franka_msgs.action import Homing, Move, Grasp
 
 from .skill_list import *
 from .exceptions import *
-from .franka_arm_state_client import FrankaArmStateClient
+from .gripper_state_client import GripperStateClient
+from .franka_robot_state_client import FrankaRobotStateClient
+from .franka_interface_status_client import FrankaInterfaceStatusClient
 from .franka_constants import FrankaConstants as FC
 from .franka_interface_common_definitions import *
-from .ros_utils import BoxesPublisher
+from .ros_utils import CollisionBoxesPublisher
 
 
-class FrankaArm:
+class FrankaArm(Node):
 
     def __init__(
             self,
-            rosnode_name='franka_arm_client', 
-            ros_log_level=rospy.INFO,
+            node_name='franka_arm_client', 
             robot_num=1,
             with_gripper=True,
             old_gripper=False,
-            offline=False,
-            init_node=True):
+            offline=False):
 
         """
         Initialize a FrankaArm.
 
         Parameters
         ----------
-        rosnode_name : :obj:`str`
+        node_name : :obj:`str`
             A name for the FrankaArm ROS Node.
-
-        ros_log_level : :obj:`rospy.log_level` of int
-            Passed to rospy.init_node.
 
         robot_num : :obj:`int`
             Number assigned to the current robot.
@@ -66,8 +63,12 @@ class FrankaArm:
 
         """
 
+        super().__init__(node_name)
+
         self._execute_skill_action_server_name = \
                 '/execute_skill_action_server_node_{}/execute_skill'.format(robot_num)
+        self._gripper_state_server_name = \
+                '/get_current_gripper_state_server_node_{}/gripper_state'.format(robot_num)
         self._robot_state_server_name = \
                 '/get_current_robot_state_server_node_{}/get_current_robot_state_server'.format(robot_num)
         self._franka_interface_status_server_name = \
@@ -76,59 +77,53 @@ class FrankaArm:
                 '/franka_gripper_{}/homing'.format(robot_num)
         self._gripper_move_action_server_name = \
                 '/franka_gripper_{}/move'.format(robot_num)
-        self._gripper_stop_action_server_name = \
-                '/franka_gripper_{}/stop'.format(robot_num)
         self._gripper_grasp_action_server_name = \
                 '/franka_gripper_{}/grasp'.format(robot_num)
         self._gripper_joint_states_name = \
                 '/franka_gripper_{}/joint_states'.format(robot_num)
+        self._joint_state_publisher_name = \
+                '/franka_virtual_joints_{}'.format(robot_num)
+        self._sensor_data_publisher_name = \
+                '/sensor_data_{}/sensor_data'.format(robot_num)
 
         self._connected = False
         self._in_skill = False
+        self._in_gripper_skill = False
         self._offline = offline
         self._with_gripper = with_gripper
         self._old_gripper = old_gripper
-        self._last_gripper_command = None
 
-        # init ROS
-        if init_node:
-            rospy.init_node(rosnode_name,
-                            disable_signals=True,
-                            log_level=ros_log_level)
-        self._collision_boxes_pub = BoxesPublisher('franka_collision_boxes_{}'.format(robot_num))
-        self._joint_state_pub = rospy.Publisher('franka_virtual_joints_{}'.format(robot_num), JointState, queue_size=10)
+        self._collision_boxes_pub = CollisionBoxesPublisher('franka_collision_boxes_{}'.format(robot_num))
+        self._sensor_data_pub = self.create_publisher(SensorDataGroup, self._sensor_data_publisher_name, 10)
+        self._joint_state_pub = self.create_publisher(JointState, self._joint_state_publisher_name, 10)
         
-        self._state_client = FrankaArmStateClient(
-                new_ros_node=False,
+        self._robot_state_client = FrankaRobotStateClient(
                 robot_state_server_name=self._robot_state_server_name,
+                offline=self._offline)
+
+        self._franka_interface_status_client = FrankaInterfaceStatusClient(
+                franka_interface_status_server_name=self._franka_interface_status_server_name,
                 offline=self._offline)
 
         if not self._offline:
             # set signal handler to handle ctrl+c and kill sigs
             signal.signal(signal.SIGINT, self._sigint_handler_gen())
-            
-            rospy.wait_for_service(self._franka_interface_status_server_name)
-            self._get_current_franka_interface_status = rospy.ServiceProxy(
-                    self._franka_interface_status_server_name, GetCurrentFrankaInterfaceStatusCmd)
 
-            self._client = SimpleActionClient(
-                    self._execute_skill_action_server_name, ExecuteSkillAction)
-            self._client.wait_for_server()
+            self._execute_skill_action_client = ActionClient(self, ExecuteSkill, self._execute_skill_action_server_name)
+            self._execute_skill_action_client.wait_for_server()
+
             self.wait_for_franka_interface()
 
             if self._with_gripper and not self._old_gripper:
-                self._gripper_homing_client = SimpleActionClient(
-                    self._gripper_homing_action_server_name, HomingAction)
+                self._gripper_homing_client = ActionClient(self, Homing, self._gripper_homing_action_server_name)
                 self._gripper_homing_client.wait_for_server()
-                self._gripper_move_client = SimpleActionClient(
-                    self._gripper_move_action_server_name, MoveAction)
+                self._gripper_move_client = ActionClient(self, Move, self._gripper_move_action_server_name)
                 self._gripper_move_client.wait_for_server()
-                self._gripper_grasp_client = SimpleActionClient(
-                    self._gripper_grasp_action_server_name, GraspAction)
+                self._gripper_grasp_client = ActionClient(self, Grasp, self._gripper_grasp_action_server_name)
                 self._gripper_grasp_client.wait_for_server()
-                self._gripper_stop_client = SimpleActionClient(
-                    self._gripper_stop_action_server_name, StopAction)
-                self._gripper_stop_client.wait_for_server()
+
+                self._gripper_state_client = GripperStateClient(gripper_state_server_name=self._gripper_state_server_name,
+                                                                offline=self._offline)
 
             # done init ROS
             self._connected = True
@@ -167,11 +162,11 @@ class FrankaArm:
         timeout = FC.DEFAULT_FRANKA_INTERFACE_TIMEOUT if timeout is None else timeout
         t_start = time()
         while time() - t_start < timeout:
-            franka_interface_status = self._get_current_franka_interface_status().franka_interface_status
+            franka_interface_status = self._franka_interface_status_client.get_current_franka_interface_status()
             if franka_interface_status.is_ready:
                 return
             sleep(1e-2)
-        raise FrankaArmCommException('FrankaInterface status not ready for {}s'.format(
+        raise FrankaArmCommException('Franka Interface Status is not ready for {}s'.format(
             FC.DEFAULT_FRANKA_INTERFACE_TIMEOUT))
 
     def wait_for_skill(self):
@@ -179,21 +174,14 @@ class FrankaArm:
         Blocks execution until skill is done.
         """
         while not self.is_skill_done():
-            continue
+            sleep(1e-2)
 
     def wait_for_gripper(self):
         """
         Blocks execution until gripper is done.
         """
-        if self._last_gripper_command == "Grasp":
-            done = self._gripper_grasp_client.wait_for_result()
-        elif self._last_gripper_command == "Homing":
-            done = self._gripper_homing_client.wait_for_result()
-        elif self._last_gripper_command == "Stop":
-            done = self._gripper_stop_client.wait_for_result()
-        elif self._last_gripper_command == "Move":
-            done = self._gripper_move_client.wait_for_result()
-        sleep(2)
+        while not self.is_gripper_skill_done():
+            sleep(1e-2)
 
 
     def is_skill_done(self, ignore_errors=True): 
@@ -213,11 +201,11 @@ class FrankaArm:
         if not self._in_skill:  
             return True 
 
-        franka_interface_status = self._get_current_franka_interface_status().franka_interface_status  
+        franka_interface_status = self._franka_interface_status_client.get_current_franka_interface_status()  
 
         e = None  
-        if rospy.is_shutdown(): 
-            e = RuntimeError('rospy is down!')  
+        if not rclpy.ok(): 
+            e = RuntimeError('ROS is down!')  
         elif franka_interface_status.error_description:  
             e = FrankaArmException(franka_interface_status.error_description)  
         elif not franka_interface_status.is_ready: 
@@ -229,26 +217,66 @@ class FrankaArm:
             else: 
                 raise e 
 
-        done = self._client.wait_for_result(rospy.Duration.from_sec(  
-            FC.ACTION_WAIT_LOOP_TIME))
+        return False
 
-        if done:  
-            self._in_skill = False  
+    def is_gripper_skill_done(self): 
+        """
+        Checks whether gripper skill is done.
 
-        return done
+        Returns
+        -------
+        :obj:`bool`
+            Flag of whether the gripper skill is done.
+        """ 
+        return not self._in_gripper_skill
+
+    def is_skill_done(self, ignore_errors=True): 
+        """
+        Checks whether skill is done.
+
+        Parameters
+        ----------
+        ignore_errors : :obj:`bool`
+            Flag of whether to ignore errors.
+
+        Returns
+        -------
+        :obj:`bool`
+            Flag of whether the skill is done.
+        """ 
+        if not self._in_skill:  
+            return True 
+
+        franka_interface_status = self._franka_interface_status_client.get_current_franka_interface_status()  
+
+        e = None  
+        if not rclpy.ok(): 
+            e = RuntimeError('ROS is down!')  
+        elif franka_interface_status.error_description:  
+            e = FrankaArmException(franka_interface_status.error_description)  
+        elif not franka_interface_status.is_ready: 
+            e = FrankaArmFrankaInterfaceNotReadyException() 
+
+        if e is not None: 
+            if ignore_errors: 
+                self.wait_for_franka_interface() 
+            else: 
+                raise e 
+
+        return False
 
     def stop_skill(self): 
         """
         Stops the current skill.
         """
         if self._connected and self._in_skill:
-            self._client.cancel_goal()
+            self.goal_handle.cancel_goal()
         self.wait_for_skill()
 
     def _sigint_handler_gen(self):
         def sigint_handler(sig, frame):
             if self._connected and self._in_skill:
-                self._client.cancel_goal()
+                self.goal_handle.cancel_goal()
             sys.exit(0)
 
         return sigint_handler
@@ -290,14 +318,61 @@ class FrankaArm:
         if not self.is_skill_done():  
             raise ValueError('Cannot send another command when the previous skill is active!')
 
-        self._in_skill = True
-        self._client.send_goal(goal, feedback_cb=cb)
+        self._send_goal_future = self._execute_skill_action_client.send_goal_async(goal, feedback_callback=self.feedback_callback)
+
+        self._send_goal_future.add_done_callback(self.goal_response_callback)
 
         if not block:  
             return None
 
         self.wait_for_skill()
-        return self._client.get_result()
+        return None
+
+    def goal_response_callback(self, future):
+        self.goal_handle = future.result()
+        if not self.goal_handle.accepted:
+            self.get_logger().info('Goal rejected')
+            return
+
+        self._in_skill = True
+        self.get_logger().info('Goal accepted')
+
+        self._get_result_future = self.goal_handle.get_result_async()
+        self._get_result_future.add_done_callback(self.get_result_callback)
+
+    def get_result_callback(self, future):
+        result = future.result().result
+        self.get_logger().info('Result')
+
+        self._in_skill = False
+        return True
+
+    def feedback_callback(self, feedback_msg):
+        feedback = feedback_msg.feedback
+        self.get_logger().info('Received feedback')
+
+    def gripper_goal_response_callback(self, future):
+        self.gripper_goal_handle = future.result()
+        if not self.gripper_goal_handle.accepted:
+            self.get_logger().info('Goal rejected')
+            return
+
+        self.get_logger().info('Goal accepted')
+        self._in_gripper_skill = True
+        self._get_gripper_result_future = self.gripper_goal_handle.get_result_async()
+        self._get_gripper_result_future.add_done_callback(self.get_gripper_result_callback)
+
+    def get_gripper_result_callback(self, future):
+        result = future.result().result
+        self.get_logger().info('Result')
+
+        self._in_gripper_skill = False
+        return True
+
+    def gripper_feedback_callback(self, feedback_msg):
+        feedback = feedback_msg.feedback
+        self.get_logger().info('Received feedback')
+
 
     """
     Controls
@@ -401,8 +476,6 @@ class FrankaArm:
             tool_base_pose.translation >= FC.WORKSPACE_WALLS[:, :3].max(axis=0)]):
             raise ValueError('Target pose is outside of workspace virtual walls!')
 
-        skill.add_initial_sensor_values(FC.EMPTY_SENSOR_VALUES)
-
         skill.set_cartesian_impedances(use_impedance, cartesian_impedances, joint_impedances)
 
         if not skill.check_for_contact_params(buffer_time, force_thresholds, torque_thresholds):
@@ -493,8 +566,6 @@ class FrankaArm:
                           feedback_controller_type=FeedbackControllerType.SetInternalImpedanceFeedbackController,
                           termination_handler_type=TerminationHandlerType.FinalPoseTerminationHandler, 
                           skill_desc=skill_desc)
-
-        skill.add_initial_sensor_values(FC.EMPTY_SENSOR_VALUES)
 
         skill.set_cartesian_impedances(use_impedance, cartesian_impedances, joint_impedances)
 
@@ -654,8 +725,6 @@ class FrankaArm:
         if not ignore_virtual_walls and self.is_joints_in_collision_with_boxes(joints):
             raise ValueError('Target joints in collision with virtual walls!')
 
-        skill.add_initial_sensor_values(FC.EMPTY_SENSOR_VALUES)
-
         skill.set_joint_impedances(use_impedance, cartesian_impedances, joint_impedances, k_gains, d_gains)
 
         if not skill.check_for_contact_params(buffer_time, force_thresholds, torque_thresholds):
@@ -756,8 +825,6 @@ class FrankaArm:
 
         if initial_sensor_values is None:
             initial_sensor_values = np.ones(joint_dmp_info['num_sensors']).tolist()
-
-        skill.add_initial_sensor_values(initial_sensor_values)  # sensor values
         
         skill.add_joint_dmp_params(duration, joint_dmp_info, initial_sensor_values)
         
@@ -878,8 +945,6 @@ class FrankaArm:
             else:
                 initial_sensor_values = np.ones(6*pose_dmp_info['num_sensors']).tolist()
 
-        skill.add_initial_sensor_values(initial_sensor_values)  # sensor values
-
         skill.add_pose_dmp_params(orientation_only, position_only, ee_frame, duration, pose_dmp_info, initial_sensor_values)
 
         skill.set_cartesian_impedances(use_impedance, cartesian_impedances, joint_impedances)
@@ -982,8 +1047,6 @@ class FrankaArm:
         if initial_sensor_values is None:
             initial_sensor_values = np.ones(3*position_dmp_info['num_sensors']).tolist()
 
-        skill.add_initial_sensor_values(initial_sensor_values)  # sensor values
-
         skill.add_quaternion_pose_dmp_params(ee_frame, duration, position_dmp_info, quat_dmp_info, initial_sensor_values, goal_quat, goal_quat_time)
         skill.set_cartesian_impedances(use_impedance, cartesian_impedances, joint_impedances)
 
@@ -1073,8 +1136,6 @@ class FrankaArm:
                       feedback_controller_type=FeedbackControllerType.PassThroughFeedbackController,
                       termination_handler_type=TerminationHandlerType.TimeTerminationHandler, 
                       skill_desc=skill_desc)
-
-        skill.add_initial_sensor_values(FC.EMPTY_SENSOR_VALUES)
         
         skill.add_impulse_params(run_duration, acc_duration, max_translation, max_rotation, forces, torques)
 
@@ -1152,8 +1213,6 @@ class FrankaArm:
                       feedback_controller_type=FeedbackControllerType.ForceAxisImpedenceFeedbackController,
                       termination_handler_type=TerminationHandlerType.TimeTerminationHandler, 
                       skill_desc=skill_desc)
-
-        skill.add_initial_sensor_values(FC.EMPTY_SENSOR_VALUES)
         
         skill.add_impulse_params(run_duration, acc_duration, max_translation, 0, forces.tolist(), [0, 0, 0])
 
@@ -1226,8 +1285,6 @@ class FrankaArm:
                           TrajectoryGeneratorType.GripperTrajectoryGenerator, 
                           skill_desc=skill_desc)
 
-            skill.add_initial_sensor_values(FC.EMPTY_SENSOR_VALUES)
-
             skill.add_gripper_params(grasp, width, speed, force)
 
             goal = skill.create_goal()
@@ -1241,18 +1298,29 @@ class FrankaArm:
             sleep(FC.GRIPPER_CMD_SLEEP_TIME)
         else:
             if grasp:
-                grasp_skill = GraspGoal()
+                grasp_skill = Grasp.Goal()
                 grasp_skill.width = width
                 grasp_skill.speed = speed
                 grasp_skill.force = force
                 grasp_skill.epsilon.inner = epsilon_inner
                 grasp_skill.epsilon.outer = epsilon_outer
                 self._gripper_grasp_client.send_goal(grasp_skill)
+                self._send_gripper_goal_future = self._gripper_grasp_client.send_goal_async(grasp_skill, feedback_callback=self.gripper_feedback_callback)
+
+                self._send_gripper_goal_future.add_done_callback(self.gripper_goal_response_callback)
+            
             else:
-                move_skill = MoveGoal()
+                move_skill = Move.Goal()
                 move_skill.width = width
                 move_skill.speed = speed
                 self._gripper_move_client.send_goal(move_skill)
+
+                self._send_gripper_goal_future = self._gripper_move_client.send_goal_async(move_skill, feedback_callback=self.gripper_feedback_callback)
+
+                self._send_gripper_goal_future.add_done_callback(self.gripper_goal_response_callback)
+
+            time.sleep(0.1)
+
             if block:
                 self.wait_for_gripper()
 
@@ -1360,8 +1428,6 @@ class FrankaArm:
                               feedback_controller_type=FeedbackControllerType.SetInternalImpedanceFeedbackController,
                               termination_handler_type=TerminationHandlerType.TimeTerminationHandler, 
                               skill_desc=skill_desc)
-
-        skill.add_initial_sensor_values(FC.EMPTY_SENSOR_VALUES)
         
         skill.add_run_time(duration)
 
@@ -1424,9 +1490,11 @@ class FrankaArm:
             skill_desc : :obj:`str` 
                 Skill description to use for logging on control-pc.
         """
-        self._last_gripper_command = 'Homing'
-        homing_skill = HomingGoal()
-        self._gripper_homing_client.send_goal(homing_skill)
+        homing_skill = Homing.Goal()
+        self._send_gripper_goal_future = self._gripper_homing_client.send_goal_async(homing_skill, feedback_callback=self.gripper_feedback_callback)
+
+        self._send_gripper_goal_future.add_done_callback(self.gripper_goal_response_callback)
+        time.sleep(0.1)
         if block:
             self.wait_for_gripper()
 
@@ -1442,9 +1510,9 @@ class FrankaArm:
             skill_desc : :obj:`str` 
                 Skill description to use for logging on control-pc.
         """
-        self._last_gripper_command = 'Stop'
-        stop_skill = StopGoal()
-        self._gripper_stop_client.send_goal(stop_skill)
+
+        self.gripper_goal_handle.cancel_goal()
+
         if block:
             self.wait_for_gripper()
 
@@ -1536,7 +1604,6 @@ class FrankaArm:
                         termination_handler_type=TerminationHandlerType.TimeTerminationHandler, 
                         skill_desc=skill_desc)
 
-        skill.add_initial_sensor_values(FC.EMPTY_SENSOR_VALUES)
         skill.add_force_position_params(position_kps_cart, force_kps_cart, position_kps_joint, force_kps_joint, S, use_cartesian_gains)
         skill.add_run_time(duration)
 
@@ -1564,7 +1631,7 @@ class FrankaArm:
                 Dict that contains all of the robot's current
                 state information.
         """
-        return self._state_client.get_data()
+        return self._robot_state_client.get_data()
 
     def get_pose(self, include_tool_offset=True):
         """
@@ -1574,7 +1641,7 @@ class FrankaArm:
                 Current pose of the end-effector including the transform
                 to the end of the tool.
         """
-        tool_base_pose = self._state_client.get_pose()
+        tool_base_pose = self._robot_state_client.get_pose()
 
         if include_tool_offset:
             tool_pose = tool_base_pose * self._tool_delta_pose
@@ -1591,7 +1658,7 @@ class FrankaArm:
             joint_positions : :obj:`numpy.ndarray`
                 7 floats that represent each joint's position in radians.
         """
-        return self._state_client.get_joints()
+        return self._robot_state_client.get_joints()
 
     def get_joint_torques(self):
         """
@@ -1602,7 +1669,7 @@ class FrankaArm:
             joint_torques : :obj:`numpy.ndarray`
                 7 floats that represent each joint's torque in Nm.
         """
-        return self._state_client.get_joint_torques()
+        return self._robot_state_client.get_joint_torques()
 
     def get_joint_velocities(self):
         """
@@ -1613,7 +1680,7 @@ class FrankaArm:
             joint_velocities : :obj:`numpy.ndarray`
                 7 floats that represent each joint's velocity in rads/s.
         """
-        return self._state_client.get_joint_velocities()
+        return self._robot_state_client.get_joint_velocities()
 
     def get_gripper_width(self):
         """
@@ -1625,9 +1692,9 @@ class FrankaArm:
                 Robot gripper width in meters.
         """
         if self._old_gripper:
-            return self._state_client.get_gripper_width()
+            return self._robot_state_client.get_gripper_width()
         else:
-            gripper_data = rospy.wait_for_message(self._gripper_joint_states_name, JointState)
+            gripper_data = self._gripper_state_client.get_current_gripper_state()
             return gripper_data.position[0] + gripper_data.position[1]
 
     def get_gripper_is_grasped(self):
@@ -1644,7 +1711,7 @@ class FrankaArm:
             is_grasped : :obj:`bool`
                 Returns True if gripper is grasping something. False otherwise.
         """
-        return self._state_client.get_gripper_is_grasped()
+        return self._robot_state_client.get_gripper_is_grasped()
 
     def get_tool_base_pose(self):
         """
@@ -1668,7 +1735,7 @@ class FrankaArm:
                 A numpy ndarray of 6 floats that represents the current
                 end-effector's sensed force_torque.
         """
-        return self._state_client.get_ee_force_torque()
+        return self._robot_state_client.get_ee_force_torque()
 
     def get_finger_poses(self):
         """
@@ -1903,7 +1970,7 @@ class FrankaArm:
                         
         joint_state = JointState()
         joint_state.name = FC.JOINT_NAMES
-        joint_state.header.stamp = rospy.Time.now()
+        joint_state.header.stamp = self.get_clock().now()
 
         if len(joints) == 7:
             joints = np.concatenate([joints, [0, 0]])
@@ -2088,6 +2155,56 @@ class FrankaArm:
                 return False
 
         return True
+
+    def publish_sensor_data(self, sensor_data_msg):
+        """
+        Publishes a sensor data msg.
+
+        Parameters
+        ----------
+            sensor_data_msg : :obj:`SensorDataGroup msg` 
+                Desired sensor data group msg to publish.
+        """
+
+        self._sensor_data_pub.publish(marker_array)
+
+    def log_info(self, msg):
+        """
+        Logs a string to ROS INFO.
+
+        Parameters
+        ----------
+            msg : :obj:`string` 
+                Desired msg string to write to ROS INFO.
+        """
+
+        self.get_logger().info(msg)
+
+    def get_time(self):
+        """
+        Returns the current ROS Time
+
+        Returns
+        -------
+            time : :obj:`Time`
+                Current ROS Time.
+        """
+
+        return self.get_clock().now()
+
+    def get_rate(self, loop_rate):
+        """
+        Get a ROS Rate object for use in sleeping.
+
+        Returns
+        -------
+            rate : :obj:`Rate`
+                Get a ROS Rate object for sleeping in a loop.
+        """
+
+        self._loop_rate = self.create_rate(loop_rate, self.get_clock())
+
+        return self._loop_rate
 
     """
     Unimplemented

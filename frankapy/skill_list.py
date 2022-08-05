@@ -1,7 +1,3 @@
-import roslib
-roslib.load_manifest('franka_interface_msgs')
-import rospy
-import actionlib
 import numpy as np
 from autolab_core import RigidTransform
 
@@ -10,7 +6,7 @@ from .franka_interface_common_definitions import *
 from .proto import *
 from .utils import transform_to_list
 
-from franka_interface_msgs.msg import ExecuteSkillAction, ExecuteSkillGoal
+from franka_interface_msgs.action import ExecuteSkill
 
 class Skill:
     def __init__(self, 
@@ -33,9 +29,6 @@ class Skill:
         self._termination_handler_type = termination_handler_type
         self._timer_type = timer_type
 
-        self._sensor_value_sizes = 0
-        self._initial_sensor_values = []
-
         # Add trajectory params
         self._trajectory_generator_param_data = []
         self._trajectory_generator_param_data_size = 0
@@ -57,10 +50,6 @@ class Skill:
 
     def set_meta_skill_id(self, meta_skill_id):
         self._meta_skill_id = meta_skill_id
-
-    def add_initial_sensor_values(self, values):
-        self._initial_sensor_values = values
-        self._sensor_value_sizes = [len(values)]
 
     def add_trajectory_params(self, params):
         self._trajectory_generator_param_data = params
@@ -523,7 +512,7 @@ class Skill:
 
     # Add checks for these
     def create_goal(self):
-        goal = ExecuteSkillGoal()
+        goal = ExecuteSkill.Goal()
         goal.skill_type = self._skill_type
         goal.skill_description = self._skill_desc
         goal.meta_skill_type = self._meta_skill_type

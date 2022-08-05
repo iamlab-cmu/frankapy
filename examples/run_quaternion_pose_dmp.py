@@ -1,9 +1,5 @@
-import numpy as np
-import math
-import rospy
 import argparse
 import pickle
-from autolab_core import RigidTransform, Point
 from frankapy import FrankaArm
 
 def execute_quaternion_pose_dmp(fa, position_dmp_weights_path, quat_dmp_weights_path, 

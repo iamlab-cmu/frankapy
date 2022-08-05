@@ -1,9 +1,5 @@
-import numpy as np
-import math
-import rospy
 import argparse
 import pickle
-from autolab_core import RigidTransform, Point
 from frankapy import FrankaArm
 
 if __name__ == '__main__':

@@ -1,22 +1,24 @@
 import logging
 
 import numpy as np
-import rospy
-from franka_interface_msgs.srv import GetCurrentRobotStateCmd
+
+import rclpy
+from rclpy.node import Node
+from franka_interface_msgs.srv import GetCurrentRobotState
 
 from .utils import franka_pose_to_rigid_transform
 
+class FrankaRobotStateClient(Node):
 
-class FrankaArmStateClient:
-
-    def __init__(self, new_ros_node=True, robot_state_server_name='/get_current_robot_state_server_node_1/get_current_robot_state_server', offline=False):
-        if new_ros_node:
-            rospy.init_node('FrankaArmStateClient', anonymous=True)
-
+    def __init__(self, robot_state_server_name='/get_current_robot_state_server_node_1/get_current_robot_state_server', offline=False):
+        super().__init__('franka_arm_state_client')
+        
         self._offline = offline
         if not self._offline:
-            rospy.wait_for_service(robot_state_server_name)
-            self._get_current_robot_state = rospy.ServiceProxy(robot_state_server_name, GetCurrentRobotStateCmd)
+            self._robot_state_client = self.create_client(GetCurrentRobotState, robot_state_server_name)
+            while not self._robot_state_client.wait_for_service(timeout_sec=1.0):
+                self.get_logger().info('Get Current Robot State Service is not available, waiting again...')
+            self.req = GetCurrentRobotState.Request()
 
     def get_data(self):
         '''Get all fields of current robot data in a dict.
@@ -25,7 +27,7 @@ class FrankaArmStateClient:
             dict of robot state
         '''
         if self._offline:
-            logging.warn('In offline mode - FrankaArmStateClient will return 0 values.')
+            logging.warn('In offline mode - FrankaRobotStateClient will return 0 values.')
             return {
                 'pose': franka_pose_to_rigid_transform(np.eye(4)),
                 'pose_desired': franka_pose_to_rigid_transform(np.eye(4)),
@@ -39,19 +41,21 @@ class FrankaArmStateClient:
                 'ee_force_torque': np.zeros(6)
             }
 
-        ros_data = self._get_current_robot_state().robot_state
+        self.future = self._robot_state_client.call_async(self.req)
+        rclpy.spin_until_future_complete(self, self.future)
+        ros_data = self.future.result().robot_state
 
         data = {
-            'pose': franka_pose_to_rigid_transform(ros_data.O_T_EE),
-            'pose_desired': franka_pose_to_rigid_transform(ros_data.O_T_EE_d),
-            'joint_torques': np.array(ros_data.tau_J),
-            'joint_torques_derivative': np.array(ros_data.dtau_J),
+            'pose': franka_pose_to_rigid_transform(ros_data.o_t_ee),
+            'pose_desired': franka_pose_to_rigid_transform(ros_data.o_t_ee_d),
+            'joint_torques': np.array(ros_data.tau_j),
+            'joint_torques_derivative': np.array(ros_data.dtau_j),
             'joints': np.array(ros_data.q),
             'joints_desired': np.array(ros_data.q_d),
             'joint_velocities': np.array(ros_data.dq),
             'gripper_width': ros_data.gripper_width,
             'gripper_is_grasped': ros_data.gripper_is_grasped,
-            'ee_force_torque': np.array(ros_data.O_F_ext_hat_K)
+            'ee_force_torque': np.array(ros_data.o_f_ext_hat_k)
         }
 
         return data

@@ -1,5 +1,7 @@
 from .franka_arm import FrankaArm
 from .franka_constants import FrankaConstants
-from .franka_arm_state_client import FrankaArmStateClient
+from .gripper_state_client import GripperStateClient
+from .franka_robot_state_client import FrankaRobotStateClient
+from .franka_interface_status_client import FrankaInterfaceStatusClient
 from .exceptions import FrankaArmCommException
 from .franka_interface_common_definitions import SkillType, MetaSkillType, TrajectoryGeneratorType, FeedbackControllerType, TerminationHandlerType, SkillStatus, SensorDataMessageType

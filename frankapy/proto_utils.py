@@ -1,6 +1,5 @@
 from franka_interface_msgs.msg import SensorData, SensorDataGroup
 
-
 def sensor_proto2ros_msg(sensor_proto_msg, sensor_data_type, info=''):
     sensor_ros_msg = SensorData()
     sensor_ros_msg.type = sensor_data_type
@@ -11,7 +10,6 @@ def sensor_proto2ros_msg(sensor_proto_msg, sensor_data_type, info=''):
     sensor_ros_msg.sensorData = sensor_data_bytes
 
     return sensor_ros_msg
-
 
 def make_sensor_group_msg(trajectory_generator_sensor_msg=None, feedback_controller_sensor_msg=None, termination_handler_sensor_msg=None):
     sensor_group_msg = SensorDataGroup()

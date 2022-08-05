@@ -11,8 +11,6 @@ class FrankaConstants:
 
     LOGGING_LEVEL = logging.INFO
 
-    EMPTY_SENSOR_VALUES = [0]
-
     # translational stiffness, rotational stiffness
     DEFAULT_FORCE_AXIS_TRANSLATIONAL_STIFFNESS = 600
     DEFAULT_FORCE_AXIS_ROTATIONAL_STIFFNESS = 20
@@ -177,7 +175,6 @@ class FrankaConstants:
         [0.2, 0, -0.05, 0, 0, 0, 1.2, 1, 0.01]
     ])
 
-    DEFAULT_SENSOR_PUBLISHER_TOPIC = 'franka_ros_interface/sensor'
     DYNAMIC_SKILL_WAIT_TIME = 0.3
 
     DEFAULT_HFPC_FORCE_GAIN = [0.1] * 6
