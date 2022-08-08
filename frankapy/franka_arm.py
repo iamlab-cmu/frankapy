@@ -67,21 +67,21 @@ class FrankaArm(Node):
         super().__init__(node_name)
 
         self._execute_skill_action_server_name = \
-                '/execute_skill'.format(robot_num)
+                'execute_skill_action_server_node_{}/execute_skill'.format(robot_num)
         self._gripper_state_server_name = \
-                '/get_current_gripper_state_server'.format(robot_num)
+                '/get_current_gripper_state_server_node_{}/gripper_state'.format(robot_num)
         self._robot_state_server_name = \
-                '/get_current_robot_state_server'
+                '/get_current_robot_state_server_node_{}/robot_state'.format(robot_num)
         self._franka_interface_status_server_name = \
-                '/get_current_franka_interface_status_server'
+                '/get_current_franka_interface_status_server_node_{}/franka_interface_status'.format(robot_num)
         self._gripper_homing_action_server_name = \
-                '/panda_gripper_{}/homing'.format(robot_num)
+                '/franka_gripper_{}/homing'.format(robot_num)
         self._gripper_move_action_server_name = \
-                '/panda_gripper_{}/move'.format(robot_num)
+                '/franka_gripper_{}/move'.format(robot_num)
         self._gripper_grasp_action_server_name = \
-                '/panda_gripper_{}/grasp'.format(robot_num)
+                '/franka_gripper_{}/grasp'.format(robot_num)
         self._gripper_joint_states_name = \
-                '/panda_gripper_{}/joint_states'.format(robot_num)
+                '/franka_gripper_{}/joint_states'.format(robot_num)
         self._joint_state_publisher_name = \
                 '/franka_virtual_joints_{}'.format(robot_num)
         self._sensor_data_publisher_name = \
@@ -167,7 +167,7 @@ class FrankaArm(Node):
             franka_interface_status = self._franka_interface_status_client.get_current_franka_interface_status()
             if franka_interface_status.is_ready:
                 return
-            sleep(1e-2)
+            sleep(0.01)
         raise FrankaArmCommException('Franka Interface Status is not ready for {}s'.format(
             FC.DEFAULT_FRANKA_INTERFACE_TIMEOUT))
 
@@ -176,14 +176,14 @@ class FrankaArm(Node):
         Blocks execution until skill is done.
         """
         while not self.is_skill_done():
-            sleep(1e-2)
+            sleep(0.01)
 
     def wait_for_gripper(self):
         """
         Blocks execution until gripper is done.
         """
         while not self.is_gripper_skill_done():
-            sleep(1e-2)
+            sleep(0.01)
 
 
     def is_skill_done(self, ignore_errors=True): 
@@ -1321,8 +1321,6 @@ class FrankaArm(Node):
 
                 self._send_gripper_goal_future.add_done_callback(self.gripper_goal_response_callback)
 
-            time.sleep(0.1)
-
             if block:
                 self.wait_for_gripper()
 
@@ -1496,7 +1494,7 @@ class FrankaArm(Node):
         self._send_gripper_goal_future = self._gripper_homing_client.send_goal_async(homing_skill, feedback_callback=self.gripper_feedback_callback)
 
         self._send_gripper_goal_future.add_done_callback(self.gripper_goal_response_callback)
-        time.sleep(0.1)
+        
         if block:
             self.wait_for_gripper()
 
