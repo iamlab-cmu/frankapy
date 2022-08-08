@@ -113,22 +113,16 @@ class FrankaArm(Node):
             self._execute_skill_action_client = ActionClient(self, ExecuteSkill, self._execute_skill_action_server_name)
             self._execute_skill_action_client.wait_for_server()
 
-            print('here0')
-
-            #self.wait_for_franka_interface()
+            self.wait_for_franka_interface()
 
             if self._with_gripper and not self._old_gripper:
-                print(self._gripper_homing_action_server_name)
+
                 self._gripper_homing_client = ActionClient(self, Homing, self._gripper_homing_action_server_name)
                 self._gripper_homing_client.wait_for_server()
-                print('here1')
                 self._gripper_move_client = ActionClient(self, Move, self._gripper_move_action_server_name)
                 self._gripper_move_client.wait_for_server()
-                print('here2')
                 self._gripper_grasp_client = ActionClient(self, Grasp, self._gripper_grasp_action_server_name)
                 self._gripper_grasp_client.wait_for_server()
-
-                print('here3')
 
                 self._gripper_state_client = GripperStateClient(gripper_state_server_name=self._gripper_state_server_name,
                                                                 offline=self._offline)

@@ -8,8 +8,6 @@ class FrankaInterfaceStatusClient(Node):
 
     def __init__(self, franka_interface_status_server_name='/get_current_franka_interface_status_server', offline=False):
         super().__init__('franka_interface_status_client')
-        
-        print(franka_interface_status_server_name)
 
         self._offline = offline
         if not self._offline:

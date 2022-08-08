@@ -8,8 +8,6 @@ class GripperStateClient(Node):
 
     def __init__(self, gripper_state_server_name='/get_current_gripper_state_server_node_1/get_current_gripper_state_server', offline=False):
         super().__init__('gripper_state_client')
-        
-        print(gripper_state_server_name)
 
         self._offline = offline
         if not self._offline:
