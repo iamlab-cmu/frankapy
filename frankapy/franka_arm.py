@@ -63,24 +63,25 @@ class FrankaArm(Node):
 
         """
 
+        rclpy.init()
         super().__init__(node_name)
 
         self._execute_skill_action_server_name = \
-                '/execute_skill_action_server_node_{}/execute_skill'.format(robot_num)
+                '/execute_skill'.format(robot_num)
         self._gripper_state_server_name = \
-                '/get_current_gripper_state_server_node_{}/gripper_state'.format(robot_num)
+                '/get_current_gripper_state_server'.format(robot_num)
         self._robot_state_server_name = \
-                '/get_current_robot_state_server_node_{}/get_current_robot_state_server'.format(robot_num)
+                '/get_current_robot_state_server'
         self._franka_interface_status_server_name = \
-                '/get_current_franka_interface_status_server_node_{}/get_current_franka_interface_status_server'.format(robot_num)
+                '/get_current_franka_interface_status_server'
         self._gripper_homing_action_server_name = \
-                '/franka_gripper_{}/homing'.format(robot_num)
+                '/panda_gripper_{}/homing'.format(robot_num)
         self._gripper_move_action_server_name = \
-                '/franka_gripper_{}/move'.format(robot_num)
+                '/panda_gripper_{}/move'.format(robot_num)
         self._gripper_grasp_action_server_name = \
-                '/franka_gripper_{}/grasp'.format(robot_num)
+                '/panda_gripper_{}/grasp'.format(robot_num)
         self._gripper_joint_states_name = \
-                '/franka_gripper_{}/joint_states'.format(robot_num)
+                '/panda_gripper_{}/joint_states'.format(robot_num)
         self._joint_state_publisher_name = \
                 '/franka_virtual_joints_{}'.format(robot_num)
         self._sensor_data_publisher_name = \
@@ -112,15 +113,22 @@ class FrankaArm(Node):
             self._execute_skill_action_client = ActionClient(self, ExecuteSkill, self._execute_skill_action_server_name)
             self._execute_skill_action_client.wait_for_server()
 
-            self.wait_for_franka_interface()
+            print('here0')
+
+            #self.wait_for_franka_interface()
 
             if self._with_gripper and not self._old_gripper:
+                print(self._gripper_homing_action_server_name)
                 self._gripper_homing_client = ActionClient(self, Homing, self._gripper_homing_action_server_name)
                 self._gripper_homing_client.wait_for_server()
+                print('here1')
                 self._gripper_move_client = ActionClient(self, Move, self._gripper_move_action_server_name)
                 self._gripper_move_client.wait_for_server()
+                print('here2')
                 self._gripper_grasp_client = ActionClient(self, Grasp, self._gripper_grasp_action_server_name)
                 self._gripper_grasp_client.wait_for_server()
+
+                print('here3')
 
                 self._gripper_state_client = GripperStateClient(gripper_state_server_name=self._gripper_state_server_name,
                                                                 offline=self._offline)

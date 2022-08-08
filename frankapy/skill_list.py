@@ -517,9 +517,6 @@ class Skill:
         goal.skill_description = self._skill_desc
         goal.meta_skill_type = self._meta_skill_type
         goal.meta_skill_id = self._meta_skill_id
-        goal.sensor_topics = self._sensor_topics
-        goal.initial_sensor_values = self._initial_sensor_values
-        goal.sensor_value_sizes = self._sensor_value_sizes
         goal.trajectory_generator_type = self._trajectory_generator_type
         goal.trajectory_generator_param_data = self._trajectory_generator_param_data
         goal.trajectory_generator_param_data_size = self._trajectory_generator_param_data_size

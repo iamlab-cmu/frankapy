@@ -9,13 +9,13 @@ requirements = [
     'numpy',
     'numpy-quaternion',
     'numba',
-    'rospkg',
-    'catkin-tools',
+    'catkin-pkg',
+    'lark',
     'protobuf==3.12.4'
 ]
 
 setup(name='frankapy',
-      version='1.0.0',
+      version='2.0.0',
       description='FrankaPy Franka Panda Robot Control Library',
       author='Kevin Zhang, Mohit Sharma, Jacky Liang, Oliver Kroemer',
       author_email='',
