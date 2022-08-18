@@ -1,4 +1,5 @@
 import numpy as np
+import time
 
 from frankapy import FrankaArm, SensorDataMessageType
 from frankapy import FrankaConstants as FC
@@ -51,7 +52,6 @@ if __name__ == "__main__":
     position_kps_joint = FC.DEFAULT_K_GAINS
     force_kps_joint = [0.1] * 7
 
-    rate = fa.get_rate(1 / dt)
     n_times = 1
 
     fa.log_info('Publishing HFPC trajectory w/ cartesian gains...')
@@ -59,10 +59,10 @@ if __name__ == "__main__":
                                 use_cartesian_gains=True,
                                 position_kps_cart=position_kps_cart,
                                 force_kps_cart=force_kps_cart)
-    init_time = fa.get_time().to_time()
+    init_time = fa.get_time()
     for i in trange(N * n_times):
         t = i % N
-        timestamp = fa.get_time().to_time() - init_time
+        timestamp = fa.get_time() - init_time
         traj_gen_proto_msg = ForcePositionSensorMessage(
             id=i, timestamp=timestamp, seg_run_time=dt,
             pose=transform_to_list(target_poses[t]),
@@ -81,7 +81,7 @@ if __name__ == "__main__":
                 fb_ctrlr_proto, SensorDataMessageType.FORCE_POSITION_GAINS)
             )
         fa.publish_sensor_data(ros_msg)
-        rate.sleep()
+        time.sleep(dt)
     fa.stop_skill()
 
     fa.log_info('Publishing HFPC trajectory w/ joint gains...')
@@ -89,10 +89,10 @@ if __name__ == "__main__":
                                 use_cartesian_gains=False,
                                 position_kps_joint=position_kps_joint,
                                 force_kps_joint=force_kps_joint)
-    init_time = fa.get_time().to_time()
+    init_time = fa.get_time()
     for i in trange(N * n_times):
         t = i % N
-        timestamp = fa.get_time().to_time() - init_time
+        timestamp = fa.get_time() - init_time
         traj_gen_proto_msg = ForcePositionSensorMessage(
             id=i, timestamp=timestamp, seg_run_time=dt,
             pose=transform_to_list(target_poses[t]),
@@ -111,7 +111,7 @@ if __name__ == "__main__":
                 fb_ctrlr_proto, SensorDataMessageType.FORCE_POSITION_GAINS)
             )
         fa.publish_sensor_data(ros_msg)
-        rate.sleep()
+        time.sleep(dt)
     fa.stop_skill()
 
     fa.reset_joints()

@@ -1,4 +1,5 @@
 import numpy as np
+import time
 
 from autolab_core import RigidTransform
 from frankapy import FrankaArm, SensorDataMessageType
@@ -35,16 +36,16 @@ if __name__ == "__main__":
     z_stiffness_traj = [min_jerk(100, 800, t, T) for t in ts]
 
     fa.log_info('Initializing Sensor Publisher')
-    rate = fa.get_rate(1 / dt)
 
     fa.log_info('Publishing pose trajectory...')
     # To ensure skill doesn't end before completing trajectory, make the buffer time much longer than needed
     fa.goto_pose(pose_traj[1], duration=T, dynamic=True, buffer_time=10,
         cartesian_impedances=FC.DEFAULT_TRANSLATIONAL_STIFFNESSES[:2] + [z_stiffness_traj[1]] + FC.DEFAULT_ROTATIONAL_STIFFNESSES
     )
-    init_time = fa.get_time().to_time()
+    init_time = fa.get_time()
+
     for i in range(2, len(ts)):
-        timestamp = fa.get_time().to_time() - init_time
+        timestamp = fa.get_time() - init_time
         traj_gen_proto_msg = PosePositionSensorMessage(
             id=i, timestamp=timestamp, 
             position=pose_traj[i].translation, quaternion=pose_traj[i].quaternion
@@ -69,16 +70,15 @@ if __name__ == "__main__":
         if current_gripper_width < 0.002:
             has_closed = True
 
-        fa.goto_gripper(current_gripper_width, block=False)
-
+        #fa.goto_gripper(current_gripper_width, block=False)
         
         fa.log_info('Publishing: ID {}'.format(traj_gen_proto_msg.id))
         fa.publish_sensor_data(ros_msg)
-        rate.sleep()
+        time.sleep(dt)
 
     # Stop the skill
     # Alternatively can call fa.stop_skill()
-    term_proto_msg = ShouldTerminateSensorMessage(timestamp=fa.get_time().to_time() - init_time, should_terminate=True)
+    term_proto_msg = ShouldTerminateSensorMessage(timestamp=fa.get_time() - init_time, should_terminate=True)
     ros_msg = make_sensor_group_msg(
         termination_handler_sensor_msg=sensor_proto2ros_msg(
             term_proto_msg, SensorDataMessageType.SHOULD_TERMINATE)

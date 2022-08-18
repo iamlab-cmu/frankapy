@@ -79,6 +79,7 @@ class SkillStatus:
     RUNNING = _enum_auto('SkillStatus')
     FINISHED = _enum_auto('SkillStatus')
     VIRT_COLL_ERR = _enum_auto('SkillStatus')
+    FRANKA_ERR = _enum_auto('SkillStatus')
 
 
 class SensorDataMessageType:

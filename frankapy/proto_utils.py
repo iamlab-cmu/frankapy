@@ -7,7 +7,7 @@ def sensor_proto2ros_msg(sensor_proto_msg, sensor_data_type, info=''):
 
     sensor_data_bytes = sensor_proto_msg.SerializeToString()
     sensor_ros_msg.size = len(sensor_data_bytes)
-    sensor_ros_msg.sensorData = sensor_data_bytes
+    sensor_ros_msg.sensor_data = sensor_data_bytes
 
     return sensor_ros_msg
 
@@ -16,12 +16,12 @@ def make_sensor_group_msg(trajectory_generator_sensor_msg=None, feedback_control
 
     if trajectory_generator_sensor_msg is not None:
         sensor_group_msg.has_trajectory_generator_sensor_data = True
-        sensor_group_msg.trajectoryGeneratorSensorData = trajectory_generator_sensor_msg
+        sensor_group_msg.trajectory_generator_sensor_data = trajectory_generator_sensor_msg
     if feedback_controller_sensor_msg is not None:
         sensor_group_msg.has_feedback_controller_sensor_data = True
-        sensor_group_msg.feedbackControllerSensorData = feedback_controller_sensor_msg
+        sensor_group_msg.feedback_controller_sensor_data = feedback_controller_sensor_msg
     if termination_handler_sensor_msg is not None:
         sensor_group_msg.has_termination_handler_sensor_data = True
-        sensor_group_msg.terminationHandlerSensorData = termination_handler_sensor_msg
+        sensor_group_msg.termination_handler_sensor_data = termination_handler_sensor_msg
 
     return sensor_group_msg

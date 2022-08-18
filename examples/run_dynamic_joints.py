@@ -1,4 +1,5 @@
 import numpy as np
+import time
 
 from frankapy import FrankaArm, SensorDataMessageType
 from frankapy.proto_utils import sensor_proto2ros_msg, make_sensor_group_msg
@@ -24,15 +25,14 @@ if __name__ == "__main__":
     joints_traj = [min_jerk(joints_1, joints_0, t, T) for t in ts]
 
     fa.log_info('Initializing Sensor Publisher')
-    rate = fa.get_rate(1 / dt)
 
     fa.log_info('Publishing joints trajectory...')
     # To ensure skill doesn't end before completing trajectory, make the buffer time much longer than needed
     fa.goto_joints(joints_traj[1], duration=T, dynamic=True, buffer_time=10)
-    init_time = fa.get_time().to_time()
+    init_time = fa.get_time()
     for i in range(2, len(ts)):
         traj_gen_proto_msg = JointPositionSensorMessage(
-            id=i, timestamp=fa.get_time().to_time() - init_time, 
+            id=i, timestamp=fa.get_time() - init_time, 
             joints=joints_traj[i]
         )
         ros_msg = make_sensor_group_msg(
@@ -42,11 +42,11 @@ if __name__ == "__main__":
         
         fa.log_info('Publishing: ID {}'.format(traj_gen_proto_msg.id))
         fa.publish_sensor_data(ros_msg)
-        rate.sleep()
+        time.sleep(dt)
 
     # Stop the skill
     # Alternatively can call fa.stop_skill()
-    term_proto_msg = ShouldTerminateSensorMessage(timestamp=fa.get_time().to_time() - init_time, should_terminate=True)
+    term_proto_msg = ShouldTerminateSensorMessage(timestamp=fa.get_time() - init_time, should_terminate=True)
     ros_msg = make_sensor_group_msg(
         termination_handler_sensor_msg=sensor_proto2ros_msg(
             term_proto_msg, SensorDataMessageType.SHOULD_TERMINATE)

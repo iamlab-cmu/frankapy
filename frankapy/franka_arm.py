@@ -66,6 +66,9 @@ class FrankaArm(Node):
         rclpy.init()
         super().__init__(node_name)
 
+        # 30 means WARN while 20 means INFO
+        self.get_logger().set_level(20)
+
         self._execute_skill_action_server_name = \
                 'execute_skill_action_server_node_{}/execute_skill'.format(robot_num)
         self._gripper_state_server_name = \
@@ -167,7 +170,7 @@ class FrankaArm(Node):
             franka_interface_status = self._franka_interface_status_client.get_current_franka_interface_status()
             if franka_interface_status.is_ready:
                 return
-            sleep(0.01)
+            rclpy.spin_once(self)
         raise FrankaArmCommException('Franka Interface Status is not ready for {}s'.format(
             FC.DEFAULT_FRANKA_INTERFACE_TIMEOUT))
 
@@ -176,14 +179,14 @@ class FrankaArm(Node):
         Blocks execution until skill is done.
         """
         while not self.is_skill_done():
-            sleep(0.01)
+            rclpy.spin_once(self)
 
     def wait_for_gripper(self):
         """
         Blocks execution until gripper is done.
         """
         while not self.is_gripper_skill_done():
-            sleep(0.01)
+            rclpy.spin_once(self)
 
 
     def is_skill_done(self, ignore_errors=True): 
@@ -232,41 +235,6 @@ class FrankaArm(Node):
         """ 
         return not self._in_gripper_skill
 
-    def is_skill_done(self, ignore_errors=True): 
-        """
-        Checks whether skill is done.
-
-        Parameters
-        ----------
-        ignore_errors : :obj:`bool`
-            Flag of whether to ignore errors.
-
-        Returns
-        -------
-        :obj:`bool`
-            Flag of whether the skill is done.
-        """ 
-        if not self._in_skill:  
-            return True 
-
-        franka_interface_status = self._franka_interface_status_client.get_current_franka_interface_status()  
-
-        e = None  
-        if not rclpy.ok(): 
-            e = RuntimeError('ROS is down!')  
-        elif franka_interface_status.error_description:  
-            e = FrankaArmException(franka_interface_status.error_description)  
-        elif not franka_interface_status.is_ready: 
-            e = FrankaArmFrankaInterfaceNotReadyException() 
-
-        if e is not None: 
-            if ignore_errors: 
-                self.wait_for_franka_interface() 
-            else: 
-                raise e 
-
-        return False
-
     def stop_skill(self): 
         """
         Stops the current skill.
@@ -278,7 +246,9 @@ class FrankaArm(Node):
     def _sigint_handler_gen(self):
         def sigint_handler(sig, frame):
             if self._connected and self._in_skill:
-                self.goal_handle.cancel_goal()
+                self.goal_handle.cancel_goal_async()
+            if self._in_gripper_skill:
+                self.gripper_goal_handle.cancel_goal_async()
             sys.exit(0)
 
         return sigint_handler
@@ -320,9 +290,10 @@ class FrankaArm(Node):
         if not self.is_skill_done():  
             raise ValueError('Cannot send another command when the previous skill is active!')
 
+        self._in_skill = True
         self._send_goal_future = self._execute_skill_action_client.send_goal_async(goal, feedback_callback=self.feedback_callback)
-
         self._send_goal_future.add_done_callback(self.goal_response_callback)
+        rclpy.spin_until_future_complete(self, self._send_goal_future)
 
         if not block:  
             return None
@@ -333,47 +304,46 @@ class FrankaArm(Node):
     def goal_response_callback(self, future):
         self.goal_handle = future.result()
         if not self.goal_handle.accepted:
+            self._in_skill = False
             self.get_logger().info('Goal rejected')
             return
 
-        self._in_skill = True
-        self.get_logger().info('Goal accepted')
-
+        self.get_logger().info('Robot Goal Accepted')
         self._get_result_future = self.goal_handle.get_result_async()
         self._get_result_future.add_done_callback(self.get_result_callback)
 
     def get_result_callback(self, future):
         result = future.result().result
-        self.get_logger().info('Result')
+        self.get_logger().info('Robot Goal Completed')
 
         self._in_skill = False
         return True
 
     def feedback_callback(self, feedback_msg):
         feedback = feedback_msg.feedback
-        self.get_logger().info('Received feedback')
+        self.get_logger().info('Received Feedback')
 
     def gripper_goal_response_callback(self, future):
         self.gripper_goal_handle = future.result()
         if not self.gripper_goal_handle.accepted:
-            self.get_logger().info('Goal rejected')
+            self.get_logger().info('Gripper Goal Rejected')
+            self._in_gripper_skill = False
             return
 
-        self.get_logger().info('Goal accepted')
-        self._in_gripper_skill = True
+        self.get_logger().info('Gripper Goal Accepted')
         self._get_gripper_result_future = self.gripper_goal_handle.get_result_async()
         self._get_gripper_result_future.add_done_callback(self.get_gripper_result_callback)
 
     def get_gripper_result_callback(self, future):
         result = future.result().result
-        self.get_logger().info('Result')
+        self.get_logger().info('Gripper Goal Completed')
 
         self._in_gripper_skill = False
         return True
 
     def gripper_feedback_callback(self, feedback_msg):
         feedback = feedback_msg.feedback
-        self.get_logger().info('Received feedback')
+        self.get_logger().info('Received Gripper Feedback')
 
 
     """
@@ -1306,20 +1276,21 @@ class FrankaArm(Node):
                 grasp_skill.force = force
                 grasp_skill.epsilon.inner = epsilon_inner
                 grasp_skill.epsilon.outer = epsilon_outer
-                self._gripper_grasp_client.send_goal(grasp_skill)
-                self._send_gripper_goal_future = self._gripper_grasp_client.send_goal_async(grasp_skill, feedback_callback=self.gripper_feedback_callback)
 
+                self._in_gripper_skill = True
+                self._send_gripper_goal_future = self._gripper_grasp_client.send_goal_async(grasp_skill, feedback_callback=self.gripper_feedback_callback)
                 self._send_gripper_goal_future.add_done_callback(self.gripper_goal_response_callback)
+                rclpy.spin_until_future_complete(self, self._send_gripper_goal_future)
             
             else:
                 move_skill = Move.Goal()
                 move_skill.width = width
                 move_skill.speed = speed
-                self._gripper_move_client.send_goal(move_skill)
 
+                self._in_gripper_skill = True
                 self._send_gripper_goal_future = self._gripper_move_client.send_goal_async(move_skill, feedback_callback=self.gripper_feedback_callback)
-
                 self._send_gripper_goal_future.add_done_callback(self.gripper_goal_response_callback)
+                rclpy.spin_until_future_complete(self, self._send_gripper_goal_future)
 
             if block:
                 self.wait_for_gripper()
@@ -1491,9 +1462,11 @@ class FrankaArm(Node):
                 Skill description to use for logging on control-pc.
         """
         homing_skill = Homing.Goal()
-        self._send_gripper_goal_future = self._gripper_homing_client.send_goal_async(homing_skill, feedback_callback=self.gripper_feedback_callback)
 
+        self._in_gripper_skill = True
+        self._send_gripper_goal_future = self._gripper_homing_client.send_goal_async(homing_skill, feedback_callback=self.gripper_feedback_callback)
         self._send_gripper_goal_future.add_done_callback(self.gripper_goal_response_callback)
+        rclpy.spin_until_future_complete(self, self._send_gripper_goal_future)
         
         if block:
             self.wait_for_gripper()
@@ -2166,7 +2139,7 @@ class FrankaArm(Node):
                 Desired sensor data group msg to publish.
         """
 
-        self._sensor_data_pub.publish(marker_array)
+        self._sensor_data_pub.publish(sensor_data_msg)
 
     def log_info(self, msg):
         """
@@ -2182,29 +2155,16 @@ class FrankaArm(Node):
 
     def get_time(self):
         """
-        Returns the current ROS Time
+        Returns the current ROS Time in seconds
 
         Returns
         -------
-            time : :obj:`Time`
-                Current ROS Time.
+            time : :obj:`float`
+                Current ROS Time in seconds.
         """
 
-        return self.get_clock().now()
+        return self.get_clock().now().nanoseconds / 1e9
 
-    def get_rate(self, loop_rate):
-        """
-        Get a ROS Rate object for use in sleeping.
-
-        Returns
-        -------
-            rate : :obj:`Rate`
-                Get a ROS Rate object for sleeping in a loop.
-        """
-
-        self._loop_rate = self.create_rate(loop_rate, self.get_clock())
-
-        return self._loop_rate
 
     """
     Unimplemented
