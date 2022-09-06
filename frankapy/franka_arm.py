@@ -38,7 +38,8 @@ class FrankaArm(Node):
             robot_num=1,
             with_gripper=True,
             old_gripper=False,
-            offline=False):
+            offline=False,
+            init_rclpy=True):
 
         """
         Initialize a FrankaArm.
@@ -63,7 +64,8 @@ class FrankaArm(Node):
 
         """
 
-        rclpy.init()
+        if init_rclpy:
+            rclpy.init()
         super().__init__(node_name)
 
         # 30 means WARN while 20 means INFO
@@ -1598,6 +1600,8 @@ class FrankaArm(Node):
 
     def get_robot_state(self):
         """
+        Returns the current robot state.
+
         Returns
         -------
             robot_state : :obj:`dict`
@@ -1608,6 +1612,8 @@ class FrankaArm(Node):
 
     def get_pose(self, include_tool_offset=True):
         """
+        Returns the current robot end-effector pose including the transform to the end of the tool.
+
         Returns
         -------
             pose : :obj:`autolab_core.RigidTransform`
