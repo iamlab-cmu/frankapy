@@ -529,11 +529,11 @@ class FrankaArm:
             actual_translation = starting_rotation * predicted_translation
             delta_tool_base_pose.translation = actual_translation.translation
 
-            if not ignore_virtual_walls and not self._offline:
-                if np.any([
-                    final_tool_base_pose.translation <= FC.WORKSPACE_WALLS[:, :3].min(axis=0),
-                    final_tool_base_pose.translation >= FC.WORKSPACE_WALLS[:, :3].max(axis=0)]):
-                    raise ValueError('Target pose is outside of workspace virtual walls!')
+            # if not ignore_virtual_walls and not self._offline:
+            #     if np.any([
+            #         final_tool_base_pose.translation <= FC.WORKSPACE_WALLS[:, :3].min(axis=0),
+            #         final_tool_base_pose.translation >= FC.WORKSPACE_WALLS[:, :3].max(axis=0)]):
+            #         raise ValueError('Target pose is outside of workspace virtual walls!')
 
             skill.add_goal_pose(duration, delta_tool_base_pose)
 
@@ -651,8 +651,8 @@ class FrankaArm:
 
         if not self.is_joints_reachable(joints):
             raise ValueError('Joints not reachable!')
-        if not ignore_virtual_walls and self.is_joints_in_collision_with_boxes(joints):
-            raise ValueError('Target joints in collision with virtual walls!')
+        # if not ignore_virtual_walls and self.is_joints_in_collision_with_boxes(joints):
+            # raise ValueError('Target joints in collision with virtual walls!')
 
         skill.add_initial_sensor_values(FC.EMPTY_SENSOR_VALUES)
 
