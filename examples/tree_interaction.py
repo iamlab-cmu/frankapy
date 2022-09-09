@@ -89,14 +89,10 @@ class tree_interaction:
 
     def append_X(self,node_perturbation_count):
 
-        X_list = []
         for i in range(node_perturbation_count):
-            X_list.append(self.get_rigid_body_pose())
-        return X_list
-
+            self.vertex_init_pos_list.append(self.get_rigid_body_pose())
 
     def create_perturbation_list(self, branch, node_perturbation_count, force_min, force_max, safe_force_max):
-        applied_perturbation_list = []
 
         if branch in self.branch_list:
             print(f"this is branch. lower force range")
@@ -108,9 +104,7 @@ class tree_interaction:
             theta = random.uniform(0, 2*3.14159)
             force_vector = [
                 force_magnitude*np.cos(theta), force_magnitude*np.sin(theta), 0]
-            applied_perturbation_list.append(force_vector)
-
-        return applied_perturbation_list
+            self.force_applied_list.append(force_vector)
 
     def random_force_interaction(self, applied_force_list,grasp_traj):
         force_duration = 3
@@ -137,15 +131,11 @@ class tree_interaction:
             print(f" ------------- iteration: {iteration} -------------")
             for i in range (self.num_nodes):
 
-                #get random F force
+                #get random F force, #append F
                 perturb_list = self.create_perturbation_list(i, node_perturbation_count, self.force_min, self.force_max, self.safe_force_max)
-                print(f"perturb_list {len(perturb_list)} and data {perturb_list}")
 
                 #append X
-                X_list_resized = self.append_X(node_perturbation_count)
-                self.vertex_init_pos_list.append(X_list_resized)
-                #append F
-                self.force_applied_list.append(perturb_list)
+                self.append_X(node_perturbation_count)
 
                 print(f"size of X: {len(self.vertex_init_pos_list)}, and F: {len(self.force_applied_list)}")
 
