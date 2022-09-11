@@ -21,7 +21,9 @@ class tree_interaction:
 
         self.force_min = 10
         self.force_max = 30
-        self.safe_force_max = 18
+        self.safe_force_max = 15
+        self.workspace_force_max = 13
+        self.max_trans_meter = 0.2
 
 
         sub1 = rospy.Subscriber("/vrpn_client_node/rb0/pose", PoseStamped, self.get_pose_rb0)
@@ -38,9 +40,10 @@ class tree_interaction:
 
         #init franka
         self.fa = FrankaArm()  
-            
+ 
         # reset franka to its home joints
         self.fa.reset_joints()
+        
 
         # gripper controls
         # print('Open gripper')
@@ -54,35 +57,46 @@ class tree_interaction:
         self.vertex_final_pos_list = []
         self.force_applied_list = []
 
+    def convert_to_list_GeometryPose(self,geometrypose):
+        x = geometrypose.position.x
+        y = geometrypose.position.y
+        z = geometrypose.position.z
+        qx = geometrypose.orientation.x
+        qy = geometrypose.orientation.y
+        qz = geometrypose.orientation.z
+        qw = geometrypose.orientation.w
+        return [x,y,z,qx,qy,qz,qw]
+
+
     def get_pose_rb0(self,pose_in):
-        self.rb0 = pose_in.pose
+        self.rb0 = self.convert_to_list_GeometryPose(pose_in.pose)
 
     def get_pose_rb1(self,pose_in):
-        self.rb1 = pose_in.pose
+        self.rb1 = self.convert_to_list_GeometryPose(pose_in.pose)
     
     def get_pose_rb2(self,pose_in):
-        self.rb2 = pose_in.pose
+        self.rb2 = self.convert_to_list_GeometryPose(pose_in.pose)
 
     def get_pose_rb3(self,pose_in):
-        self.rb3 = pose_in.pose
+        self.rb3 = self.convert_to_list_GeometryPose(pose_in.pose)
 
     def get_pose_rb4(self,pose_in):
-        self.rb4 = pose_in.pose
+        self.rb4 = self.convert_to_list_GeometryPose(pose_in.pose)
 
     def get_pose_rb5(self,pose_in):
-        self.rb5 = pose_in.pose
+        self.rb5 = self.convert_to_list_GeometryPose(pose_in.pose)
 
     def get_pose_rb6(self,pose_in):
-        self.rb6 = pose_in.pose
+        self.rb6 = self.convert_to_list_GeometryPose(pose_in.pose)
 
     def get_pose_rb7(self,pose_in):
-        self.rb7 = pose_in.pose
+        self.rb7 = self.convert_to_list_GeometryPose(pose_in.pose)
 
     def get_pose_rb8(self,pose_in):
-        self.rb8 = pose_in.pose
+        self.rb8 = self.convert_to_list_GeometryPose(pose_in.pose)
 
     def get_pose_rb9(self,pose_in):
-        self.rb9 = pose_in.pose
+        self.rb9 = self.convert_to_list_GeometryPose(pose_in.pose)
 
     def get_rigid_body_pose(self):
         return [self.rb0, self.rb1, self.rb2, self.rb3, self.rb4, self.rb5, self.rb6, self.rb7, self.rb8, self.rb9]
@@ -90,25 +104,42 @@ class tree_interaction:
     def append_X(self,node_perturbation_count):
 
         for i in range(node_perturbation_count):
-            self.vertex_init_pos_list.append(self.get_rigid_body_pose())
+            X = self.get_rigid_body_pose()
+            self.vertex_init_pos_list.append(X)
 
     def create_perturbation_list(self, branch, node_perturbation_count, force_min, force_max, safe_force_max):
 
+        perturbation_list = [] 
         if branch in self.branch_list:
             print(f"this is branch. lower force range")
             force_max = safe_force_max
+
+            #last branch can exceed workspace
+            # if branch == 7:
+            #     force_max = self.workspace_force_max
 
 
         for i in range(node_perturbation_count):
             force_magnitude = random.uniform(force_min, force_max)
             theta = random.uniform(0, 2*3.14159)
+
             force_vector = [
                 force_magnitude*np.cos(theta), force_magnitude*np.sin(theta), 0]
-            self.force_applied_list.append(force_vector)
+
+            #create into one hot vector
+            F_vector_array = np.zeros((3,self.num_nodes+1))
+            F_vector_array[0,branch+1] = force_vector[0]
+            F_vector_array[1,branch+1] = force_vector[1]
+            F_vector_array[2,branch+1] = force_vector[2]
+
+            self.force_applied_list.append(F_vector_array)
+            perturbation_list.append(force_vector)
+
+        return  perturbation_list
 
     def random_force_interaction(self, applied_force_list,grasp_traj):
         force_duration = 3
-        max_trans_meter = 0.2
+        max_trans_meter = self.max_trans_meter
 
         #push interactions
         for i in range(len(applied_force_list)):
@@ -118,8 +149,10 @@ class tree_interaction:
             self.fa.apply_effector_forces_along_axis(
                 force_duration, 1.0, max_trans_meter, applied_force, 0)
             #save Y data HERE
+            # print(f" ********* capturing deform now ******** ")
             Y = self.get_rigid_body_pose()
             self.vertex_final_pos_list.append(Y)
+
             print(f"returning to original node")
             self.fa.goto_joints(grasp_traj)
 
@@ -133,38 +166,40 @@ class tree_interaction:
 
                 #get random F force, #append F
                 perturb_list = self.create_perturbation_list(i, node_perturbation_count, self.force_min, self.force_max, self.safe_force_max)
+                # print(f"perturb_list is {perturb_list}")
+                
 
-                #append X
-                self.append_X(node_perturbation_count)
-
-                print(f"size of X: {len(self.vertex_init_pos_list)}, and F: {len(self.force_applied_list)}")
+                # print(f"size of X: {len(self.vertex_init_pos_list)}, and F: {len(self.force_applied_list)}")
 
                 #1. approach grasp point
                 joint_traj = self.pre_grasp_list[i]
-                print(f"approach pregrasp joints")
+                # print(f"approach pregrasp joints")
                 self.fa.goto_joints(joint_traj)
                 #2. grasp point
                 grasp_traj = self.grasp_list[i]
-                print(f" grasp joints ")
+                # print(f" grasp joints ")
                 self.fa.goto_joints(grasp_traj)
                 #3. grasp branch
                 self.fa.close_gripper()
+                #append X
+                self.append_X(node_perturbation_count)
+
                 #4. push/pull branch 
                 self.random_force_interaction(perturb_list, grasp_traj)
                 #5. let go branch
                 self.fa.open_gripper()
                 #6. back out to approach point
-                print(f"go back to pregrasp joints ")
+                # print(f"go back to pregrasp joints ")
                 self.fa.goto_joints(joint_traj)
                 #7. move back for clearance
-                print('moving back')
+                # print('moving back')
                 move_back = RigidTransform(translation=np.array([0,0,-0.05]), from_frame='franka_tool', to_frame='franka_tool')
                 self.fa.goto_pose_delta(delta_tool_pose=move_back, duration=3)
                 #8. go to safe pos to start again
                 self.fa.goto_joints(self.recovery_joint)
 
-                print(f"size of X: {len(self.vertex_init_pos_list)}, and F: {len(self.force_applied_list)}")
-                print(f"size of Y: {len(self.vertex_final_pos_list)}")
+                # print(f"size of X: {len(self.vertex_init_pos_list)}, and F: {len(self.force_applied_list)}")
+                # print(f"size of Y: {len(self.vertex_final_pos_list)}")
 
             #temporarily save data
             np.save('temp_X', self.vertex_init_pos_list)

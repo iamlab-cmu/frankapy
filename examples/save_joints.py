@@ -21,7 +21,7 @@ if __name__ == "__main__":
 
     for i in range (num_nodes):
         print(f'---------- guide mode start (pre-grasp) for {i+1}th node---------- ')
-        guide_duration =  10
+        guide_duration =  15
         fa.run_guide_mode(guide_duration) #hitting joint limit will end early
 
         joints = fa.get_joints()

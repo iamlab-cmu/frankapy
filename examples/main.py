@@ -7,7 +7,7 @@ import tree_interaction
 
 if __name__ == "__main__":
     
-    desired_num_pushes = 1
+    desired_num_pushes = 2
 
     # ========= param unique for each new tree ===============
     #load npy files
@@ -23,10 +23,10 @@ if __name__ == "__main__":
     branch_list = list(branch_array)
 
     data_collect_motion = tree_interaction.tree_interaction(desired_num_pushes, num_nodes, pre_grasp_joints, grasp_joints, recovery_joint, branch_list)
-    node_perturbation_count = 4
+    node_perturbation_count =  40
     # ============================ 
 
-    
+
     X,Y,F = data_collect_motion.collect_data(node_perturbation_count)
     print(f"====== done with data collection ======== ")
     np.save('final_X',X)
