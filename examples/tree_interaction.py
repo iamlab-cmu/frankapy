@@ -171,11 +171,13 @@ class tree_interaction:
 
                 # print(f"size of X: {len(self.vertex_init_pos_list)}, and F: {len(self.force_applied_list)}")
 
-                #1. approach grasp point
+                #1. approach grasp point with closed gripper
+                self.fa.goto_gripper(0.02)
                 joint_traj = self.pre_grasp_list[i]
                 # print(f"approach pregrasp joints")
                 self.fa.goto_joints(joint_traj)
                 #2. grasp point
+                self.fa.open_gripper()
                 grasp_traj = self.grasp_list[i]
                 # print(f" grasp joints ")
                 self.fa.goto_joints(grasp_traj)
@@ -193,7 +195,7 @@ class tree_interaction:
                 self.fa.goto_joints(joint_traj)
                 #7. move back for clearance
                 # print('moving back')
-                move_back = RigidTransform(translation=np.array([0,0,-0.05]), from_frame='franka_tool', to_frame='franka_tool')
+                move_back = RigidTransform(translation=np.array([0,0,-0.07]), from_frame='franka_tool', to_frame='franka_tool')
                 self.fa.goto_pose_delta(delta_tool_pose=move_back, duration=3)
                 #8. go to safe pos to start again
                 self.fa.goto_joints(self.recovery_joint)
@@ -201,10 +203,12 @@ class tree_interaction:
                 # print(f"size of X: {len(self.vertex_init_pos_list)}, and F: {len(self.force_applied_list)}")
                 # print(f"size of Y: {len(self.vertex_final_pos_list)}")
 
-            #temporarily save data
-            np.save('temp_X', self.vertex_init_pos_list)
-            np.save('temp_F', self.force_applied_list)
-            np.save('temp_Y', self.vertex_final_pos_list)
+                #temporarily save data
+                np.save('temp_X', self.vertex_init_pos_list)
+                np.save('temp_F', self.force_applied_list)
+                np.save('temp_Y', self.vertex_final_pos_list)
+
+            
             
         return self.vertex_init_pos_list, self.vertex_final_pos_list, self.force_applied_list
         
