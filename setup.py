@@ -11,7 +11,7 @@ requirements = [
     'numba',
     'catkin-pkg',
     'lark',
-    'protobuf==3.12.4'
+    'protobuf'
 ]
 
 setup(name='frankapy',
