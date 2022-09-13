@@ -11,10 +11,10 @@ if __name__ == "__main__":
     # ========= param unique for each new tree ===============
     
     # top or last branch nodes that should be take be cautious of applied force 
-    branch_array = np.array([4,5,6, 8,9])
+    branch_array = np.array([3,4,7,8,9])
     #load npy files
-    pre_grasp_joints = np.load('pre_grasp_joint_list5.npy')
-    grasp_joints = np.load('grasp_joint_list5.npy')
+    pre_grasp_joints = np.load('pre_grasp_joint_list10.npy')
+    grasp_joints = np.load('grasp_joint_list10.npy')
 
     desired_num_pushes = 1 #2
     node_perturbation_count =  40 #40
