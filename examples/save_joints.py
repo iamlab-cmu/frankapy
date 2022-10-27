@@ -38,6 +38,9 @@ if __name__ == "__main__":
         print('Joints: {}'.format(joints))
         print(f"length of grasp list {len(grasp_joint_list)}")
 
+    #move back from last joint before going home
+    move_back = RigidTransform(translation=np.array([0,0,-0.07]), from_frame='franka_tool', to_frame='franka_tool')
+    fa.goto_pose_delta(delta_tool_pose=move_back, duration=3)
 
     # reset franka back to home
     fa.reset_joints()
