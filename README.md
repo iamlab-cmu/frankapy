@@ -27,9 +27,9 @@ Do `nproc` to find out how many cores you have, and use that as the `N` number i
 
 ```shell
 sudo apt-get install autoconf automake libtool curl make g++ unzip
-wget https://github.com/protocolbuffers/protobuf/releases/download/v3.11.4/protobuf-all-3.11.4.zip
-unzip protobuf-all-3.11.4.zip
-cd protobuf-3.11.4
+wget https://github.com/protocolbuffers/protobuf/releases/download/v21.8/protobuf-all-21.8.zip
+unzip protobuf-all-21.8.zip
+cd protobuf-21.8
 ./configure
 make -jN
 make check -jN
