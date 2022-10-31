@@ -6,12 +6,12 @@ from setuptools import setup
 requirements = [
     'autolab_core',
     'empy',
-    'numpy',
+    'numpy==1.22.4',
     'numpy-quaternion',
     'numba',
     'rospkg',
     'catkin-tools',
-    'protobuf==3.12.4'
+    'protobuf'
 ]
 
 setup(name='frankapy',
