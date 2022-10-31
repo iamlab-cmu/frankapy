@@ -1824,7 +1824,7 @@ class FrankaArm:
 
     def get_jacobian(self, joints):
         """ 
-        Computes the analytical jacobian
+        Computes the geometric jacobian
         
         Parameters
         ----------
