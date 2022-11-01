@@ -23,6 +23,7 @@ class SkillType:
     GripperSkill = _enum_auto('SkillType')
     ImpedanceControlSkill = _enum_auto('SkillType')
     JointPositionSkill = _enum_auto('SkillType')
+    JointVelocitySkill = _enum_auto('SkillType')
 
 
 class MetaSkillType:
@@ -44,6 +45,7 @@ class TrajectoryGeneratorType:
     MinJerkPoseTrajectoryGenerator = _enum_auto('TrajectoryGeneratorType')
     PassThroughForcePositionTrajectoryGenerator = _enum_auto('TrajectoryGeneratorType')
     PassThroughJointTrajectoryGenerator = _enum_auto('TrajectoryGeneratorType')
+    PassThroughJointVelocityTrajectoryGenerator = _enum_auto('TrajectoryGeneratorType')
     PassThroughPoseTrajectoryGenerator = _enum_auto('TrajectoryGeneratorType')
     PoseDmpTrajectoryGenerator = _enum_auto('TrajectoryGeneratorType')
     QuaternionPoseDmpTrajectoryGenerator = _enum_auto('TrajectoryGeneratorType')
