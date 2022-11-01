@@ -91,6 +91,7 @@ class SensorDataMessageType:
     FORCE_POSITION_GAINS = _enum_auto('SensorDataMessageType')
     JOINT_POSITION_VELOCITY = _enum_auto('SensorDataMessageType')
     JOINT_POSITION = _enum_auto('SensorDataMessageType')
+    JOINT_VELOCITY = _enum_auto('SensorDataMessageType')
     POSE_POSITION_VELOCITY = _enum_auto('SensorDataMessageType')
     POSE_POSITION = _enum_auto('SensorDataMessageType')
     SHOULD_TERMINATE = _enum_auto('SensorDataMessageType')

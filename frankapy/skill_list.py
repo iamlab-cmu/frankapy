@@ -337,6 +337,20 @@ class Skill:
 
         self.add_trajectory_params(joint_trajectory_generator_msg_proto.SerializeToString())
 
+    def add_goal_joint_velocities(self, run_time, joint_velocities, joint_accelerations):
+        assert type(run_time) is float or type(run_time) is int,\
+                "Incorrect time type. Should be int or float."
+        assert run_time >= 0, "Incorrect time. Should be non negative."
+        assert type(joint_velocities) is list, "Incorrect joint_velocities type. Should be list."
+        assert len(joint_velocities) == 7, "Incorrect joint_velocities len. Should be 7."
+        assert type(joint_accelerations) is list, "Incorrect joint_accelerations type. Should be list."
+        assert len(joint_accelerations) == 7, "Incorrect joint_accelerations len. Should be 7."
+
+        joint_velocity_trajectory_generator_msg_proto = JointVelocityTrajectoryGeneratorMessage(run_time=run_time, 
+                                                    joint_velocities=joint_velocities, joint_accelerations=joint_accelerations)
+
+        self.add_trajectory_params(joint_velocity_trajectory_generator_msg_proto.SerializeToString())
+
     def add_joint_dmp_params(self, run_time, joint_dmp_info, initial_sensor_values):
         assert type(run_time) is float or type(run_time) is int,\
                 "Incorrect run_time type. Should be int or float."
