@@ -89,7 +89,6 @@ class FrankaArm:
         self._with_gripper = with_gripper
         self._old_gripper = old_gripper
         self._last_gripper_command = None
-
         # init ROS
         if init_node:
             rospy.init_node(rosnode_name,
@@ -97,7 +96,7 @@ class FrankaArm:
                             log_level=ros_log_level)
         self._collision_boxes_pub = BoxesPublisher('franka_collision_boxes_{}'.format(robot_num))
         self._joint_state_pub = rospy.Publisher('franka_virtual_joints_{}'.format(robot_num), JointState, queue_size=10)
-        
+
         self._state_client = FrankaArmStateClient(
                 new_ros_node=False,
                 robot_state_server_name=self._robot_state_server_name,
@@ -115,7 +114,6 @@ class FrankaArm:
                     self._execute_skill_action_server_name, ExecuteSkillAction)
             self._client.wait_for_server()
             self.wait_for_franka_interface()
-
             if self._with_gripper and not self._old_gripper:
                 self._gripper_homing_client = SimpleActionClient(
                     self._gripper_homing_action_server_name, HomingAction)
@@ -164,6 +162,7 @@ class FrankaArm:
         timeout : :obj:`float`
             Timeout in seconds to wait for franka-interface.
         """
+
         timeout = FC.DEFAULT_FRANKA_INTERFACE_TIMEOUT if timeout is None else timeout
         t_start = time()
         while time() - t_start < timeout:
@@ -171,6 +170,7 @@ class FrankaArm:
             if franka_interface_status.is_ready:
                 return
             sleep(1e-2)
+
         raise FrankaArmCommException('FrankaInterface status not ready for {}s'.format(
             FC.DEFAULT_FRANKA_INTERFACE_TIMEOUT))
 

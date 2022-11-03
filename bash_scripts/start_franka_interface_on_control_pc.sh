@@ -21,6 +21,8 @@ if [ "$control_pc_ip_address" = "localhost" ]; then
 else
 if [ "$control_pc_use_password" = "0" ]; then
 ssh -tt $control_pc_uname@$control_pc_ip_address << EOSSH
+
+docker exec -it realtime_docker bash
 cd $control_pc_franka_interface_path
 cd build
 ./franka_interface --robot_ip $robot_ip --with_gripper $with_gripper --log $log_on_franka_interface --stop_on_error $stop_on_error
@@ -28,6 +30,8 @@ bash
 EOSSH
 else
 sshpass -p "$control_pc_password" ssh -tt -o StrictHostKeyChecking=no $control_pc_uname@$control_pc_ip_address << EOSSH
+
+docker exec -it realtime_docker bash
 cd $control_pc_franka_interface_path
 cd build
 echo $stop_on_error
