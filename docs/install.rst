@@ -52,9 +52,9 @@ If you plan on modifying the library and the protobuf messages, you will need to
 2. Execute the following commands::
 
     sudo apt-get install autoconf automake libtool curl make g++ unzip
-    wget https://github.com/protocolbuffers/protobuf/releases/download/v3.11.4/protobuf-all-3.11.4.zip
-    unzip protobuf-all-3.11.4.zip
-    cd protobuf-3.11.4
+    wget https://github.com/protocolbuffers/protobuf/releases/download/v21.8/protobuf-all-21.8.zip
+    unzip protobuf-all-21.8.zip
+    cd protobuf-21.8
     ./configure
 
 3. Use the number that was previously printed out using the ``nproc`` command above and substitute it as ``N`` below::
