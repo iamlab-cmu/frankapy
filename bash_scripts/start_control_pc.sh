@@ -103,13 +103,14 @@ else
 fi
 
 if [ "$with_gripper" -eq 0 ]; then
-let old_gripper=0
+let old_gripper=0  
 fi
 
 if [ "$start_franka_interface" -eq 1 ]; then
 # ssh to the control pc and start franka_interface in a new gnome-terminal
 echo $DIR
 start_franka_interface_on_control_pc_path="$DIR/start_franka_interface_on_control_pc.sh"
+echo $start_franka_interface_on_control_pc_path
 echo "Will ssh to control PC and start franka-interface."
 sleep 3
 gnome-terminal --working-directory="$DIR" -- bash $start_franka_interface_on_control_pc_path $robot_ip $old_gripper $log_on_franka_interface $stop_on_error $control_pc_uname $control_pc_ip_address $control_pc_franka_interface_path $control_pc_use_password $control_pc_password 
@@ -121,6 +122,7 @@ fi
 
 # ssh to the control pc and start ROS action server in a new gnome-terminal
 start_franka_ros_interface_on_control_pc_path="$DIR/start_franka_ros_interface_on_control_pc.sh"
+echo $start_franka_ros_interface_on_control_pc_path
 echo "Will ssh to control PC and start ROS action server."
 gnome-terminal --working-directory="$DIR" -- bash $start_franka_ros_interface_on_control_pc_path $control_pc_uname $control_pc_ip_address $workstation_ip_address $control_pc_franka_interface_path $robot_number $control_pc_use_password $control_pc_password
 sleep 3
