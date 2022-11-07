@@ -20,7 +20,7 @@ if __name__ == "__main__":
     joint_accelerations = [1, 1, 1, 1, 1, 1, 1]
 
     T = 5
-    dt = 0.001
+    dt = 0.01
     ts = np.arange(0, T, dt)
     joint_velocities = []
 
