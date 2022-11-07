@@ -20,7 +20,7 @@ if __name__ == "__main__":
     joint_accelerations = [1, 1, 1, 1, 1, 1, 1]
 
     T = 5
-    dt = 0.02
+    dt = 0.001
     ts = np.arange(0, T, dt)
     joint_velocities = []
 
@@ -28,6 +28,9 @@ if __name__ == "__main__":
         joint_velocities.append(fa.get_robot_state()['joint_velocities'])
         time.sleep(dt)
 
+    fa.wait_for_skill()
+
+    fa.reset_joints()
 
     fa.log_info('Initializing Sensor Publisher')
 
@@ -38,7 +41,7 @@ if __name__ == "__main__":
     for i in range(len(ts)):
         traj_gen_proto_msg = JointVelocitySensorMessage(
             id=i, timestamp=fa.get_time() - init_time, 
-            joints=joint_velocities[i]
+            joint_velocities=joint_velocities[i]
         )
         ros_msg = make_sensor_group_msg(
             trajectory_generator_sensor_msg=sensor_proto2ros_msg(

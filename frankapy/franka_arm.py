@@ -797,7 +797,7 @@ class FrankaArm(Node):
                           termination_handler_type=TerminationHandlerType.TimeTerminationHandler, 
                           skill_desc=skill_desc)
 
-        skill.set_joint_impedances(use_impedance, cartesian_impedances, joint_impedances, k_gains, d_gains)
+        skill.set_joint_impedances(False, cartesian_impedances, joint_impedances, None, None)
 
         if not skill.check_for_contact_params(buffer_time, force_thresholds, torque_thresholds):
             if dynamic:
