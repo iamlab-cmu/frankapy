@@ -20,7 +20,7 @@ where:
     -o Using old gripper commands (0 (default) / 1)
     -l Log at 1kHz on franka-interface (0 (default) / 1)
     -e Stop franka-interface when an error has occurred (0 (default) / 1)
-    -w workstation IP address(default hostname)
+    
     ./start_control_pc.sh -i iam-space
     ./start_control_pc.sh -i iam-space -u iam-lab -p 12345678 -d ~/Documents/franka-interface -r 1 -s 0
     "
@@ -31,13 +31,13 @@ control_pc_password=""
 control_pc_franka_interface_path="/home/pairlab/franka-interface"
 start_franka_interface=1
 robot_number=1
-robot_ip=""
+robot_ip="192.168.1.107"
 with_gripper=1
 old_gripper=0
 log_on_franka_interface=0
 stop_on_error=0
-workstation_ip_address="`hostname`"
-while getopts ':h:i:u:p:d:r:a:s:g:o:l:e:w:' option; do
+
+while getopts ':h:i:u:p:d:r:s:g:o:l:e' option; do
   case "${option}" in
     h) echo "$usage"
        exit
@@ -65,8 +65,6 @@ while getopts ':h:i:u:p:d:r:a:s:g:o:l:e:w:' option; do
        ;;
     e) stop_on_error=$OPTARG
        ;;
-    w) workstation_ip_address="$OPTARG"
-       ;;      
     :) printf "missing argument for -%s\n" "$OPTARG" >&2
        echo "$usage" >&2
        exit 1
@@ -79,7 +77,7 @@ while getopts ':h:i:u:p:d:r:a:s:g:o:l:e:w:' option; do
 done
 shift $((OPTIND - 1))
 
-#workstation_ip_address="192.168.0.1"
+workstation_ip_address="192.168.0.1"
 
 # Notify the IP addresses being used.
 echo "Control PC IP uname/address: "$control_pc_uname"@"$control_pc_ip_address

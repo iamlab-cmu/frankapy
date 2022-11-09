@@ -1,4 +1,5 @@
-#!/bin/bash
+
+
 
 robot_ip=${1}
 with_gripper=${2}
@@ -20,8 +21,11 @@ if [ "$control_pc_ip_address" = "localhost" ]; then
     bash
 else
 if [ "$control_pc_use_password" = "0" ]; then
-ssh -tt $control_pc_uname@$control_pc_ip_address << EOSSH
 
+
+sleep 2
+ssh -tt $control_pc_uname@$control_pc_ip_address << EOSSH
+echo "ssh works"
 docker exec -it realtime_docker bash
 cd $control_pc_franka_interface_path
 cd build
@@ -40,3 +44,4 @@ bash
 EOSSH
 fi
 fi
+sleep 2
