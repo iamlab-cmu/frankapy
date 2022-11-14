@@ -205,8 +205,8 @@ class FrankaArm(Node):
         :obj:`bool`
             Flag of whether the skill is done.
         """ 
-        if not self._in_skill:  
-            return True 
+        
+        rclpy.spin_once(self)
 
         franka_interface_status = self._franka_interface_status_client.get_current_franka_interface_status()  
 
@@ -223,6 +223,9 @@ class FrankaArm(Node):
                 self.wait_for_franka_interface() 
             else: 
                 raise e 
+
+        if not self._in_skill:
+            return True
 
         return False
 
@@ -295,9 +298,12 @@ class FrankaArm(Node):
         self._in_skill = True
         self._send_goal_future = self._execute_skill_action_client.send_goal_async(goal, feedback_callback=self.feedback_callback)
         self._send_goal_future.add_done_callback(self.goal_response_callback)
-        rclpy.spin_until_future_complete(self, self._send_goal_future)
+        rclpy.spin_until_future_complete(self, self._send_goal_future) 
+        
+        rclpy.spin_once(self)
 
-        if not block:  
+        if not block: 
+            rclpy.spin_once(self)
             return None
 
         self.wait_for_skill()
