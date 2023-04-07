@@ -1,4 +1,14 @@
 # moveit_frankapy
+
+Prerequisites:
+
+- Install Docker: https://docs.docker.com/engine/install/ubuntu/
+
+- (Optional) Add docker to sudoers: https://docs.docker.com/engine/install/linux-postinstall/. If not done, please run all docker commands with a ```sudo```
+
+<br>
+
+Steps to run moveit with frankapy
 1. Build the Docker Container:
 
     ```
