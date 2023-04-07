@@ -33,12 +33,13 @@
   <arg name="rviz_tutorial" default="false" />
 
   <!-- If needed, broadcast static tf for robot root -->
-  <node pkg="tf2_ros" type="static_transform_publisher" name="virtual_joint_broadcaster_0" args="0 0 0 0 0 0 world $(arg arm_id)_link0" />
+  <!-- <node pkg="tf2_ros" type="static_transform_publisher" name="virtual_joint_broadcaster_0" args="0 0 0 0 0 0 world $(arg arm_id)_link0" /> -->
 
   <group if="$(eval arg('moveit_controller_manager') == 'fake')">
     <!-- Real robot joints are remapped on the /real_robot_joints topic, which the joint_state_publisher uses -->
     <node name="joint_state_publisher" pkg="joint_state_publisher" type="joint_state_publisher" unless="$(arg use_gui)">
       <rosparam param="source_list">[real_robot_joints]</rosparam> 
+      <!-- <rosparam param="source_list">[move_group/fake_controller_joint_states]</rosparam> -->
     </node>
 
     <!-- Given the published joint states, publish tf for the robot links -->
