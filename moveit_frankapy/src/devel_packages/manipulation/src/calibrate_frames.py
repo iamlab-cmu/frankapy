@@ -9,6 +9,7 @@ import numpy as np
 from tf.transformations import euler_from_quaternion, quaternion_from_euler
 from moveit_msgs.msg import PlanningScene, CollisionObject
 from shape_msgs.msg import SolidPrimitive, Mesh
+import tf2_ros
 import scipy.spatial.transform as spt
 
 sys.path.append("/home/ros_ws/src/git_packages/frankapy")
@@ -18,6 +19,7 @@ from frankapy.proto_utils import sensor_proto2ros_msg, make_sensor_group_msg
 from frankapy.proto import JointPositionSensorMessage, ShouldTerminateSensorMessage
 from franka_interface_msgs.msg import SensorDataGroup
 from frankapy.utils import min_jerk
+import tf
 
 class moveit_planner():
     def __init__(self) -> None: #None means no return value
@@ -183,13 +185,14 @@ class moveit_planner():
             self.fa.stop_skill()
             pose_goal_fa = self.fa.get_pose()
             pose_goal = geometry_msgs.msg.Pose()
+            # print(dir(pose_goal_fa))
             pose_goal.position.x = pose_goal_fa.translation[0]
             pose_goal.position.y = pose_goal_fa.translation[1]
             pose_goal.position.z = pose_goal_fa.translation[2]
-            pose_goal.orientation.w = pose_goal_fa.quaternion[0]
-            pose_goal.orientation.x = pose_goal_fa.quaternion[1]
-            pose_goal.orientation.y = pose_goal_fa.quaternion[2]
-            pose_goal.orientation.z = pose_goal_fa.quaternion[3]
+            pose_goal.orientation.x = pose_goal_fa.quaternion[0]
+            pose_goal.orientation.y = pose_goal_fa.quaternion[1]
+            pose_goal.orientation.z = pose_goal_fa.quaternion[2]
+            pose_goal.orientation.w = pose_goal_fa.quaternion[3]
         else:
             pose_goal = geometry_msgs.msg.Pose()
             # These states are different from the fa.get_pose() values
@@ -199,6 +202,7 @@ class moveit_planner():
             pose_goal.position.x = 0.5843781940153249
             pose_goal.position.y = 0.05791107711908864
             pose_goal.position.z = 0.23098061041636195
+
             pose_goal.orientation.x = -0.9186984147774666
             pose_goal.orientation.y = 0.3942492534293267
             pose_goal.orientation.z = -0.012441904611284204 
@@ -206,8 +210,6 @@ class moveit_planner():
         
         # Convert to moveit pose
         pose_goal = self.get_moveit_pose_given_frankapy_pose(pose_goal)
-        # pose_goal = self.group.get_current_pose().pose
-        # print(pose_goal, pose_goal_conv)
         print("Pose Goal: ", pose_goal)
         print("Resetting Joints")
         self.fa.reset_joints()
@@ -223,46 +225,26 @@ class moveit_planner():
         Adds 180 degree offset to yaw, and 10 cm offset to z
         """
         transform_mat =  np.array([[ 1.00000000e+00,7.21391350e-06,-3.74069273e-06,-9.14757563e-07],
-                            [-7.21392068e-06,1.00000000e+00,-1.91977900e-06,-2.85452459e-06],
-                            [ 3.74067888e-06,1.91980599e-06,1.00000000e+00,-1.03400211e-01],
-                            [ 0.00000000e+00,0.00000000e+00,0.00000000e+00,1.00000000e+00]])
-        pose_mat = self.pose_to_transformation_matrix(pose)
-        transformed = pose_mat @ transform_mat
-        pose_goal = self.transformation_matrix_to_pose(transformed)
-        # pose_goal = geometry_msgs.msg.Pose()
-        # pose_goal.position.x = pose.position.x
-        # pose_goal.position.y = pose.position.y
-        # pose_goal.position.z = pose.position.z + 0.10339913226933785
-        # pose_goal.orientation.x = pose.orientation.x
-        # pose_goal.orientation.y = pose.orientation.y
-        # pose_goal.orientation.z = pose.orientation.z
-        # pose_goal.orientation.w = pose.orientation.w
+                                [-7.21392068e-06,1.00000000e+00,-1.91977900e-06,-2.85452459e-06],
+                                [ 3.74067888e-06,1.91980599e-06,1.00000000e+00,-1.03400211e-01],
+                                [ 0.00000000e+00,0.00000000e+00,0.00000000e+00,1.00000000e+00]])
+        pose_goal = geometry_msgs.msg.Pose()
+        pose_goal.position.x = pose.position.x
+        pose_goal.position.y = pose.position.y
+        pose_goal.position.z = pose.position.z + 0.10339913226933785
+        # convert pose to roll, pitch, yaw
+        roll, pitch, yaw = euler_from_quaternion([pose.orientation.x, pose.orientation.y, pose.orientation.z, pose.orientation.w])
+        # add 180 degree offset to yaw
+        # yaw = yaw + np.pi
+        # roll = -roll
+        # pitch = -pitch
+        # convert back to quaternion
+        quat = quaternion_from_euler(roll, pitch, yaw)
+        pose_goal.orientation.x = quat[0]
+        pose_goal.orientation.y = quat[1]
+        pose_goal.orientation.z = quat[2]
+        pose_goal.orientation.w = quat[3]        
         return pose_goal
-    
-    def pose_to_transformation_matrix(self, pose):
-        T = np.eye(4)
-        T[0,3] = pose.position.x
-        T[1,3] = pose.position.y
-        T[2,3] = pose.position.z
-        r = spt.Rotation.from_quat([pose.orientation.x, pose.orientation.y, pose.orientation.z, pose.orientation.w])
-        T[0:3, 0:3] = r.as_matrix()
-        return T
-
-    def transformation_matrix_to_pose(self, trans_mat):   
-        out_pose = geometry_msgs.msg.Pose()
-        out_pose.position.x = trans_mat[0,3]
-        out_pose.position.y = trans_mat[1,3]
-        out_pose.position.z = trans_mat[2,3]
-
-        #convert rotation matrix to quaternion
-        r = spt.Rotation.from_matrix(trans_mat[0:3, 0:3])
-        quat = r.as_quat() 
-        out_pose.orientation.x = quat[0]
-        out_pose.orientation.y = quat[1]
-        out_pose.orientation.z = quat[2]
-        out_pose.orientation.w = quat[3] 
-        return out_pose
-
     
     def add_box(self, name, pose: geometry_msgs.msg.PoseStamped(), size):
         """
@@ -281,6 +263,62 @@ class moveit_planner():
 
     def remove_box(self, name):
         self.scene.remove_world_object(name)
+
+def print_diff(pose1, pose2):
+    roll1, pitch1, yaw1 = euler_from_quaternion([pose1.orientation.x, pose1.orientation.y, pose1.orientation.z, pose1.orientation.w])
+    roll2, pitch2, yaw2 = euler_from_quaternion([pose2.orientation.x, pose2.orientation.y, pose2.orientation.z, pose2.orientation.w])
+    # print("Moveit Pose: \n", moveit_pose.position, "\nRoll: ", roll_moveit, "Pitch: ", pitch_moveit, "Yaw: ", yaw_moveit)
+    # print("Fa Pose: \n", fa_pose_raw.position, "\nRoll: ", roll, "Pitch: ", pitch, "Yaw: ", yaw)
+    diff_x = pose1.position.x - pose2.position.x
+    diff_y = pose1.position.y - pose2.position.y
+    diff_z = pose1.position.z - pose2.position.z
+    diff_roll = roll1 - roll2
+    diff_pitch = pitch1 - pitch2
+    diff_yaw = yaw1 - yaw2
+    print("Diff X: ", diff_x, "Diff Y: ", diff_y, "Diff Z: ", diff_z)
+    print("Diff Roll: ", diff_roll, "Diff Pitch: ", diff_pitch, "Diff Yaw: ", diff_yaw)
+
+def pose_to_transformation_matrix(pose):
+    T = np.eye(4)
+    T[0,3] = pose.position.x
+    T[1,3] = pose.position.y
+    T[2,3] = pose.position.z
+    r = spt.Rotation.from_quat([pose.orientation.x, pose.orientation.y, pose.orientation.z, pose.orientation.w])
+    T[0:3, 0:3] = r.as_matrix()
+    return T
+
+def transformation_matrix_to_pose(trans_mat):   
+    out_pose = geometry_msgs.msg.Pose()
+    out_pose.position.x = trans_mat[0,3]
+    out_pose.position.y = trans_mat[1,3]
+    out_pose.position.z = trans_mat[2,3]
+
+    #convert rotation matrix to quaternion
+    r = spt.Rotation.from_matrix(trans_mat[0:3, 0:3])
+    quat = r.as_quat() 
+    out_pose.orientation.x = quat[0]
+    out_pose.orientation.y = quat[1]
+    out_pose.orientation.z = quat[2]
+    out_pose.orientation.w = quat[3] 
+    return out_pose
+
+def get_transform_pose1_pose2(pose1, pose2):
+    """
+    Returns transformation matrix from pose1 to pose2
+    """
+    # calculate transformation matrix for pose1
+    trans_mat1 = pose_to_transformation_matrix(pose1)
+
+    # calculate transformation matrix for pose2
+    trans_mat2 = pose_to_transformation_matrix(pose2)
+
+    diff_mat = np.linalg.inv(trans_mat1) @ trans_mat2
+    return diff_mat
+
+def get_transformed_pose(pose, transform_mat):
+    pose_mat = pose_to_transformation_matrix(pose)
+    transformed_pose_mat = pose_mat @ transform_mat
+    return transformation_matrix_to_pose(transformed_pose_mat)
 
 if __name__ == "__main__":
     franka_moveit = moveit_planner()
@@ -307,4 +345,57 @@ if __name__ == "__main__":
     # franka_moveit.unittest_joint(execute = True, guided = False) 
 
     # Test Tool Position Planning
-    franka_moveit.unittest_pose(execute = True, guided=True)
+    # franka_moveit.unittest_pose(execute = True, guided=True)
+    pose_goal_fa = franka_moveit.fa.get_pose()
+    fa_pose_raw = geometry_msgs.msg.Pose()
+    fa_pose_raw.position.x = pose_goal_fa.translation[0]
+    fa_pose_raw.position.y = pose_goal_fa.translation[1]
+    fa_pose_raw.position.z = pose_goal_fa.translation[2]
+    fa_pose_raw.orientation.w = pose_goal_fa.quaternion[0]
+    fa_pose_raw.orientation.x = pose_goal_fa.quaternion[1]
+    fa_pose_raw.orientation.y = pose_goal_fa.quaternion[2]
+    fa_pose_raw.orientation.z = pose_goal_fa.quaternion[3]
+    
+    moveit_pose = franka_moveit.group.get_current_pose().pose
+    # print("Initial Error:")
+    # print_diff(moveit_pose, fa_pose_raw)
+    print("Moveit Pose: ", moveit_pose)
+    print("Fa Pose Raw: ", fa_pose_raw)
+    print()
+
+    moveit_pose_mat = pose_to_transformation_matrix(moveit_pose)
+    fa_pose_raw_mat = pose_to_transformation_matrix(fa_pose_raw)
+    print("Moveit pose mat:", moveit_pose_mat)
+    print("Fa pose raw mat:", fa_pose_raw_mat)
+
+    # print("Moveit mat: \n", moveit_pose_mat)
+    # print("Fa mat: \n", fa_pose_raw_mat)
+    # get transformation matrix from moveit to fa
+    transform_mat = get_transform_pose1_pose2(fa_pose_raw, moveit_pose) # fa_pose_raw^-1 x moveit_pose
+    print("Transformation Matrix: \n", transform_mat)
+    transform_pose = transformation_matrix_to_pose(transform_mat)
+    r = spt.Rotation.from_quat([transform_pose.orientation.x, transform_pose.orientation.y, transform_pose.orientation.z, transform_pose.orientation.w])
+    roll, pitch, yaw = r.as_euler('xyz', degrees=True)
+    print("Transform Pose: \n", transform_pose.position, "\nRoll: ", roll, "Pitch: ", pitch, "Yaw: ", yaw)
+
+    print()
+    # get transformed pose
+    fa_pose = get_transformed_pose(fa_pose_raw, transform_mat) # fa_pose_raw x transform_mat
+    print("Fa pose: \n", fa_pose)
+    print("Final Errors:")
+    print_diff(moveit_pose, fa_pose)
+
+
+
+    # print("Moveit Pose: \n", moveit_pose)
+    # moveit_pose_mat = pose_to_transformation_matrix(moveit_pose)
+    # print("Moveit mat: \n", moveit_pose_mat)
+    # test_moveit = transformation_matrix_to_pose(moveit_pose_mat)
+    # print("Test Moveit: \n", test_moveit)
+    # print(moveit_pose)
+
+    # get transform between panda_hand and panda_end_effector using tf wait for transform
+    # listener = tf.TransformListener()
+    # listener.waitForTransform('panda_link0', 'panda_end_effector', rospy.Time(), rospy.Duration(4.0))
+    # transform = listener.lookupTransform('panda_hand', 'panda_end_effector', rospy.Time(0))
+    # print("Transform: \n", transform)

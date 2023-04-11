@@ -6,9 +6,14 @@ Prerequisites:
 
 - (Optional) Add docker to sudoers: https://docs.docker.com/engine/install/linux-postinstall/. If not done, please run all docker commands with a ```sudo```
 
+
 <br>
 
 Steps to run moveit with frankapy
+Frankapy Setup
+- Clone repo: git clone --recursive  https://github.com/vib2810/frankapy.git
+- bash start_control_pc.sh -u student -i iam-snowwhite
+
 1. Build the Docker Container:
 
     ```
