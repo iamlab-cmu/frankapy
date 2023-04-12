@@ -1,7 +1,7 @@
 xhost +local:root 
 docker container prune -f 
 docker run --privileged --rm -it \
-    --name="auto_jenga" \
+    --name="moveit_frankapy" \
     --env="DISPLAY=$DISPLAY" \
     --env="QT_X11_NO_MITSHM=1" \
     --volume="/tmp/.X11-unix:/tmp/.X11-unix:rw" \

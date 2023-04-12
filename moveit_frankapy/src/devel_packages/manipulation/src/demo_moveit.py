@@ -91,22 +91,85 @@ class moveit_planner():
         joint_values = np.array(joint_values)
         return joint_values, plan
 
+    def test_fn(self, curr_pos, curr_vel, curr_acc, final_pos, num_points, T):
+        """
+        T is num 
+        """
+        D = T
+        a0 = curr_pos
+        a1= D*curr_vel
+        a2 = D*curr_acc/2
+        a3 = -(3*D**2/2) *curr_acc - 6*D*curr_vel + 10*(final_pos - curr_pos)
+        a4 = (3*D**2/2)*curr_acc + 8*D*curr_vel - 15*(final_pos - curr_pos)
+        a5 = -(D**2/2)*curr_acc - 3*D*curr_vel + 6*(final_pos - curr_pos)
+
+        t = np.linspace(0, T, num_points)/D
+        pos = []
+        for ti in t:
+            pos.append( a0 + a1*ti + a2*ti**2 + a3*ti**3 + a4*ti**4 + a5*ti**5 )
+        # import pdb
+        # pdb.set_trace()
+        return np.array(pos)
+
     def execute_plan(self, joints_traj):
         """
         joints_traj shape: (N x 7)
         """
+        # num_interp = 20 # number of points to interpolate between each trajectory edge
+        # interpolated_traj = np.zeros(((joints_traj.shape[0]-1)*num_interp + 1, joints_traj.shape[1]))
+        # t_interp = np.linspace(1/num_interp, 1, num_interp) # expand each trajectory edge to num_interp points
+        # interpolated_traj[0,:] = joints_traj[0,:]
+        # for i in range(1, joints_traj.shape[0]):
+        #     for t_i in range(len(t_interp)):
+        #         dt = t_interp[t_i]
+        #         interp_traj_i = joints_traj[i,:]*dt + joints_traj[i-1,:]*(1-dt)
+        #         interpolated_traj[(i-1)*num_interp + t_i+1,:] = interp_traj_i
+
+        num_interp_slow = 50
         num_interp = 20 # number of points to interpolate between each trajectory edge
-        interpolated_traj = np.zeros(((joints_traj.shape[0]-1)*num_interp + 1, joints_traj.shape[1]))
+        interpolated_traj = []
+
+        t_interp_slow = np.linspace(1/num_interp_slow, 1, num_interp_slow) # expand each trajectory edge to num_interp points
         t_interp = np.linspace(1/num_interp, 1, num_interp) # expand each trajectory edge to num_interp points
-        interpolated_traj[0,:] = joints_traj[0,:]
-        for i in range(1, joints_traj.shape[0]):
+        interpolated_traj.append(joints_traj[0,:])
+        
+        for t_i in range(len(t_interp)):
+            dt = t_interp[t_i]
+            interp_traj_i = joints_traj[1,:]*dt + joints_traj[0,:]*(1-dt)
+            interpolated_traj.append(interp_traj_i)
+        
+        for i in range(2, joints_traj.shape[0]-1):
             for t_i in range(len(t_interp)):
                 dt = t_interp[t_i]
                 interp_traj_i = joints_traj[i,:]*dt + joints_traj[i-1,:]*(1-dt)
-                interpolated_traj[(i-1)*num_interp + t_i+1,:] = interp_traj_i
-                
+                interpolated_traj.append(interp_traj_i)
+
+        curr_vel = (interpolated_traj[-1] - interpolated_traj[-2])/(1/num_interp)
+        curr_pos = interpolated_traj[-1]
+        curr_acc = (curr_vel - (interpolated_traj[-2] - interpolated_traj[-3])/(1/num_interp))/(1/num_interp)
+        next_pos = self.test_fn(curr_pos=curr_pos, curr_vel=curr_vel, curr_acc=curr_acc, final_pos=joints_traj[-1], num_points=20, T=1)
+        interpolated_traj.extend(next_pos)
+        # for t_i in range(len(t_interp_slow)):
+        #     dt = t_interp_slow[t_i]
+        #     next_
+        #     interp_traj_i = 
+        #     interp_traj_i = joints_traj[-1,:]*dt + joints_traj[-2,:]*(1-dt)
+        #     interpolated_traj.append(interp_traj_i)
+
+        interpolated_traj = np.array(interpolated_traj)
+        # import matplotlib.pyplot as plt
+        # plt.plot(interpolated_traj[:,0])
+        # plt.plot(interpolated_traj[:,1])
+        # plt.plot(interpolated_traj[:,2])
+        # plt.plot(interpolated_traj[:,3])
+        # plt.plot(interpolated_traj[:,4])
+        # plt.plot(interpolated_traj[:,5])
+        # plt.plot(interpolated_traj[:,6])
+        # plt.show()
+        # return    
         print('Executing joints trajectory of shape: ', interpolated_traj.shape)
-        rate = rospy.Rate(50)
+        # return
+        rate = rospy.Rate(20)
         # To ensure skill doesn't end before completing trajectory, make the buffer time much longer than needed
         self.fa.goto_joints(interpolated_traj[1], duration=5, dynamic=True, buffer_time=10)
         init_time = rospy.Time.now().to_time()
@@ -120,9 +183,13 @@ class moveit_planner():
                     traj_gen_proto_msg, SensorDataMessageType.JOINT_POSITION)
             )
             
-            print('Publishing: ID {}'.format(traj_gen_proto_msg.id))
+            print('Publishing: ID {}\n'.format(traj_gen_proto_msg.id), self.fa.get_joints(), "\n", interpolated_traj[i])
             self.pub.publish(ros_msg)
             rate.sleep()
+
+        # sleep for 1 second
+        rospy.sleep(1)
+        print(self.fa.get_joints(), "\n", interpolated_traj[-1])
 
         # Stop the skill
         # Alternatively can call fa.stop_skill()
@@ -286,23 +353,23 @@ if __name__ == "__main__":
     # Test Planning
     # To execute the plan, set execute = True
     # To plan to a joint goal using run_guide_mode, set guided = True
+    franka_moveit.remove_box("box")
 
     # Test Joint Planning
-    franka_moveit.unittest_joint(execute=False, guided=False) 
+    franka_moveit.unittest_joint(execute=True, guided=True) 
 
     # Test Tool Position Planning
-    franka_moveit.unittest_pose(execute=False, guided=False)
+    # franka_moveit.unittest_pose(execute=True, guided=True)
 
     # Adding and removing obstacle boxes to planning scene
     # box_pose = geometry_msgs.msg.PoseStamped()
     # box_pose.header.frame_id = "panda_link0"
-    # box_pose.pose.position.x = 0.2
-    # box_pose.pose.position.y = 0.0
-    # box_pose.pose.position.z = 0.3
-    # box_pose.pose.orientation.x = 0.0
-    # box_pose.pose.orientation.y = 0.0
-    # box_pose.pose.orientation.z = 0.0
-    # box_pose.pose.orientation.w = 1.0
-    # # franka_moveit.add_box("box", box_pose, [0.1, 0.1, 0.6])
-    # franka_moveit.remove_box("box")
+    # box_pose.pose.position.x = 0.5767154
+    # box_pose.pose.position.y = -0.17477638
+    # box_pose.pose.position.z = 0.00872429
+    # box_pose.pose.orientation.x = 0.98198148
+    # box_pose.pose.orientation.y = 0.18717703
+    # box_pose.pose.orientation.z = 0.02544852
+    # box_pose.pose.orientation.w = -0.00495174
+    # franka_moveit.add_box("box", box_pose, [0.02, 0.065, 0.015])
 
