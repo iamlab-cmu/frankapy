@@ -49,10 +49,9 @@ class moveit_planner():
     # Utility Functions
     def print_robot_state(self):
         print("Joint Values:\n", self.group.get_current_joint_values())
-        print("Pose Values:\n", self.group.get_current_pose())
-        pose = self.group.get_current_pose().pose
-        print("Pose Euler Angles:\n", euler_from_quaternion([pose.orientation.x, pose.orientation.y, pose.orientation.z, pose.orientation.w]))
-
+        print("Pose Values (panda_hand):\n", self.group.get_current_pose())
+        print("Pose Values (panda_end_effector):\nNOTE: Quaternion is (w,x,y,z)\n", self.fa.get_pose())
+     
     def reset_joints(self):
         self.fa.reset_joints()
 
@@ -106,7 +105,6 @@ class moveit_planner():
                 interp_traj_i = joints_traj[i,:]*dt + joints_traj[i-1,:]*(1-dt)
                 interpolated_traj[(i-1)*num_interp + t_i+1,:] = interp_traj_i
                 
-        # for franka robot
         print('Executing joints trajectory of shape: ', interpolated_traj.shape)
         rate = rospy.Rate(50)
         # To ensure skill doesn't end before completing trajectory, make the buffer time much longer than needed
@@ -139,14 +137,16 @@ class moveit_planner():
     def unittest_joint(self, execute = False, guided = False):
         """
         Unit test for joint trajectory planning
-        If guided = True:
-            Robot put in run_guide_mode for 10 seconds
-            Record the final joint state
-        Else:
-            Use a fixed joint goal
-        Resets to home and plans to the recorded joint state
+        Resets to home and plans to the joint goal
         Displays the planned path to a fixed joint goal on rviz
-        Optionally Executes the planned path
+
+        Parameters
+        ----------
+        execute: bool
+            If True, executes the planned trajectory
+        guided: bool
+            If True, runs guide mode where the user can move the robot to a desired joint goal
+            Else, uses a fixed joint goal
         """
         if guided:
             print("Running Guide Mode, Move Robot to Desired Pose")
@@ -155,6 +155,7 @@ class moveit_planner():
             joint_goal_list = self.fa.get_joints()
             print("Joint Goal: ", joint_goal_list)
         else:
+            # A random joint goal
             joint_goal_list = [6.14813255e-02 ,4.11382927e-01, 6.80023936e-02,-2.09547337e+00,-2.06094866e-03,2.56799173e+00,  9.20088362e-01]
         print("Resetting Joints")
         self.fa.reset_joints()
@@ -166,15 +167,17 @@ class moveit_planner():
     
     def unittest_pose(self, execute = False, guided = False):
         """
-        Unit test for tool pose trajectory planning
-        If guided = True:
-            Robot put in run_guide_mode for 10 seconds
-            Record the final tool pose
-        Else:
-            Use a fixed tool pose goal
-        Resets to home and plans to the recorded tool pose
-        Displays the planned path to a fixed tool pose goal on rviz
-        Optionally Executes the planned path    
+        Unit test for pose trajectory planning
+        Resets to home and plans to the pose goal
+        Displays the planned path to a fixed pose goal on rviz
+
+        Parameters
+        ----------
+        execute: bool
+            If True, executes the planned trajectory
+        guided: bool
+            If True, runs guide mode where the user can move the robot to a desired pose goal
+            Else, uses a fixed pose goal
         """
         print("Unit Test for Tool Pose Trajectory Planning")
         if guided:
@@ -192,10 +195,7 @@ class moveit_planner():
             pose_goal.orientation.z = pose_goal_fa.quaternion[3]
         else:
             pose_goal = geometry_msgs.msg.Pose()
-            # These states are different from the fa.get_pose() values
-            # fa.get_pose() -> (-180, 0, -180)               x: 3.07138173e-01       -2.41627056e-04             4.86902806e-01
-            # group.get_current_pose() -> (180, 0, 45)       x: 0.30689056659294117, -2.3679704553216237e-16, z: 0.5902820523028393
-            # fa.get_pose() + 0.1z + 225 deg yaw = group.get_current_pose()
+            # a random test pose
             pose_goal.position.x = 0.5843781940153249
             pose_goal.position.y = 0.05791107711908864
             pose_goal.position.z = 0.23098061041636195
@@ -206,8 +206,6 @@ class moveit_planner():
         
         # Convert to moveit pose
         pose_goal = self.get_moveit_pose_given_frankapy_pose(pose_goal)
-        # pose_goal = self.group.get_current_pose().pose
-        # print(pose_goal, pose_goal_conv)
         print("Pose Goal: ", pose_goal)
         print("Resetting Joints")
         self.fa.reset_joints()
@@ -219,27 +217,22 @@ class moveit_planner():
 
     def get_moveit_pose_given_frankapy_pose(self, pose):
         """
-        Converts a frankapy pose to a moveit pose
-        Adds 180 degree offset to yaw, and 10 cm offset to z
+        Converts a frankapy pose (in panda_end_effector frame) to a moveit pose (in panda_hand frame) 
+        by adding a 10 cm offset to z direction
         """
-        transform_mat =  np.array([[ 1.00000000e+00,7.21391350e-06,-3.74069273e-06,-9.14757563e-07],
-                            [-7.21392068e-06,1.00000000e+00,-1.91977900e-06,-2.85452459e-06],
-                            [ 3.74067888e-06,1.91980599e-06,1.00000000e+00,-1.03400211e-01],
-                            [ 0.00000000e+00,0.00000000e+00,0.00000000e+00,1.00000000e+00]])
+        transform_mat =  np.array([[1,0,0,0],
+                                   [0,1,0,0],
+                                   [0,0,1,-0.1034],
+                                   [0,0,0,1]])
         pose_mat = self.pose_to_transformation_matrix(pose)
         transformed = pose_mat @ transform_mat
         pose_goal = self.transformation_matrix_to_pose(transformed)
-        # pose_goal = geometry_msgs.msg.Pose()
-        # pose_goal.position.x = pose.position.x
-        # pose_goal.position.y = pose.position.y
-        # pose_goal.position.z = pose.position.z + 0.10339913226933785
-        # pose_goal.orientation.x = pose.orientation.x
-        # pose_goal.orientation.y = pose.orientation.y
-        # pose_goal.orientation.z = pose.orientation.z
-        # pose_goal.orientation.w = pose.orientation.w
         return pose_goal
     
     def pose_to_transformation_matrix(self, pose):
+        """
+        Converts geometry_msgs/Pose to a 4x4 transformation matrix
+        """
         T = np.eye(4)
         T[0,3] = pose.position.x
         T[1,3] = pose.position.y
@@ -249,6 +242,9 @@ class moveit_planner():
         return T
 
     def transformation_matrix_to_pose(self, trans_mat):   
+        """
+        Converts a 4x4 transformation matrix to geometry_msgs/Pose
+        """
         out_pose = geometry_msgs.msg.Pose()
         out_pose.position.x = trans_mat[0,3]
         out_pose.position.y = trans_mat[1,3]
@@ -263,7 +259,6 @@ class moveit_planner():
         out_pose.orientation.w = quat[3] 
         return out_pose
 
-    
     def add_box(self, name, pose: geometry_msgs.msg.PoseStamped(), size):
         """
         Adds a collision box to the planning scene
@@ -284,9 +279,21 @@ class moveit_planner():
 
 if __name__ == "__main__":
     franka_moveit = moveit_planner()
-    # franka_moveit.print_robot_state()
-    
-    # Adding and removing box to planning scene
+
+    # Print Current Robot State (Joint Values and End Effector Pose)
+    franka_moveit.print_robot_state()
+
+    # Test Planning
+    # To execute the plan, set execute = True
+    # To plan to a joint goal using run_guide_mode, set guided = True
+
+    # Test Joint Planning
+    franka_moveit.unittest_joint(execute=False, guided=False) 
+
+    # Test Tool Position Planning
+    franka_moveit.unittest_pose(execute=False, guided=False)
+
+    # Adding and removing obstacle boxes to planning scene
     # box_pose = geometry_msgs.msg.PoseStamped()
     # box_pose.header.frame_id = "panda_link0"
     # box_pose.pose.position.x = 0.2
@@ -299,12 +306,3 @@ if __name__ == "__main__":
     # # franka_moveit.add_box("box", box_pose, [0.1, 0.1, 0.6])
     # franka_moveit.remove_box("box")
 
-    # Test Planning
-    # To execute the plan, set execute = True
-    # To plan to a joint goal using run_guide_mode, set guided = False
-    
-    # Test Joint Planning
-    # franka_moveit.unittest_joint(execute = True, guided = False) 
-
-    # Test Tool Position Planning
-    franka_moveit.unittest_pose(execute = True, guided=True)
