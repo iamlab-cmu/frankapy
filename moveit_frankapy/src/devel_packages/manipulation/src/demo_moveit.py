@@ -115,63 +115,39 @@ class moveit_planner():
         """
         joints_traj shape: (N x 7)
         """
-        # num_interp = 20 # number of points to interpolate between each trajectory edge
-        # interpolated_traj = np.zeros(((joints_traj.shape[0]-1)*num_interp + 1, joints_traj.shape[1]))
-        # t_interp = np.linspace(1/num_interp, 1, num_interp) # expand each trajectory edge to num_interp points
-        # interpolated_traj[0,:] = joints_traj[0,:]
-        # for i in range(1, joints_traj.shape[0]):
-        #     for t_i in range(len(t_interp)):
-        #         dt = t_interp[t_i]
-        #         interp_traj_i = joints_traj[i,:]*dt + joints_traj[i-1,:]*(1-dt)
-        #         interpolated_traj[(i-1)*num_interp + t_i+1,:] = interp_traj_i
-
-        num_interp_slow = 50
-        num_interp = 20 # number of points to interpolate between each trajectory edge
+        # interpolate the trajectory
+        num_interp_slow = 50 # number of points to interpolate for the start and end of the trajectory
+        num_interp = 20 # number of points to interpolate for the middle part of the trajectory
         interpolated_traj = []
+        t_linear = np.linspace(1/num_interp, 1, num_interp)
+        t_slow = np.linspace(1/num_interp_slow, 1, num_interp_slow)
+        t_ramp_up = t_slow**2
+        t_ramp_down = 1 - (1-t_slow)**2
 
-        t_interp_slow = np.linspace(1/num_interp_slow, 1, num_interp_slow) # expand each trajectory edge to num_interp points
-        t_interp = np.linspace(1/num_interp, 1, num_interp) # expand each trajectory edge to num_interp points
         interpolated_traj.append(joints_traj[0,:])
-        
-        for t_i in range(len(t_interp)):
-            dt = t_interp[t_i]
+        for t_i in range(len(t_ramp_up)):
+            dt = t_ramp_up[t_i]
             interp_traj_i = joints_traj[1,:]*dt + joints_traj[0,:]*(1-dt)
             interpolated_traj.append(interp_traj_i)
-        
+            
         for i in range(2, joints_traj.shape[0]-1):
-            for t_i in range(len(t_interp)):
-                dt = t_interp[t_i]
+            for t_i in range(len(t_linear)):
+                dt = t_linear[t_i]
                 interp_traj_i = joints_traj[i,:]*dt + joints_traj[i-1,:]*(1-dt)
                 interpolated_traj.append(interp_traj_i)
 
-        curr_vel = (interpolated_traj[-1] - interpolated_traj[-2])/(1/num_interp)
-        curr_pos = interpolated_traj[-1]
-        curr_acc = (curr_vel - (interpolated_traj[-2] - interpolated_traj[-3])/(1/num_interp))/(1/num_interp)
-        next_pos = self.test_fn(curr_pos=curr_pos, curr_vel=curr_vel, curr_acc=curr_acc, final_pos=joints_traj[-1], num_points=20, T=1)
-        interpolated_traj.extend(next_pos)
-        # for t_i in range(len(t_interp_slow)):
-        #     dt = t_interp_slow[t_i]
-        #     next_
-        #     interp_traj_i = 
-        #     interp_traj_i = joints_traj[-1,:]*dt + joints_traj[-2,:]*(1-dt)
-        #     interpolated_traj.append(interp_traj_i)
+        for t_i in range(len(t_ramp_down)):
+            dt = t_ramp_down[t_i]
+            interp_traj_i = joints_traj[-1,:]*dt + joints_traj[-2,:]*(1-dt)
+            interpolated_traj.append(interp_traj_i)
 
         interpolated_traj = np.array(interpolated_traj)
-        # import matplotlib.pyplot as plt
-        # plt.plot(interpolated_traj[:,0])
-        # plt.plot(interpolated_traj[:,1])
-        # plt.plot(interpolated_traj[:,2])
-        # plt.plot(interpolated_traj[:,3])
-        # plt.plot(interpolated_traj[:,4])
-        # plt.plot(interpolated_traj[:,5])
-        # plt.plot(interpolated_traj[:,6])
-        # plt.show()
-        # return    
+
         print('Executing joints trajectory of shape: ', interpolated_traj.shape)
-        # return
-        rate = rospy.Rate(20)
+
+        rate = rospy.Rate(50)
         # To ensure skill doesn't end before completing trajectory, make the buffer time much longer than needed
-        self.fa.goto_joints(interpolated_traj[1], duration=5, dynamic=True, buffer_time=10)
+        self.fa.goto_joints(interpolated_traj[1], duration=5, dynamic=True, buffer_time=20)
         init_time = rospy.Time.now().to_time()
         for i in range(2, interpolated_traj.shape[0]):
             traj_gen_proto_msg = JointPositionSensorMessage(
@@ -182,14 +158,8 @@ class moveit_planner():
                 trajectory_generator_sensor_msg=sensor_proto2ros_msg(
                     traj_gen_proto_msg, SensorDataMessageType.JOINT_POSITION)
             )
-            
-            print('Publishing: ID {}\n'.format(traj_gen_proto_msg.id), self.fa.get_joints(), "\n", interpolated_traj[i])
             self.pub.publish(ros_msg)
             rate.sleep()
-
-        # sleep for 1 second
-        rospy.sleep(1)
-        print(self.fa.get_joints(), "\n", interpolated_traj[-1])
 
         # Stop the skill
         # Alternatively can call fa.stop_skill()
