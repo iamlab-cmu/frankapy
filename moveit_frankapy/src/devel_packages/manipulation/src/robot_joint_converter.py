@@ -1,3 +1,4 @@
+# Author: Vibhakar Mohta vib2810@gmail.com
 # Node reads current robot joint state
 # - Reads manipulator joint state using ros service call through frankapy 
 # - Reads gripper joint state by subscribing to /franka_gripper_1/joint_states

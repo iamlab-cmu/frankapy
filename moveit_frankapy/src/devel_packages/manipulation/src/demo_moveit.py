@@ -1,3 +1,4 @@
+# Author: Vibhakar Mohta vib2810@gmail.com
 #!/usr/bin/env python3
 import sys
 import rospy
@@ -6,7 +7,6 @@ import moveit_msgs.msg
 import geometry_msgs.msg
 import sensor_msgs.msg
 import numpy as np
-from tf.transformations import euler_from_quaternion, quaternion_from_euler
 from moveit_msgs.msg import PlanningScene, CollisionObject
 from shape_msgs.msg import SolidPrimitive, Mesh
 import scipy.spatial.transform as spt
@@ -17,7 +17,6 @@ from frankapy import FrankaConstants as FC
 from frankapy.proto_utils import sensor_proto2ros_msg, make_sensor_group_msg
 from frankapy.proto import JointPositionSensorMessage, ShouldTerminateSensorMessage
 from franka_interface_msgs.msg import SensorDataGroup
-from frankapy.utils import min_jerk
 
 class moveit_planner():
     def __init__(self) -> None: #None means no return value
@@ -151,7 +150,7 @@ class moveit_planner():
         self.pub.publish(ros_msg)
     
     # Test Functions
-    def unittest_joint(self, execute = False, guided = False):
+    def unit_test_joint(self, execute = False, guided = False):
         """
         Unit test for joint trajectory planning
         Resets to home and plans to the joint goal
@@ -182,7 +181,7 @@ class moveit_planner():
             print("Executing Plan")
             self.execute_plan(plan_joint_vals)
     
-    def unittest_pose(self, execute = False, guided = False):
+    def unit_test_pose(self, execute = False, guided = False):
         """
         Unit test for pose trajectory planning
         Resets to home and plans to the pose goal
@@ -303,10 +302,9 @@ if __name__ == "__main__":
     # Test Planning
     # To execute the plan, set execute = True
     # To plan to a joint goal using run_guide_mode, set guided = True
-    franka_moveit.remove_box("box")
 
     # Test Joint Planning
-    franka_moveit.unittest_joint(execute=True, guided=True) 
+    franka_moveit.unit_test_joint(execute=False, guided=False) 
 
     # Test Tool Position Planning
     # franka_moveit.unittest_pose(execute=True, guided=True)
@@ -322,4 +320,7 @@ if __name__ == "__main__":
     # box_pose.pose.orientation.z = 0.02544852
     # box_pose.pose.orientation.w = -0.00495174
     # franka_moveit.add_box("box", box_pose, [0.02, 0.065, 0.015])
+
+    # Remove added obstacle box
+    # franka_moveit.remove_box("box")
 
