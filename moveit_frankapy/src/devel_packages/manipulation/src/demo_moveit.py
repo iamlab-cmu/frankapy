@@ -91,26 +91,6 @@ class moveit_planner():
         joint_values = np.array(joint_values)
         return joint_values, plan
 
-    def test_fn(self, curr_pos, curr_vel, curr_acc, final_pos, num_points, T):
-        """
-        T is num 
-        """
-        D = T
-        a0 = curr_pos
-        a1= D*curr_vel
-        a2 = D*curr_acc/2
-        a3 = -(3*D**2/2) *curr_acc - 6*D*curr_vel + 10*(final_pos - curr_pos)
-        a4 = (3*D**2/2)*curr_acc + 8*D*curr_vel - 15*(final_pos - curr_pos)
-        a5 = -(D**2/2)*curr_acc - 3*D*curr_vel + 6*(final_pos - curr_pos)
-
-        t = np.linspace(0, T, num_points)/D
-        pos = []
-        for ti in t:
-            pos.append( a0 + a1*ti + a2*ti**2 + a3*ti**3 + a4*ti**4 + a5*ti**5 )
-        # import pdb
-        # pdb.set_trace()
-        return np.array(pos)
-
     def execute_plan(self, joints_traj):
         """
         joints_traj shape: (N x 7)
