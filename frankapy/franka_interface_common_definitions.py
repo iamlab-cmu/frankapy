@@ -23,6 +23,7 @@ class SkillType:
     GripperSkill = _enum_auto('SkillType')
     ImpedanceControlSkill = _enum_auto('SkillType')
     JointPositionSkill = _enum_auto('SkillType')
+    JointTorqueSkill = _enum_auto('SkillType')
 
 
 class MetaSkillType:
@@ -64,7 +65,7 @@ class FeedbackControllerType:
     NoopFeedbackController = _enum_auto('FeedbackControllerType')
     PassThroughFeedbackController = _enum_auto('FeedbackControllerType')
     SetInternalImpedanceFeedbackController = _enum_auto('FeedbackControllerType')
-
+    TorqueFeedBackController = _enum_auto('FeedbackControllerType')
 
 class TerminationHandlerType:
     ContactTerminationHandler = _enum_auto('TerminationHandlerType')

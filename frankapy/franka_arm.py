@@ -550,6 +550,36 @@ class FrankaArm:
                         block=block,
                         ignore_errors=ignore_errors)
             
+    def apply_joint_torques(self,
+                            desired_torque,
+                            duration=5,
+                            buffer_time=FC.DEFAULT_TERM_BUFFER_TIME,   
+                            skill_desc='ApplyJointTorque'                                                     
+                            ):
+        """
+        Commands Arm to apply desired joint torque
+            desired_torque : :obj:`list` 
+                A list of 7 numbers that correspond to joint joint torques in Nm. 
+            duration : :obj:`float` 
+                How much time this robot motion should take.                  
+            buffer_time : :obj:`float` 
+                How much extra time the termination handler will wait
+                before stopping the skill after duration has passed. 
+            skill_desc : :obj:`str` 
+                Skill description to use for logging on the Control PC.                                    
+        """        
+        skill = Skill(SkillType.JointTorqueSkill, 
+                        TrajectoryGeneratorType.MinJerkJointTrajectoryGenerator,
+                        feedback_controller_type=FeedbackControllerType.TorqueFeedbackController,
+                        termination_handler_type=TerminationHandlerType.TimeTerminationHandler, 
+                        skill_desc=skill_desc)    
+        skill.add_initial_sensor_values(FC.EMPTY_SENSOR_VALUES)
+        goal = skill.create_goal()
+        self._send_goal(goal,
+                        cb=lambda x: skill.feedback_callback(x),
+                        block=block,
+                        ignore_errors=ignore_errors)
+        sleep(FC.DYNAMIC_SKILL_WAIT_TIME)
 
     def goto_joints(self,
                     joints,
@@ -2093,22 +2123,22 @@ class FrankaArm:
     Unimplemented
     """
 
-    def apply_joint_torques(self, torques, duration, ignore_errors=True, skill_desc='',):
-        """
-        NOT IMPLEMENTED YET
+    # def apply_joint_torques(self, torques, duration, ignore_errors=True, skill_desc='',):
+    #     """
+    #     NOT IMPLEMENTED YET
 
-        Commands the arm to apply given joint torques for duration seconds.
+    #     Commands the arm to apply given joint torques for duration seconds.
 
-        Parameters
-        ----------
-            torques : :obj:`list` 
-                A list of 7 numbers that correspond to torques in Nm.
-            duration : :obj:`float`
-                How much time this robot motion should take.
-            skill_desc : :obj:`str` 
-                Skill description to use for logging on control-pc.
-        """
-        pass
+    #     Parameters
+    #     ----------
+    #         torques : :obj:`list` 
+    #             A list of 7 numbers that correspond to torques in Nm.
+    #         duration : :obj:`float`
+    #             How much time this robot motion should take.
+    #         skill_desc : :obj:`str` 
+    #             Skill description to use for logging on control-pc.
+    #     """
+    #     pass
 
     def set_speed(self, speed):
         """
