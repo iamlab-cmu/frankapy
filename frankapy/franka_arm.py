@@ -570,16 +570,17 @@ class FrankaArm:
         """        
         skill = Skill(SkillType.JointTorqueSkill, 
                         TrajectoryGeneratorType.MinJerkJointTrajectoryGenerator,
-                        feedback_controller_type=FeedbackControllerType.TorqueFeedbackController,
+                        feedback_controller_type=FeedbackControllerType.TorqueFeedBackController,
                         termination_handler_type=TerminationHandlerType.TimeTerminationHandler, 
                         skill_desc=skill_desc)    
         skill.add_initial_sensor_values(FC.EMPTY_SENSOR_VALUES)
         goal = skill.create_goal()
         self._send_goal(goal,
                         cb=lambda x: skill.feedback_callback(x),
-                        block=block,
-                        ignore_errors=ignore_errors)
+                        block=False,
+                        ignore_errors=False)
         sleep(FC.DYNAMIC_SKILL_WAIT_TIME)
+
 
     def goto_joints(self,
                     joints,
