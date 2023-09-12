@@ -574,6 +574,8 @@ class FrankaArm:
                         termination_handler_type=TerminationHandlerType.TimeTerminationHandler, 
                         skill_desc=skill_desc)    
         skill.add_initial_sensor_values(FC.EMPTY_SENSOR_VALUES)
+        skill.add_time_termination_params(buffer_time)
+        skill.add_run_time(duration)
         goal = skill.create_goal()
         self._send_goal(goal,
                         cb=lambda x: skill.feedback_callback(x),
