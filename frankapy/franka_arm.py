@@ -576,6 +576,7 @@ class FrankaArm:
         skill.add_initial_sensor_values(FC.EMPTY_SENSOR_VALUES)
         skill.add_time_termination_params(buffer_time)
         skill.add_run_time(duration)
+        skill.add_goal_joints(duration, desired_torque)
         goal = skill.create_goal()
         self._send_goal(goal,
                         cb=lambda x: skill.feedback_callback(x),
