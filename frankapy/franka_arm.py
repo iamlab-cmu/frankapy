@@ -89,7 +89,6 @@ class FrankaArm:
         self._with_gripper = with_gripper
         self._old_gripper = old_gripper
         self._last_gripper_command = None
-
         # init ROS
         if init_node:
             rospy.init_node(rosnode_name,
@@ -97,7 +96,7 @@ class FrankaArm:
                             log_level=ros_log_level)
         self._collision_boxes_pub = BoxesPublisher('franka_collision_boxes_{}'.format(robot_num))
         self._joint_state_pub = rospy.Publisher('franka_virtual_joints_{}'.format(robot_num), JointState, queue_size=10)
-        
+
         self._state_client = FrankaArmStateClient(
                 new_ros_node=False,
                 robot_state_server_name=self._robot_state_server_name,
@@ -115,7 +114,6 @@ class FrankaArm:
                     self._execute_skill_action_server_name, ExecuteSkillAction)
             self._client.wait_for_server()
             self.wait_for_franka_interface()
-
             if self._with_gripper and not self._old_gripper:
                 self._gripper_homing_client = SimpleActionClient(
                     self._gripper_homing_action_server_name, HomingAction)
@@ -171,6 +169,7 @@ class FrankaArm:
             if franka_interface_status.is_ready:
                 return
             sleep(1e-2)
+
         raise FrankaArmCommException('FrankaInterface status not ready for {}s'.format(
             FC.DEFAULT_FRANKA_INTERFACE_TIMEOUT))
 
@@ -550,6 +549,40 @@ class FrankaArm:
                         block=block,
                         ignore_errors=ignore_errors)
             
+    def apply_joint_torques(self,
+                            desired_torque,
+                            duration=5,
+                            buffer_time=FC.DEFAULT_TERM_BUFFER_TIME,   
+                            skill_desc='ApplyJointTorque'                                                     
+                            ):
+        """
+        Commands Arm to apply desired joint torque
+            desired_torque : :obj:`list` 
+                A list of 7 numbers that correspond to joint joint torques in Nm. 
+            duration : :obj:`float` 
+                How much time this robot motion should take.                  
+            buffer_time : :obj:`float` 
+                How much extra time the termination handler will wait
+                before stopping the skill after duration has passed. 
+            skill_desc : :obj:`str` 
+                Skill description to use for logging on the Control PC.                                    
+        """        
+        skill = Skill(SkillType.JointTorqueSkill, 
+                      TrajectoryGeneratorType.MinJerkJointTrajectoryGenerator,
+                      feedback_controller_type=FeedbackControllerType.TorqueFeedbackController,
+                      termination_handler_type=TerminationHandlerType.TimeTerminationHandler, 
+                      skill_desc=skill_desc)    
+        skill.add_initial_sensor_values(FC.EMPTY_SENSOR_VALUES)
+        skill.add_time_termination_params(buffer_time)
+        skill.add_run_time(duration)
+        skill.add_goal_joints(duration, desired_torque)
+        goal = skill.create_goal()
+        self._send_goal(goal,
+                        cb=lambda x: skill.feedback_callback(x),
+                        block=False,
+                        ignore_errors=False)
+        sleep(FC.DYNAMIC_SKILL_WAIT_TIME)
+
 
     def goto_joints(self,
                     joints,
@@ -2092,24 +2125,6 @@ class FrankaArm:
     """
     Unimplemented
     """
-
-    def apply_joint_torques(self, torques, duration, ignore_errors=True, skill_desc='',):
-        """
-        NOT IMPLEMENTED YET
-
-        Commands the arm to apply given joint torques for duration seconds.
-
-        Parameters
-        ----------
-            torques : :obj:`list` 
-                A list of 7 numbers that correspond to torques in Nm.
-            duration : :obj:`float`
-                How much time this robot motion should take.
-            skill_desc : :obj:`str` 
-                Skill description to use for logging on control-pc.
-        """
-        pass
-
     def set_speed(self, speed):
         """
         NOT IMPLEMENTED YET
