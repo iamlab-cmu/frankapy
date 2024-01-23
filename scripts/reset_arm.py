@@ -1,5 +1,4 @@
 import argparse
-import frankapy
 from frankapy import FrankaArm
 
 if __name__ == '__main__':

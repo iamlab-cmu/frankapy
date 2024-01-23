@@ -65,7 +65,7 @@ class FeedbackControllerType:
     NoopFeedbackController = _enum_auto('FeedbackControllerType')
     PassThroughFeedbackController = _enum_auto('FeedbackControllerType')
     SetInternalImpedanceFeedbackController = _enum_auto('FeedbackControllerType')
-    TorqueFeedBackController = _enum_auto('FeedbackControllerType')
+    TorqueFeedbackController = _enum_auto('FeedbackControllerType')
 
 class TerminationHandlerType:
     ContactTerminationHandler = _enum_auto('TerminationHandlerType')

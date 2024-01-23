@@ -162,7 +162,6 @@ class FrankaArm:
         timeout : :obj:`float`
             Timeout in seconds to wait for franka-interface.
         """
-
         timeout = FC.DEFAULT_FRANKA_INTERFACE_TIMEOUT if timeout is None else timeout
         t_start = time()
         while time() - t_start < timeout:
@@ -569,10 +568,10 @@ class FrankaArm:
                 Skill description to use for logging on the Control PC.                                    
         """        
         skill = Skill(SkillType.JointTorqueSkill, 
-                        TrajectoryGeneratorType.MinJerkJointTrajectoryGenerator,
-                        feedback_controller_type=FeedbackControllerType.TorqueFeedBackController,
-                        termination_handler_type=TerminationHandlerType.TimeTerminationHandler, 
-                        skill_desc=skill_desc)    
+                      TrajectoryGeneratorType.MinJerkJointTrajectoryGenerator,
+                      feedback_controller_type=FeedbackControllerType.TorqueFeedbackController,
+                      termination_handler_type=TerminationHandlerType.TimeTerminationHandler, 
+                      skill_desc=skill_desc)    
         skill.add_initial_sensor_values(FC.EMPTY_SENSOR_VALUES)
         skill.add_time_termination_params(buffer_time)
         skill.add_run_time(duration)
@@ -2126,24 +2125,6 @@ class FrankaArm:
     """
     Unimplemented
     """
-
-    # def apply_joint_torques(self, torques, duration, ignore_errors=True, skill_desc='',):
-    #     """
-    #     NOT IMPLEMENTED YET
-
-    #     Commands the arm to apply given joint torques for duration seconds.
-
-    #     Parameters
-    #     ----------
-    #         torques : :obj:`list` 
-    #             A list of 7 numbers that correspond to torques in Nm.
-    #         duration : :obj:`float`
-    #             How much time this robot motion should take.
-    #         skill_desc : :obj:`str` 
-    #             Skill description to use for logging on control-pc.
-    #     """
-    #     pass
-
     def set_speed(self, speed):
         """
         NOT IMPLEMENTED YET
