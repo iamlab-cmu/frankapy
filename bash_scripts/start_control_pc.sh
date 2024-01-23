@@ -1,4 +1,4 @@
- #!/bin/bash
+#!/bin/bash
 
 die () {
     echo >&2 "$@"
@@ -20,24 +20,24 @@ where:
     -o Using old gripper commands (0 (default) / 1)
     -l Log at 1kHz on franka-interface (0 (default) / 1)
     -e Stop franka-interface when an error has occurred (0 (default) / 1)
-    -w workstation IP address(default hostname)
+    
     ./start_control_pc.sh -i iam-space
     ./start_control_pc.sh -i iam-space -u iam-lab -p 12345678 -d ~/Documents/franka-interface -r 1 -s 0
     "
 
-control_pc_uname="pairlab"
-control_pc_use_password=1
+control_pc_uname="iam-lab"
+control_pc_use_password=0
 control_pc_password=""
-control_pc_franka_interface_path="/home/pairlab/franka-interface"
+control_pc_franka_interface_path="Documents/franka-interface"
 start_franka_interface=1
 robot_number=1
-robot_ip=""
+robot_ip="172.16.0.2"
 with_gripper=1
 old_gripper=0
 log_on_franka_interface=0
 stop_on_error=0
-workstation_ip_address="`hostname`"
-while getopts ':h:i:u:p:d:r:a:s:g:o:l:e:w:' option; do
+
+while getopts ':h:i:u:p:d:r:a:s:g:o:l:e' option; do
   case "${option}" in
     h) echo "$usage"
        exit
@@ -65,8 +65,6 @@ while getopts ':h:i:u:p:d:r:a:s:g:o:l:e:w:' option; do
        ;;
     e) stop_on_error=$OPTARG
        ;;
-    w) workstation_ip_address="$OPTARG"
-       ;;      
     :) printf "missing argument for -%s\n" "$OPTARG" >&2
        echo "$usage" >&2
        exit 1
@@ -79,7 +77,7 @@ while getopts ':h:i:u:p:d:r:a:s:g:o:l:e:w:' option; do
 done
 shift $((OPTIND - 1))
 
-#workstation_ip_address="192.168.0.1"
+workstation_ip_address="`hostname`"
 
 # Notify the IP addresses being used.
 echo "Control PC IP uname/address: "$control_pc_uname"@"$control_pc_ip_address
@@ -98,38 +96,38 @@ then
     start_rosmaster_path="$DIR/start_rosmaster.sh"
     echo "Will start ROS master in new terminal."$start_rosmaster_path
     gnome-terminal --working-directory="$DIR" -- bash $start_rosmaster_path
+    sleep 3
     echo "Did start ROS master in new terminal."
 else
     echo "Roscore is already running"
 fi
 
 if [ "$with_gripper" -eq 0 ]; then
-let old_gripper=0  
+let old_gripper=0
 fi
 
 if [ "$start_franka_interface" -eq 1 ]; then
 # ssh to the control pc and start franka_interface in a new gnome-terminal
-echo $DIR
 start_franka_interface_on_control_pc_path="$DIR/start_franka_interface_on_control_pc.sh"
-echo $start_franka_interface_on_control_pc_path
 echo "Will ssh to control PC and start franka-interface."
 gnome-terminal --working-directory="$DIR" -- bash $start_franka_interface_on_control_pc_path $robot_ip $old_gripper $log_on_franka_interface $stop_on_error $control_pc_uname $control_pc_ip_address $control_pc_franka_interface_path $control_pc_use_password $control_pc_password 
 echo "Done"
+sleep 3
 else
 echo "Will not start franka-interface on the control pc."
 fi
 
 # ssh to the control pc and start ROS action server in a new gnome-terminal
 start_franka_ros_interface_on_control_pc_path="$DIR/start_franka_ros_interface_on_control_pc.sh"
-echo $start_franka_ros_interface_on_control_pc_path
 echo "Will ssh to control PC and start ROS action server."
 gnome-terminal --working-directory="$DIR" -- bash $start_franka_ros_interface_on_control_pc_path $control_pc_uname $control_pc_ip_address $workstation_ip_address $control_pc_franka_interface_path $robot_number $control_pc_use_password $control_pc_password
-
+sleep 3
 
 if [ "$with_gripper" -eq 1 ] && [ "$old_gripper" -eq 0 ]; then
 start_franka_gripper_on_control_pc_path="$DIR/start_franka_gripper_on_control_pc.sh"
 echo "Will ssh to control PC and start ROS action server."
 gnome-terminal --working-directory="$DIR" -- bash $start_franka_gripper_on_control_pc_path $control_pc_uname $control_pc_ip_address $workstation_ip_address $control_pc_franka_interface_path $robot_number $robot_ip $control_pc_use_password $control_pc_password
+sleep 3
 else
     echo "Will not start franka gripper on the control pc."
 fi
