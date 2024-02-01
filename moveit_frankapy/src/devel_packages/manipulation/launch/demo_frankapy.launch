@@ -1,0 +1,70 @@
+<!-- A modified version of the panda_moveit_config/launch/demo.launch file -->
+<launch>
+  <arg name="arm_id" default="panda" />
+
+  <!-- specify the planning pipeline -->
+  <arg name="pipeline" default="ompl" />
+
+  <!-- By default, we do not start a database (it can be large) -->
+  <arg name="db" default="false" />
+  <!-- Allow user to specify database location -->
+  <arg name="db_path" default="$(find panda_moveit_config)/default_warehouse_mongo_db" />
+
+  <!-- By default, we are not in debug mode -->
+  <arg name="debug" default="false" />
+
+  <!-- By default we will load the gripper -->
+  <arg name="load_gripper" default="true" />
+
+  <!-- By default, we will load or override the robot_description -->
+  <arg name="load_robot_description" default="true"/>
+
+  <!-- Choose controller manager: fake, simple, or ros_control -->
+  <arg name="moveit_controller_manager" default="fake" />
+  <!-- Set execution mode for fake execution controllers -->
+  <arg name="fake_execution_type" default="interpolate" />
+  <!-- Transmission used for joint control: position, velocity, or effort -->
+  <arg name="transmission" />
+
+  <!-- By default, hide joint_state_publisher's GUI in 'fake' controller_manager mode -->
+  <arg name="use_gui" default="false" />
+  <arg name="use_rviz" default="true" />
+  <!-- Use rviz config for MoveIt tutorial -->
+  <arg name="rviz_tutorial" default="false" />
+
+  <!-- If needed, broadcast static tf for robot root -->
+  <!-- <node pkg="tf2_ros" type="static_transform_publisher" name="virtual_joint_broadcaster_0" args="0 0 0 0 0 0 world $(arg arm_id)_link0" /> -->
+
+  <group if="$(eval arg('moveit_controller_manager') == 'fake')">
+    <!-- Real robot joints are remapped on the /real_robot_joints topic, which the joint_state_publisher uses -->
+    <node name="joint_state_publisher" pkg="joint_state_publisher" type="joint_state_publisher" unless="$(arg use_gui)">
+      <rosparam param="source_list">[real_robot_joints]</rosparam> 
+      <!-- <rosparam param="source_list">[move_group/fake_controller_joint_states]</rosparam> -->
+    </node>
+
+    <!-- Given the published joint states, publish tf for the robot links -->
+    <node name="robot_state_publisher" pkg="robot_state_publisher" type="robot_state_publisher" respawn="true" output="screen" />
+  </group>
+
+  <!-- Run the main MoveIt executable without trajectory execution (we do not have controllers configured by default) -->
+  <include file="$(find panda_moveit_config)/launch/move_group.launch" pass_all_args="true">
+    <arg name="allow_trajectory_execution" value="true" />
+    <arg name="info" value="true" />
+  </include>
+
+  <!-- Run Rviz and load the default config to see the state of the move_group node -->
+  <include file="$(find panda_moveit_config)/launch/moveit_rviz.launch" if="$(arg use_rviz)">
+    <arg name="rviz_tutorial" value="$(arg rviz_tutorial)"/>
+    <arg name="rviz_config" value="$(find panda_moveit_config)/launch/moveit.rviz"/>
+    <arg name="debug" value="$(arg debug)"/>
+  </include>
+
+  <!-- If database loading was enabled, start mongodb as well -->
+  <include file="$(find panda_moveit_config)/launch/default_warehouse_db.launch" if="$(arg db)">
+    <arg name="moveit_warehouse_database_path" value="$(arg db_path)"/>
+  </include>
+
+  <!-- Launch robot_joint_converter node -->
+  <node name="robot_joint_converter" pkg="manipulation" type="robot_joint_converter.py" output="screen" />
+
+</launch>
