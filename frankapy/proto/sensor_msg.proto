@@ -31,6 +31,13 @@ message PosePositionVelocitySensorMessage {
   repeated double pose_velocities = 6;
 }
 
+message JointVelocitySensorMessage {
+  required int32 id = 1;
+  required double timestamp = 2;
+
+  repeated double joint_velocities = 3;
+}
+
 message JointPositionSensorMessage {
   required int32 id = 1;
   required double timestamp = 2;
@@ -44,6 +51,13 @@ message PosePositionSensorMessage {
 
   repeated double position = 3;
   repeated double quaternion = 4;
+}
+
+message CartesianVelocitySensorMessage {
+  required int32 id = 1;
+  required double timestamp = 2;
+
+  repeated double cartesian_velocities = 3;
 }
 
 message ShouldTerminateSensorMessage {

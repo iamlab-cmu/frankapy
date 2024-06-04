@@ -27,6 +27,7 @@ class FrankaArmStateClient:
         if self._offline:
             logging.warn('In offline mode - FrankaArmStateClient will return 0 values.')
             return {
+                'cartesian_velocities': np.zeros(6),
                 'pose': franka_pose_to_rigid_transform(np.eye(4)),
                 'pose_desired': franka_pose_to_rigid_transform(np.eye(4)),
                 'joint_torques': np.zeros(7),
@@ -42,6 +43,7 @@ class FrankaArmStateClient:
         ros_data = self._get_current_robot_state().robot_state
 
         data = {
+            'cartesian_velocities': np.array(ros_data.O_dP_EE_c),
             'pose': franka_pose_to_rigid_transform(ros_data.O_T_EE),
             'pose_desired': franka_pose_to_rigid_transform(ros_data.O_T_EE_d),
             'joint_torques': np.array(ros_data.tau_J),

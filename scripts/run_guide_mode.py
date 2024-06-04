@@ -13,3 +13,5 @@ if __name__ == '__main__':
         fa.open_gripper()
     print('Applying 0 force torque control for {}s'.format(args.time))
     fa.run_guide_mode(args.time)
+    print(fa.get_pose())
+    print(fa.get_joints())

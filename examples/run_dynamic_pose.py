@@ -29,7 +29,6 @@ if __name__ == "__main__":
     T = 5
     dt = 0.02
     ts = np.arange(0, T, dt)
-    current_gripper_width = 0.08
     has_closed = False
 
     weights = [min_jerk_weight(t, T) for t in ts]
@@ -64,17 +63,6 @@ if __name__ == "__main__":
             feedback_controller_sensor_msg=sensor_proto2ros_msg(
                 fb_ctrlr_proto, SensorDataMessageType.CARTESIAN_IMPEDANCE)
             )
-
-        if not has_closed:
-            current_gripper_width -= 0.0005
-        else:
-            current_gripper_width += 0.0005
-
-        if current_gripper_width < 0.002:
-            has_closed = True
-
-        fa.goto_gripper(current_gripper_width, block=False)
-
         
         rospy.loginfo('Publishing: ID {}'.format(traj_gen_proto_msg.id))
         pub.publish(ros_msg)

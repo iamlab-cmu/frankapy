@@ -17,12 +17,14 @@ def _enum_auto(key):
     return val
 
 
-class SkillType:
+class SkillType:    
     CartesianPoseSkill = _enum_auto('SkillType')
+    CartesianVelocitySkill = _enum_auto('SkillType')
     ForceTorqueSkill = _enum_auto('SkillType')
     GripperSkill = _enum_auto('SkillType')
     ImpedanceControlSkill = _enum_auto('SkillType')
     JointPositionSkill = _enum_auto('SkillType')
+    JointVelocitySkill = _enum_auto('SkillType')
 
 
 class MetaSkillType:
@@ -31,19 +33,23 @@ class MetaSkillType:
 
 
 class TrajectoryGeneratorType:
+    CartesianVelocityTrajectoryGenerator = _enum_auto('TrajectoryGeneratorType')
     CubicHermiteSplineJointTrajectoryGenerator = _enum_auto('TrajectoryGeneratorType')
     CubicHermiteSplinePoseTrajectoryGenerator = _enum_auto('TrajectoryGeneratorType')
     GoalPoseDmpTrajectoryGenerator = _enum_auto('TrajectoryGeneratorType')
     GripperTrajectoryGenerator = _enum_auto('TrajectoryGeneratorType')
     ImpulseTrajectoryGenerator = _enum_auto('TrajectoryGeneratorType')
     JointDmpTrajectoryGenerator = _enum_auto('TrajectoryGeneratorType')
+    JointVelocityTrajectoryGenerator = _enum_auto('TrajectoryGeneratorType')
     LinearForcePositionTrajectoryGenerator = _enum_auto('TrajectoryGeneratorType')
     LinearJointTrajectoryGenerator = _enum_auto('TrajectoryGeneratorType')
     LinearPoseTrajectoryGenerator = _enum_auto('TrajectoryGeneratorType')
     MinJerkJointTrajectoryGenerator = _enum_auto('TrajectoryGeneratorType')
     MinJerkPoseTrajectoryGenerator = _enum_auto('TrajectoryGeneratorType')
+    PassThroughCartesianVelocityTrajectoryGenerator = _enum_auto('TrajectoryGeneratorType')
     PassThroughForcePositionTrajectoryGenerator = _enum_auto('TrajectoryGeneratorType')
     PassThroughJointTrajectoryGenerator = _enum_auto('TrajectoryGeneratorType')
+    PassThroughJointVelocityTrajectoryGenerator = _enum_auto('TrajectoryGeneratorType')
     PassThroughPoseTrajectoryGenerator = _enum_auto('TrajectoryGeneratorType')
     PoseDmpTrajectoryGenerator = _enum_auto('TrajectoryGeneratorType')
     QuaternionPoseDmpTrajectoryGenerator = _enum_auto('TrajectoryGeneratorType')
@@ -84,10 +90,12 @@ class SkillStatus:
 class SensorDataMessageType:
     BOUNDING_BOX = _enum_auto('SensorDataMessageType')
     CARTESIAN_IMPEDANCE = _enum_auto('SensorDataMessageType')
+    CARTESIAN_VELOCITY = _enum_auto('SensorDataMessageType')
     FORCE_POSITION = _enum_auto('SensorDataMessageType')
     FORCE_POSITION_GAINS = _enum_auto('SensorDataMessageType')
     JOINT_POSITION_VELOCITY = _enum_auto('SensorDataMessageType')
     JOINT_POSITION = _enum_auto('SensorDataMessageType')
+    JOINT_VELOCITY = _enum_auto('SensorDataMessageType')
     POSE_POSITION_VELOCITY = _enum_auto('SensorDataMessageType')
     POSE_POSITION = _enum_auto('SensorDataMessageType')
     SHOULD_TERMINATE = _enum_auto('SensorDataMessageType')

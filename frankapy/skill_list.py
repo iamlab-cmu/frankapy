@@ -149,9 +149,9 @@ class Skill:
                 "Incorrect cartesian impedances len. Should be 0 or 6."
         assert len(joint_impedances) == 0 or len(joint_impedances) == 7, \
                 "Incorrect joint impedances len. Should be 0 or 7."
-        assert self._skill_type == SkillType.CartesianPoseSkill or self._skill_type == SkillType.JointPositionSkill, \
-                "Incorrect skill type. Should be CartesianPoseSkill or JointPositionSkill."
-
+        assert self._skill_type == SkillType.CartesianPoseSkill or self._skill_type == SkillType.JointPositionSkill \
+            or self._skill_type == SkillType.CartesianVelocitySkill or self._skill_type == SkillType.JointVelocitySkill, \
+                "Incorrect skill type. Should be CartesianPoseSkill, JointPositionSkill, CartesianVelocitySkill, or JointVelocitySkill."
         internal_feedback_controller_msg_proto = \
                 InternalImpedanceFeedbackControllerMessage(
                         cartesian_impedances=cartesian_impedances, joint_impedances=joint_impedances)
@@ -325,6 +325,20 @@ class Skill:
 
         self.add_trajectory_params(impulse_trajectory_generator_msg_proto.SerializeToString())
 
+    def add_goal_cartesian_velocities(self, run_time, cartesian_velocities, cartesian_accelerations):
+        assert type(run_time) is float or type(run_time) is int,\
+                "Incorrect time type. Should be int or float."
+        assert run_time >= 0, "Incorrect time. Should be non negative."
+        assert type(cartesian_velocities) is list, "Incorrect cartesian_velocities type. Should be list."
+        assert len(cartesian_velocities) == 6, "Incorrect cartesian_velocities len. Should be 7."
+        assert type(cartesian_accelerations) is list, "Incorrect cartesian_accelerations type. Should be list."
+        assert len(cartesian_accelerations) == 6, "Incorrect cartesian_accelerations len. Should be 7."
+
+        cartesian_velocity_trajectory_generator_msg_proto = CartesianVelocityTrajectoryGeneratorMessage(run_time=run_time, 
+                                                    cartesian_velocities=cartesian_velocities, cartesian_accelerations=cartesian_accelerations)
+
+        self.add_trajectory_params(cartesian_velocity_trajectory_generator_msg_proto.SerializeToString())
+
     def add_goal_pose(self, run_time, goal_pose):
         assert type(run_time) is float or type(run_time) is int, \
                 "Incorrect run_time type. Should be int or float."
@@ -347,6 +361,20 @@ class Skill:
         joint_trajectory_generator_msg_proto = JointTrajectoryGeneratorMessage(run_time=run_time, joints=joints)
 
         self.add_trajectory_params(joint_trajectory_generator_msg_proto.SerializeToString())
+
+    def add_goal_joint_velocities(self, run_time, joint_velocities, joint_accelerations):
+        assert type(run_time) is float or type(run_time) is int,\
+                "Incorrect time type. Should be int or float."
+        assert run_time >= 0, "Incorrect time. Should be non negative."
+        assert type(joint_velocities) is list, "Incorrect joint_velocities type. Should be list."
+        assert len(joint_velocities) == 7, "Incorrect joint_velocities len. Should be 7."
+        assert type(joint_accelerations) is list, "Incorrect joint_accelerations type. Should be list."
+        assert len(joint_accelerations) == 7, "Incorrect joint_accelerations len. Should be 7."
+
+        joint_velocity_trajectory_generator_msg_proto = JointVelocityTrajectoryGeneratorMessage(run_time=run_time, 
+                                                    joint_velocities=joint_velocities, joint_accelerations=joint_accelerations)
+
+        self.add_trajectory_params(joint_velocity_trajectory_generator_msg_proto.SerializeToString())
 
     def add_joint_dmp_params(self, run_time, joint_dmp_info, initial_sensor_values):
         assert type(run_time) is float or type(run_time) is int,\

@@ -23,6 +23,20 @@ message JointTrajectoryGeneratorMessage {
   repeated double joints = 2;
 }
 
+message JointVelocityTrajectoryGeneratorMessage {
+  required double run_time = 1;
+
+  repeated double joint_velocities = 2;
+  repeated double joint_accelerations = 3;
+}
+
+message CartesianVelocityTrajectoryGeneratorMessage {
+  required double run_time = 1;
+
+  repeated double cartesian_velocities = 2;
+  repeated double cartesian_accelerations = 3;
+}
+
 message PoseTrajectoryGeneratorMessage {
   required double run_time = 1;
 
@@ -55,7 +69,7 @@ message PoseDMPTrajectoryGeneratorMessage {
   required double beta = 7;
   required double num_basis = 8;
   required double num_sensor_values = 9;
-
+  
   repeated double basis_mean = 10;
   repeated double basis_std = 11;
   repeated double weights = 12;
