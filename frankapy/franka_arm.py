@@ -1522,13 +1522,13 @@ class FrankaArm:
                 skill = Skill(SkillType.ImpedanceControlSkill, 
                               TrajectoryGeneratorType.StayInInitialJointsTrajectoryGenerator,
                               feedback_controller_type=FeedbackControllerType.JointImpedanceFeedbackController,
-                              termination_handler_type=TerminationHandlerType.FinalJointTerminationHandler, 
+                              termination_handler_type=TerminationHandlerType.TimeTerminationHandler, 
                               skill_desc=skill_desc)
             else:
                 skill = Skill(SkillType.JointPositionSkill, 
                               TrajectoryGeneratorType.StayInInitialJointsTrajectoryGenerator,
                               feedback_controller_type=FeedbackControllerType.SetInternalImpedanceFeedbackController,
-                              termination_handler_type=TerminationHandlerType.FinalJointTerminationHandler, 
+                              termination_handler_type=TerminationHandlerType.TimeTerminationHandler, 
                               skill_desc=skill_desc)
         else:
             if use_impedance:
