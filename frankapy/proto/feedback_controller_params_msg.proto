@@ -30,3 +30,8 @@ message ForcePositionFeedbackControllerMessage {
   repeated double selection = 5;
   required bool use_cartesian_gains = 6;
 }
+
+message JointTorqueFeedbackControllerMessage {
+  repeated double selection = 1;
+  required double joint_torques = 2;
+}

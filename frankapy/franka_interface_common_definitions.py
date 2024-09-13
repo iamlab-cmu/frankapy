@@ -69,6 +69,7 @@ class FeedbackControllerType:
     JointImpedanceFeedbackController = _enum_auto('FeedbackControllerType')
     NoopFeedbackController = _enum_auto('FeedbackControllerType')
     PassThroughFeedbackController = _enum_auto('FeedbackControllerType')
+    PassThroughJointTorqueFeedbackController = _enum_auto('FeedbackControllerType')
     SetInternalImpedanceFeedbackController = _enum_auto('FeedbackControllerType')
 
 
@@ -96,6 +97,7 @@ class SensorDataMessageType:
     JOINT_POSITION_VELOCITY = _enum_auto('SensorDataMessageType')
     JOINT_POSITION = _enum_auto('SensorDataMessageType')
     JOINT_VELOCITY = _enum_auto('SensorDataMessageType')
+    JOINT_TORQUE = _enum_auto('SensorDataMessageType')
     POSE_POSITION_VELOCITY = _enum_auto('SensorDataMessageType')
     POSE_POSITION = _enum_auto('SensorDataMessageType')
     SHOULD_TERMINATE = _enum_auto('SensorDataMessageType')

@@ -92,3 +92,11 @@ message ForcePositionControllerSensorMessage {
   repeated double force_kps_joint = 6;
   repeated double selection = 7;
 }
+
+message JointTorqueControllerSensorMessage {
+  required int32 id = 1;
+  required double timestamp = 2;
+
+  repeated double selection = 3;
+  repeated double joint_torques = 4;
+}

@@ -158,18 +158,18 @@ class Skill:
 
         self.add_feedback_controller_params(internal_feedback_controller_msg_proto.SerializeToString())
 
-    def add_joint_gains(self, k_gains, d_gains):
-        assert type(k_gains) is list, "Incorrect k_gains type. Should be list."
-        assert type(d_gains) is list, "Incorrect d_gains type. Should be list."
-        assert len(k_gains) == 7, "Incorrect k_gains len. Should be 7."
-        assert len(d_gains) == 7, "Incorrect d_gains len. Should be 7."
+    def add_joint_torques(self, joint_torques, selection):
+        assert type(joint_torques) is list, "Incorrect joint_torques type. Should be list."
+        assert type(selection) is list, "Incorrect selection type. Should be list."
+        assert len(joint_torques) == 7, "Incorrect joint_torques len. Should be 7."
+        assert len(selection) == 7, "Incorrect selection len. Should be 7."
         assert self._skill_type == SkillType.ImpedanceControlSkill, \
                 "Incorrect skill type. Should be ImpedanceControlSkill"
 
-        joint_feedback_controller_msg_proto = \
-            JointImpedanceFeedbackControllerMessage(k_gains=k_gains, d_gains=d_gains)
+        joint_torque_controller_msg_proto = \
+            JointTorqueFeedbackControllerMessage(joint_torques=joint_torques, selection=selection)
 
-        self.add_feedback_controller_params(joint_feedback_controller_msg_proto.SerializeToString())
+        self.add_torque_controller_params(joint_torque_controller_msg_proto.SerializeToString())
 
     def add_force_position_params(self, position_kps_cart, force_kps_cart, position_kps_joint, force_kps_joint, S, use_cartesian_gains):
         assert type(position_kps_cart) is list or len(position_kps_cart) == 6, \
@@ -192,6 +192,19 @@ class Skill:
                 selection=S, use_cartesian_gains=use_cartesian_gains)
         
         self.add_feedback_controller_params(force_position_feedback_controller_msg_proto.SerializeToString())
+
+    def add_joint_gains(self, k_gains, d_gains):
+        assert type(k_gains) is list, "Incorrect k_gains type. Should be list."
+        assert type(d_gains) is list, "Incorrect d_gains type. Should be list."
+        assert len(k_gains) == 7, "Incorrect k_gains len. Should be 7."
+        assert len(d_gains) == 7, "Incorrect d_gains len. Should be 7."
+        assert self._skill_type == SkillType.ImpedanceControlSkill, \
+                "Incorrect skill type. Should be ImpedanceControlSkill"
+
+        joint_feedback_controller_msg_proto = \
+            JointImpedanceFeedbackControllerMessage(k_gains=k_gains, d_gains=d_gains)
+
+        self.add_feedback_controller_params(joint_feedback_controller_msg_proto.SerializeToString())
         
     ## Termination Handlers
 
