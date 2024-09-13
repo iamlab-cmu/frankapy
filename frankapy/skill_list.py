@@ -171,7 +171,7 @@ class Skill:
         joint_torque_controller_msg_proto = \
             JointTorqueFeedbackControllerMessage(joint_torques=joint_torques, selection=selection, remove_gravity=remove_gravity)
 
-        self.add_torque_controller_params(joint_torque_controller_msg_proto.SerializeToString())
+        self.add_feedback_controller_params(joint_torque_controller_msg_proto.SerializeToString())
 
     def add_force_position_params(self, position_kps_cart, force_kps_cart, position_kps_joint, force_kps_joint, S, use_cartesian_gains):
         assert type(position_kps_cart) is list or len(position_kps_cart) == 6, \

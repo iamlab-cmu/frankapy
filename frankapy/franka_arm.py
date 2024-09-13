@@ -852,7 +852,7 @@ class FrankaArm:
             if dynamic:
                 skill.add_time_termination_params(buffer_time)
             else:
-                skill.add_joint_threshold_params(buffer_time, FC.DEFAULT_JOINT_THRESHOLDS)
+                print("Unimplemented Joint Velocity Skill")
 
         skill.add_goal_joint_velocities(duration, joint_velocities, joint_accelerations)
         goal = skill.create_goal()
@@ -870,7 +870,7 @@ class FrankaArm:
                     selection=[0,0,0,0,0,0,0],
                     remove_gravity=[0,0,0,0,0,0,0],
                     duration=5,
-                    dynamic=True,
+                    dynamic=False,
                     buffer_time=FC.DEFAULT_TERM_BUFFER_TIME,
                     force_thresholds=None,
                     torque_thresholds=None,
@@ -926,24 +926,22 @@ class FrankaArm:
         selection = np.array(selection).tolist() 
 
         if dynamic:
-            skill = Skill(SkillType.ImpedanceControlSkill, 
-                          TrajectoryGeneratorType.StayInInitialJointsTrajectoryGenerator,
-                          feedback_controller_type=FeedbackControllerType.PassThroughJointTorqueFeedbackController,
-                          termination_handler_type=TerminationHandlerType.TimeTerminationHandler, 
-                          skill_desc=skill_desc)
             block = False
         else:
-            print("Unimplemented Joint Torque Skill")
+            block = True
+
+        skill = Skill(SkillType.ImpedanceControlSkill, 
+                    TrajectoryGeneratorType.StayInInitialJointsTrajectoryGenerator,
+                    feedback_controller_type=FeedbackControllerType.PassThroughJointTorqueFeedbackController,
+                    termination_handler_type=TerminationHandlerType.TimeTerminationHandler, 
+                    skill_desc=skill_desc)
 
         skill.add_initial_sensor_values(FC.EMPTY_SENSOR_VALUES)
 
         skill.add_run_time(duration)
 
         if not skill.check_for_contact_params(buffer_time, force_thresholds, torque_thresholds):
-            if dynamic:
-                skill.add_time_termination_params(buffer_time)
-            else:
-                skill.add_joint_threshold_params(buffer_time, FC.DEFAULT_JOINT_THRESHOLDS)
+            skill.add_time_termination_params(buffer_time)
 
         skill.add_joint_torques(joint_torques, selection, remove_gravity)
 
