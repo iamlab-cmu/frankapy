@@ -158,16 +158,18 @@ class Skill:
 
         self.add_feedback_controller_params(internal_feedback_controller_msg_proto.SerializeToString())
 
-    def add_joint_torques(self, joint_torques, selection):
+    def add_joint_torques(self, joint_torques, selection, remove_gravity):
         assert type(joint_torques) is list, "Incorrect joint_torques type. Should be list."
         assert type(selection) is list, "Incorrect selection type. Should be list."
+        assert type(remove_gravity) is list, "Incorrect remove_gravity type. Should be list."
         assert len(joint_torques) == 7, "Incorrect joint_torques len. Should be 7."
         assert len(selection) == 7, "Incorrect selection len. Should be 7."
+        assert len(remove_gravity) == 7, "Incorrect remove_gravity len. Should be 7."
         assert self._skill_type == SkillType.ImpedanceControlSkill, \
                 "Incorrect skill type. Should be ImpedanceControlSkill"
 
         joint_torque_controller_msg_proto = \
-            JointTorqueFeedbackControllerMessage(joint_torques=joint_torques, selection=selection)
+            JointTorqueFeedbackControllerMessage(joint_torques=joint_torques, selection=selection, remove_gravity=remove_gravity)
 
         self.add_torque_controller_params(joint_torque_controller_msg_proto.SerializeToString())
 

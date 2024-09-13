@@ -867,7 +867,8 @@ class FrankaArm:
 
     def execute_joint_torques(self,
                     joint_torques,
-                    selection,
+                    selection=[0,0,0,0,0,0,0],
+                    remove_gravity=[0,0,0,0,0,0,0],
                     duration=5,
                     dynamic=True,
                     buffer_time=FC.DEFAULT_TERM_BUFFER_TIME,
@@ -887,6 +888,9 @@ class FrankaArm:
             selection : :obj:`list` 
                 A list of 7 numbers that indicate whether to use the joint torques passed in or not. 
                 If 1 is passed in for a specific joint, the robot will use the joint torque for that joint.
+            remove_gravity : :obj:`list` 
+                A list of 7 numbers that indicate whether to remove gravity from that joint or not. 
+                If 1 is passed in for a specific joint, the robot will subtract gravity for that joint.
             duration : :obj:`float` 
                 How much time this robot motion should take.
             dynamic : :obj:`bool` 
@@ -941,7 +945,7 @@ class FrankaArm:
             else:
                 skill.add_joint_threshold_params(buffer_time, FC.DEFAULT_JOINT_THRESHOLDS)
 
-        skill.add_joint_torques(joint_torques, selection)
+        skill.add_joint_torques(joint_torques, selection, remove_gravity)
 
         goal = skill.create_goal()
 

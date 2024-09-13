@@ -98,5 +98,6 @@ message JointTorqueControllerSensorMessage {
   required double timestamp = 2;
 
   repeated double selection = 3;
-  repeated double joint_torques = 4;
+  repeated double remove_gravity = 4;
+  repeated double joint_torques = 5;
 }

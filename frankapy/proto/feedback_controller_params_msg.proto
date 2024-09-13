@@ -33,5 +33,6 @@ message ForcePositionFeedbackControllerMessage {
 
 message JointTorqueFeedbackControllerMessage {
   repeated double selection = 1;
-  required double joint_torques = 2;
+  repeated double remove_gravity = 2;
+  repeated double joint_torques = 3;
 }
