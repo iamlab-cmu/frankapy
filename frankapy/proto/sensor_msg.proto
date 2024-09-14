@@ -100,4 +100,6 @@ message JointTorqueControllerSensorMessage {
   repeated double selection = 3;
   repeated double remove_gravity = 4;
   repeated double joint_torques = 5;
+  repeated double k_gains = 6;
+  repeated double d_gains = 7;
 }

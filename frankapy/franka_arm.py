@@ -874,6 +874,8 @@ class FrankaArm:
                     buffer_time=FC.DEFAULT_TERM_BUFFER_TIME,
                     force_thresholds=None,
                     torque_thresholds=None,
+                    k_gains=None,
+                    d_gains=None,
                     block=True,
                     ignore_errors=True,
                     ignore_virtual_walls=False,
@@ -906,6 +908,14 @@ class FrankaArm:
             torque_thresholds : :obj:`list` 
                 List of 7 floats corresponding to torque limits on each joint. 
                 Default is None. If None then will not stop on contact.
+            k_gains : :obj:`list` 
+                List of 7 floats corresponding to the k_gains on each joint for 
+                our impedance controller. Default is None. If None then will use 
+                default k_gains.
+            d_gains : :obj:`list` 
+                List of 7 floats corresponding to the d_gains on each joint for 
+                our impedance controller. Default is None. If None then will use 
+                default d_gains.
             block : :obj:`bool` 
                 Function blocks by default. If False, the function becomes
                 asynchronous and can be preempted.
@@ -930,6 +940,15 @@ class FrankaArm:
         else:
             block = True
 
+        if k_gains is None:
+            k_gains = FC.DEFAULT_K_GAINS
+        else:
+            k_gains = np.array(k_gains).tolist()
+        if d_gains is None:
+            d_gains = FC.DEFAULT_D_GAINS
+        else:
+            d_gains = np.array(d_gains).tolist()
+
         skill = Skill(SkillType.ImpedanceControlSkill, 
                     TrajectoryGeneratorType.StayInInitialJointsTrajectoryGenerator,
                     feedback_controller_type=FeedbackControllerType.PassThroughJointTorqueFeedbackController,
@@ -943,7 +962,7 @@ class FrankaArm:
         if not skill.check_for_contact_params(buffer_time, force_thresholds, torque_thresholds):
             skill.add_time_termination_params(buffer_time)
 
-        skill.add_joint_torques(joint_torques, selection, remove_gravity)
+        skill.add_joint_torques(joint_torques, selection, remove_gravity, k_gains, d_gains)
 
         goal = skill.create_goal()
 

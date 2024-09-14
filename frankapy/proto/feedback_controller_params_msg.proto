@@ -35,4 +35,6 @@ message JointTorqueFeedbackControllerMessage {
   repeated double selection = 1;
   repeated double remove_gravity = 2;
   repeated double joint_torques = 3;
+  repeated double k_gains = 4;
+  repeated double d_gains = 5;
 }
