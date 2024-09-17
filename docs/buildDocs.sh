@@ -23,9 +23,9 @@ apt-get -y install ros-noetic-libfranka ros-noetic-franka-ros
 sudo rosdep init
 rosdep update
 
-pip3 install --upgrade pip
-pip3 install .
-pip install numpy==1.20 --upgrade
+sudo -H pip3 install --upgrade pip
+sudo -H pip3 install .
+sudo -H pip install numpy==1.20 --upgrade
 
 source /opt/ros/noetic/setup.bash
 
