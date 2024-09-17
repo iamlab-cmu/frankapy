@@ -1,0 +1,1494 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>Frankapy &mdash; frankapy 1.0.0 documentation</title>
+  
+
+  
+  
+  
+  
+
+  
+  <script type="text/javascript" src="_static/js/modernizr.min.js"></script>
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
+        <script type="text/javascript" src="_static/jquery.js"></script>
+        <script type="text/javascript" src="_static/underscore.js"></script>
+        <script type="text/javascript" src="_static/doctools.js"></script>
+        <script type="text/javascript" src="_static/language_data.js"></script>
+    
+    <script type="text/javascript" src="_static/js/theme.js"></script>
+
+    
+
+  
+  <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="Support" href="support.html" />
+    <link rel="prev" title="Running the Robot" href="running.html" /> 
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+          
+
+          
+            <a href="index.html" class="icon icon-home"> frankapy
+          
+
+          
+          </a>
+
+          
+            
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="install.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="network.html">Network Configuration</a></li>
+<li class="toctree-l1"><a class="reference internal" href="running.html">Running the Robot</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Frankapy</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#frankaarm">FrankaArm</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="support.html">Support</a></li>
+</ul>
+
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">frankapy</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="index.html">Docs</a> &raquo;</li>
+        
+      <li>Frankapy</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+            
+            <a href="_sources/frankaarm.rst.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <div class="section" id="frankapy">
+<h1>Frankapy<a class="headerlink" href="#frankapy" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="frankaarm">
+<h2>FrankaArm<a class="headerlink" href="#frankaarm" title="Permalink to this headline">¶</a></h2>
+<dl class="class">
+<dt id="frankapy.FrankaArm">
+<em class="property">class </em><code class="descclassname">frankapy.</code><code class="descname">FrankaArm</code><span class="sig-paren">(</span><em>rosnode_name='franka_arm_client'</em>, <em>ros_log_level=2</em>, <em>robot_num=1</em>, <em>with_gripper=True</em>, <em>old_gripper=False</em>, <em>offline=False</em>, <em>init_node=True</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/frankapy/franka_arm.html#FrankaArm"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#frankapy.FrankaArm" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<dl class="method">
+<dt id="frankapy.FrankaArm.__init__">
+<code class="descname">__init__</code><span class="sig-paren">(</span><em>rosnode_name='franka_arm_client'</em>, <em>ros_log_level=2</em>, <em>robot_num=1</em>, <em>with_gripper=True</em>, <em>old_gripper=False</em>, <em>offline=False</em>, <em>init_node=True</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/frankapy/franka_arm.html#FrankaArm.__init__"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#frankapy.FrankaArm.__init__" title="Permalink to this definition">¶</a></dt>
+<dd><p>Initialize a FrankaArm.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>rosnode_name</strong> (<code class="xref py py-obj docutils literal notranslate"><span class="pre">str</span></code>) – A name for the FrankaArm ROS Node.</li>
+<li><strong>ros_log_level</strong> (<code class="xref py py-obj docutils literal notranslate"><span class="pre">rospy.log_level</span></code> of int) – Passed to rospy.init_node.</li>
+<li><strong>robot_num</strong> (<code class="xref py py-obj docutils literal notranslate"><span class="pre">int</span></code>) – Number assigned to the current robot.</li>
+<li><strong>with_gripper</strong> (<code class="xref py py-obj docutils literal notranslate"><span class="pre">bool</span></code>) – Flag for whether the Franka gripper is attached.</li>
+<li><strong>old_gripper</strong> (<code class="xref py py-obj docutils literal notranslate"><span class="pre">bool</span></code>) – Flag for whether to run the franka_ros gripper or the old_gripper
+implementation.</li>
+<li><strong>offline</strong> (<code class="xref py py-obj docutils literal notranslate"><span class="pre">bool</span></code>) – Flag for whether to run the robot in the real world.</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="frankapy.FrankaArm.wait_for_franka_interface">
+<code class="descname">wait_for_franka_interface</code><span class="sig-paren">(</span><em>timeout=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/frankapy/franka_arm.html#FrankaArm.wait_for_franka_interface"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#frankapy.FrankaArm.wait_for_franka_interface" title="Permalink to this definition">¶</a></dt>
+<dd><p>Blocks execution until franka-interface gives ready signal.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>timeout</strong> (<code class="xref py py-obj docutils literal notranslate"><span class="pre">float</span></code>) – Timeout in seconds to wait for franka-interface.</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="frankapy.FrankaArm.wait_for_skill">
+<code class="descname">wait_for_skill</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/frankapy/franka_arm.html#FrankaArm.wait_for_skill"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#frankapy.FrankaArm.wait_for_skill" title="Permalink to this definition">¶</a></dt>
+<dd><p>Blocks execution until skill is done.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="frankapy.FrankaArm.wait_for_gripper">
+<code class="descname">wait_for_gripper</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/frankapy/franka_arm.html#FrankaArm.wait_for_gripper"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#frankapy.FrankaArm.wait_for_gripper" title="Permalink to this definition">¶</a></dt>
+<dd><p>Blocks execution until gripper is done.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="frankapy.FrankaArm.is_skill_done">
+<code class="descname">is_skill_done</code><span class="sig-paren">(</span><em>ignore_errors=True</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/frankapy/franka_arm.html#FrankaArm.is_skill_done"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#frankapy.FrankaArm.is_skill_done" title="Permalink to this definition">¶</a></dt>
+<dd><p>Checks whether skill is done.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>ignore_errors</strong> (<code class="xref py py-obj docutils literal notranslate"><span class="pre">bool</span></code>) – Flag of whether to ignore errors.</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">Flag of whether the skill is done.</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><code class="xref py py-obj docutils literal notranslate"><span class="pre">bool</span></code></td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="frankapy.FrankaArm.stop_skill">
+<code class="descname">stop_skill</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/frankapy/franka_arm.html#FrankaArm.stop_skill"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#frankapy.FrankaArm.stop_skill" title="Permalink to this definition">¶</a></dt>
+<dd><p>Stops the current skill.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="frankapy.FrankaArm.goto_pose">
+<code class="descname">goto_pose</code><span class="sig-paren">(</span><em>tool_pose</em>, <em>duration=3</em>, <em>use_impedance=True</em>, <em>dynamic=False</em>, <em>buffer_time=0.2</em>, <em>force_thresholds=None</em>, <em>torque_thresholds=None</em>, <em>cartesian_impedances=None</em>, <em>joint_impedances=None</em>, <em>block=True</em>, <em>ignore_errors=True</em>, <em>ignore_virtual_walls=False</em>, <em>skill_desc='GoToPose'</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/frankapy/franka_arm.html#FrankaArm.goto_pose"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#frankapy.FrankaArm.goto_pose" title="Permalink to this definition">¶</a></dt>
+<dd><p>Commands Arm to the given pose via min jerk interpolation</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>tool_pose</strong> (<code class="xref py py-obj docutils literal notranslate"><span class="pre">autolab_core.RigidTransform</span></code>) – End-effector pose in tool frame</li>
+<li><strong>duration</strong> (<code class="xref py py-obj docutils literal notranslate"><span class="pre">float</span></code>) – How much time this robot motion should take.</li>
+<li><strong>use_impedance</strong> (<code class="xref py py-obj docutils literal notranslate"><span class="pre">bool</span></code>) – Function uses our impedance controller by default.
+If False, uses the Franka cartesian controller.</li>
+<li><strong>dynamic</strong> (<code class="xref py py-obj docutils literal notranslate"><span class="pre">bool</span></code>) – Flag that states whether the skill is dynamic.
+If True, it will use our joint impedance controller
+and sensor values.</li>
+<li><strong>buffer_time</strong> (<code class="xref py py-obj docutils literal notranslate"><span class="pre">float</span></code>) – How much extra time the termination handler will wait
+before stopping the skill after duration has passed.</li>
+<li><strong>force_thresholds</strong> (<code class="xref py py-obj docutils literal notranslate"><span class="pre">list</span></code>) – List of 6 floats corresponding to force limits on
+translation (xyz) and rotation about (xyz) axes.
+Default is None. If None then will not stop on contact.</li>
+<li><strong>torque_thresholds</strong> (<code class="xref py py-obj docutils literal notranslate"><span class="pre">list</span></code>) – List of 7 floats corresponding to torque limits on each joint.
+Default is None. If None then will not stop on contact.</li>
+<li><strong>cartesian_impedances</strong> (<code class="xref py py-obj docutils literal notranslate"><span class="pre">list</span></code>) – List of 6 floats corresponding to impedances on translation
+(xyz) and rotation about (xyz) axes. Default is None.
+If None then will use default impedances.</li>
+<li><strong>joint_impedances</strong> (<code class="xref py py-obj docutils literal notranslate"><span class="pre">list</span></code>) – List of 7 floats corresponding to impedances on each joint.
+This is used when use_impedance is False. Default is None.
+If None then will use default impedances.</li>
+<li><strong>block</strong> (<code class="xref py py-obj docutils literal notranslate"><span class="pre">bool</span></code>) – Function blocks by default. If False, the function becomes
+asynchronous and can be preempted.</li>
+<li><strong>ignore_errors</strong> (<code class="xref py py-obj docutils literal notranslate"><span class="pre">bool</span></code>) – Function ignores errors by default. If False, errors and
+some exceptions can be thrown.</li>
+<li><strong>ignore_virtual_walls</strong> (<code class="xref py py-obj docutils literal notranslate"><span class="pre">bool</span></code>) – Function checks for collisions with virtual walls by default.
+If False, the robot no longer checks, which may be dangerous.</li>
+<li><strong>skill_desc</strong> (<code class="xref py py-obj docutils literal notranslate"><span class="pre">str</span></code>) – Skill description to use for logging on the Control PC.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Raises:</th><td class="field-body"><p class="first last"><em>ValueError: If tool_pose does not have from_frame=franka_tool and</em> – to_frame=world or tool_pose is outside the virtual walls.</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="frankapy.FrankaArm.goto_pose_delta">
+<code class="descname">goto_pose_delta</code><span class="sig-paren">(</span><em>delta_tool_pose</em>, <em>duration=3</em>, <em>use_impedance=True</em>, <em>buffer_time=0.2</em>, <em>force_thresholds=None</em>, <em>torque_thresholds=None</em>, <em>cartesian_impedances=None</em>, <em>joint_impedances=None</em>, <em>block=True</em>, <em>ignore_errors=True</em>, <em>ignore_virtual_walls=False</em>, <em>skill_desc='GoToPoseDelta'</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/frankapy/franka_arm.html#FrankaArm.goto_pose_delta"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#frankapy.FrankaArm.goto_pose_delta" title="Permalink to this definition">¶</a></dt>
+<dd><p>Commands Arm to the given delta pose via min jerk interpolation</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>delta_tool_pose</strong> (<code class="xref py py-obj docutils literal notranslate"><span class="pre">autolab_core.RigidTransform</span></code>) – Delta pose in tool frame</li>
+<li><strong>duration</strong> (<code class="xref py py-obj docutils literal notranslate"><span class="pre">float</span></code>) – How much time this robot motion should take.</li>
+<li><strong>use_impedance</strong> (<code class="xref py py-obj docutils literal notranslate"><span class="pre">bool</span></code>) – Function uses our impedance controller by default.
+If False, uses the Franka cartesian controller.</li>
+<li><strong>buffer_time</strong> (<code class="xref py py-obj docutils literal notranslate"><span class="pre">float</span></code>) – How much extra time the termination handler will wait
+before stopping the skill after duration has passed.</li>
+<li><strong>force_thresholds</strong> (<code class="xref py py-obj docutils literal notranslate"><span class="pre">list</span></code>) – List of 6 floats corresponding to force limits on translation
+(xyz) and rotation about (xyz) axes.
+Default is None. If None then will not stop on contact.</li>
+<li><strong>torque_thresholds</strong> (<code class="xref py py-obj docutils literal notranslate"><span class="pre">list</span></code>) – List of 7 floats corresponding to torque limits on each joint.
+Default is None. If None then will not stop on contact.</li>
+<li><strong>cartesian_impedances</strong> (<code class="xref py py-obj docutils literal notranslate"><span class="pre">list</span></code>) – List of 6 floats corresponding to impedances on translation
+(xyz) and rotation about (xyz) axes. Default is None.
+If None then will use default impedances.</li>
+<li><strong>joint_impedances</strong> (<code class="xref py py-obj docutils literal notranslate"><span class="pre">list</span></code>) – List of 7 floats corresponding to impedances on each joint.
+This is used when use_impedance is False. Default is None.
+If None then will use default impedances.</li>
+<li><strong>block</strong> (<code class="xref py py-obj docutils literal notranslate"><span class="pre">bool</span></code>) – Function blocks by default. If False, the function becomes
+asynchronous and can be preempted.</li>
+<li><strong>ignore_errors</strong> (<code class="xref py py-obj docutils literal notranslate"><span class="pre">bool</span></code>) – Function ignores errors by default. If False, errors and
+some exceptions can be thrown.</li>
+<li><strong>ignore_virtual_walls</strong> (<code class="xref py py-obj docutils literal notranslate"><span class="pre">bool</span></code>) – Function checks for collisions with virtual walls by default.
+If False, the robot no longer checks, which may be dangerous.</li>
+<li><strong>skill_desc</strong> (<code class="xref py py-obj docutils literal notranslate"><span class="pre">str</span></code>) – Skill description to use for logging on the Control PC.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Raises:</th><td class="field-body"><p class="first last"><code class="xref py py-exc docutils literal notranslate"><span class="pre">ValueError</span></code> – If delta_pose does not have from_frame=franka_tool and
+to_frame=franka_tool or from_frame=world and to_frame=world.</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="frankapy.FrankaArm.goto_joints">
+<code class="descname">goto_joints</code><span class="sig-paren">(</span><em>joints</em>, <em>duration=5</em>, <em>use_impedance=False</em>, <em>dynamic=False</em>, <em>buffer_time=0.2</em>, <em>force_thresholds=None</em>, <em>torque_thresholds=None</em>, <em>cartesian_impedances=None</em>, <em>joint_impedances=None</em>, <em>k_gains=None</em>, <em>d_gains=None</em>, <em>block=True</em>, <em>ignore_errors=True</em>, <em>ignore_virtual_walls=False</em>, <em>skill_desc='GoToJoints'</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/frankapy/franka_arm.html#FrankaArm.goto_joints"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#frankapy.FrankaArm.goto_joints" title="Permalink to this definition">¶</a></dt>
+<dd><p>Commands Arm to the given joint configuration</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>joints</strong> (<code class="xref py py-obj docutils literal notranslate"><span class="pre">list</span></code>) – A list of 7 numbers that correspond to joint angles in radians.</li>
+<li><strong>duration</strong> (<code class="xref py py-obj docutils literal notranslate"><span class="pre">float</span></code>) – How much time this robot motion should take.</li>
+<li><strong>use_impedance</strong> (<code class="xref py py-obj docutils literal notranslate"><span class="pre">bool</span></code>) – Function uses the Franka joint impedance controller by default.
+If True, uses our joint impedance controller.</li>
+<li><strong>dynamic</strong> (<code class="xref py py-obj docutils literal notranslate"><span class="pre">bool</span></code>) – Flag that states whether the skill is dynamic. If True, it
+will use our joint impedance controller and sensor values.</li>
+<li><strong>buffer_time</strong> (<code class="xref py py-obj docutils literal notranslate"><span class="pre">float</span></code>) – How much extra time the termination handler will wait
+before stopping the skill after duration has passed.</li>
+<li><strong>force_thresholds</strong> (<code class="xref py py-obj docutils literal notranslate"><span class="pre">list</span></code>) – List of 6 floats corresponding to force limits on translation
+(xyz) and rotation about (xyz) axes. Default is None.
+If None then will not stop on contact.</li>
+<li><strong>torque_thresholds</strong> (<code class="xref py py-obj docutils literal notranslate"><span class="pre">list</span></code>) – List of 7 floats corresponding to torque limits on each joint.
+Default is None. If None then will not stop on contact.</li>
+<li><strong>cartesian_impedances</strong> (<code class="xref py py-obj docutils literal notranslate"><span class="pre">list</span></code>) – List of 6 floats corresponding to impedances on translation
+(xyz) and rotation about (xyz) axes. Default is None. If None
+then will use default impedances.</li>
+<li><strong>joint_impedances</strong> (<code class="xref py py-obj docutils literal notranslate"><span class="pre">list</span></code>) – List of 7 floats corresponding to impedances on each joint.
+This is used when use_impedance is False. Default is None.
+If None then will use default impedances.</li>
+<li><strong>k_gains</strong> (<code class="xref py py-obj docutils literal notranslate"><span class="pre">list</span></code>) – List of 7 floats corresponding to the k_gains on each joint for
+our impedance controller. This is used when use_impedance is
+True. Default is None. If None then will use default k_gains.</li>
+<li><strong>d_gains</strong> (<code class="xref py py-obj docutils literal notranslate"><span class="pre">list</span></code>) – List of 7 floats corresponding to the d_gains on each joint for
+our impedance controller. This is used when use_impedance is
+True. Default is None. If None then will use default d_gains.</li>
+<li><strong>block</strong> (<code class="xref py py-obj docutils literal notranslate"><span class="pre">bool</span></code>) – Function blocks by default. If False, the function becomes
+asynchronous and can be preempted.</li>
+<li><strong>ignore_errors</strong> (<code class="xref py py-obj docutils literal notranslate"><span class="pre">bool</span></code>) – Function ignores errors by default. If False, errors and some
+exceptions can be thrown.</li>
+<li><strong>ignore_virtual_walls</strong> (<code class="xref py py-obj docutils literal notranslate"><span class="pre">bool</span></code>) – Function checks for collisions with virtual walls by default.
+If False, the robot no longer checks, which may be dangerous.</li>
+<li><strong>skill_desc</strong> (<code class="xref py py-obj docutils literal notranslate"><span class="pre">str</span></code>) – Skill description to use for logging on the Control PC.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Raises:</th><td class="field-body"><p class="first last"><code class="xref py py-exc docutils literal notranslate"><span class="pre">ValueError</span></code> – If is_joints_reachable(joints) returns False</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="frankapy.FrankaArm.execute_cartesian_velocities">
+<code class="descname">execute_cartesian_velocities</code><span class="sig-paren">(</span><em>cartesian_velocities</em>, <em>cartesian_accelerations</em>, <em>duration=5</em>, <em>dynamic=False</em>, <em>buffer_time=0.2</em>, <em>force_thresholds=None</em>, <em>torque_thresholds=None</em>, <em>cartesian_impedances=None</em>, <em>joint_impedances=None</em>, <em>block=True</em>, <em>ignore_errors=True</em>, <em>ignore_virtual_walls=False</em>, <em>skill_desc='ExecutecartesianVelocities'</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/frankapy/franka_arm.html#FrankaArm.execute_cartesian_velocities"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#frankapy.FrankaArm.execute_cartesian_velocities" title="Permalink to this definition">¶</a></dt>
+<dd><p>Commands Arm to execute cartesian velocities</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>cartesian_velocities</strong> (<code class="xref py py-obj docutils literal notranslate"><span class="pre">list</span></code>) – A list of 6 numbers that correspond to cartesian velocities in m/s and rad/s.</li>
+<li><strong>cartesian_accelerations</strong> (<code class="xref py py-obj docutils literal notranslate"><span class="pre">list</span></code>) – A list of 6 numbers that correspond to cartesian accelerations in m/s^2 and rad/s^2.</li>
+<li><strong>duration</strong> (<code class="xref py py-obj docutils literal notranslate"><span class="pre">float</span></code>) – How much time this robot motion should take.</li>
+<li><strong>dynamic</strong> (<code class="xref py py-obj docutils literal notranslate"><span class="pre">bool</span></code>) – Flag that states whether the skill is dynamic. If True, it
+will use our cartesian impedance controller and sensor values.</li>
+<li><strong>buffer_time</strong> (<code class="xref py py-obj docutils literal notranslate"><span class="pre">float</span></code>) – How much extra time the termination handler will wait
+before stopping the skill after duration has passed.</li>
+<li><strong>force_thresholds</strong> (<code class="xref py py-obj docutils literal notranslate"><span class="pre">list</span></code>) – List of 6 floats corresponding to force limits on translation
+(xyz) and rotation about (xyz) axes. Default is None.
+If None then will not stop on contact.</li>
+<li><strong>torque_thresholds</strong> (<code class="xref py py-obj docutils literal notranslate"><span class="pre">list</span></code>) – List of 7 floats corresponding to torque limits on each joint.
+Default is None. If None then will not stop on contact.</li>
+<li><strong>cartesian_impedances</strong> (<code class="xref py py-obj docutils literal notranslate"><span class="pre">list</span></code>) – List of 6 floats corresponding to impedances on translation
+(xyz) and rotation about (xyz) axes. Default is None. If None
+then will use default impedances.</li>
+<li><strong>joint_impedances</strong> (<code class="xref py py-obj docutils literal notranslate"><span class="pre">list</span></code>) – List of 7 floats corresponding to impedances on each joint.
+This is used when use_impedance is False. Default is None.
+If None then will use default impedances.</li>
+<li><strong>block</strong> (<code class="xref py py-obj docutils literal notranslate"><span class="pre">bool</span></code>) – Function blocks by default. If False, the function becomes
+asynchronous and can be preempted.</li>
+<li><strong>ignore_errors</strong> (<code class="xref py py-obj docutils literal notranslate"><span class="pre">bool</span></code>) – Function ignores errors by default. If False, errors and some
+exceptions can be thrown.</li>
+<li><strong>ignore_virtual_walls</strong> (<code class="xref py py-obj docutils literal notranslate"><span class="pre">bool</span></code>) – Function checks for collisions with virtual walls by default.
+If False, the robot no longer checks, which may be dangerous.</li>
+<li><strong>skill_desc</strong> (<code class="xref py py-obj docutils literal notranslate"><span class="pre">str</span></code>) – Skill description to use for logging on the Control PC.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Raises:</th><td class="field-body"><p class="first last"><code class="xref py py-exc docutils literal notranslate"><span class="pre">ValueError</span></code> – If is_cartesians_reachable(cartesians) returns False</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="frankapy.FrankaArm.execute_joint_velocities">
+<code class="descname">execute_joint_velocities</code><span class="sig-paren">(</span><em>joint_velocities</em>, <em>joint_accelerations</em>, <em>duration=5</em>, <em>dynamic=False</em>, <em>buffer_time=0.2</em>, <em>force_thresholds=None</em>, <em>torque_thresholds=None</em>, <em>cartesian_impedances=None</em>, <em>joint_impedances=None</em>, <em>block=True</em>, <em>ignore_errors=True</em>, <em>ignore_virtual_walls=False</em>, <em>skill_desc='ExecuteJointVelocities'</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/frankapy/franka_arm.html#FrankaArm.execute_joint_velocities"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#frankapy.FrankaArm.execute_joint_velocities" title="Permalink to this definition">¶</a></dt>
+<dd><p>Commands Arm to execute joint velocities</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>joint_velocities</strong> (<code class="xref py py-obj docutils literal notranslate"><span class="pre">list</span></code>) – A list of 7 numbers that correspond to joint velocities in radians/second.</li>
+<li><strong>joint_accelerations</strong> (<code class="xref py py-obj docutils literal notranslate"><span class="pre">list</span></code>) – A list of 7 numbers that correspond to joint accelerations in radians/second^2.</li>
+<li><strong>duration</strong> (<code class="xref py py-obj docutils literal notranslate"><span class="pre">float</span></code>) – How much time this robot motion should take.</li>
+<li><strong>dynamic</strong> (<code class="xref py py-obj docutils literal notranslate"><span class="pre">bool</span></code>) – Flag that states whether the skill is dynamic. If True, it
+will use our joint impedance controller and sensor values.</li>
+<li><strong>buffer_time</strong> (<code class="xref py py-obj docutils literal notranslate"><span class="pre">float</span></code>) – How much extra time the termination handler will wait
+before stopping the skill after duration has passed.</li>
+<li><strong>force_thresholds</strong> (<code class="xref py py-obj docutils literal notranslate"><span class="pre">list</span></code>) – List of 6 floats corresponding to force limits on translation
+(xyz) and rotation about (xyz) axes. Default is None.
+If None then will not stop on contact.</li>
+<li><strong>torque_thresholds</strong> (<code class="xref py py-obj docutils literal notranslate"><span class="pre">list</span></code>) – List of 7 floats corresponding to torque limits on each joint.
+Default is None. If None then will not stop on contact.</li>
+<li><strong>cartesian_impedances</strong> (<code class="xref py py-obj docutils literal notranslate"><span class="pre">list</span></code>) – List of 6 floats corresponding to impedances on translation
+(xyz) and rotation about (xyz) axes. Default is None. If None
+then will use default impedances.</li>
+<li><strong>joint_impedances</strong> (<code class="xref py py-obj docutils literal notranslate"><span class="pre">list</span></code>) – List of 7 floats corresponding to impedances on each joint.
+This is used when use_impedance is False. Default is None.
+If None then will use default impedances.</li>
+<li><strong>block</strong> (<code class="xref py py-obj docutils literal notranslate"><span class="pre">bool</span></code>) – Function blocks by default. If False, the function becomes
+asynchronous and can be preempted.</li>
+<li><strong>ignore_errors</strong> (<code class="xref py py-obj docutils literal notranslate"><span class="pre">bool</span></code>) – Function ignores errors by default. If False, errors and some
+exceptions can be thrown.</li>
+<li><strong>ignore_virtual_walls</strong> (<code class="xref py py-obj docutils literal notranslate"><span class="pre">bool</span></code>) – Function checks for collisions with virtual walls by default.
+If False, the robot no longer checks, which may be dangerous.</li>
+<li><strong>skill_desc</strong> (<code class="xref py py-obj docutils literal notranslate"><span class="pre">str</span></code>) – Skill description to use for logging on the Control PC.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Raises:</th><td class="field-body"><p class="first last"><code class="xref py py-exc docutils literal notranslate"><span class="pre">ValueError</span></code> – If is_joints_reachable(joints) returns False</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="frankapy.FrankaArm.execute_joint_torques">
+<code class="descname">execute_joint_torques</code><span class="sig-paren">(</span><em>joint_torques, selection=[0, 0, 0, 0, 0, 0, 0], remove_gravity=[0, 0, 0, 0, 0, 0, 0], duration=5, dynamic=False, buffer_time=0.2, force_thresholds=None, torque_thresholds=None, k_gains=None, d_gains=None, block=True, ignore_errors=True, ignore_virtual_walls=False, skill_desc='ExecuteJointTorques'</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/frankapy/franka_arm.html#FrankaArm.execute_joint_torques"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#frankapy.FrankaArm.execute_joint_torques" title="Permalink to this definition">¶</a></dt>
+<dd><p>Commands Arm to execute joint torques</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>joint_torques</strong> (<code class="xref py py-obj docutils literal notranslate"><span class="pre">list</span></code>) – A list of 7 numbers that correspond to joint torques in radians/second.</li>
+<li><strong>selection</strong> (<code class="xref py py-obj docutils literal notranslate"><span class="pre">list</span></code>) – A list of 7 numbers that indicate whether to use the joint torques passed in or not.
+If 1 is passed in for a specific joint, the robot will use the joint torque for that joint.</li>
+<li><strong>remove_gravity</strong> (<code class="xref py py-obj docutils literal notranslate"><span class="pre">list</span></code>) – A list of 7 numbers that indicate whether to remove gravity from that joint or not.
+If 1 is passed in for a specific joint, the robot will subtract gravity for that joint.</li>
+<li><strong>duration</strong> (<code class="xref py py-obj docutils literal notranslate"><span class="pre">float</span></code>) – How much time this robot motion should take.</li>
+<li><strong>dynamic</strong> (<code class="xref py py-obj docutils literal notranslate"><span class="pre">bool</span></code>) – Flag that states whether the skill is dynamic. If True, it
+will use our joint impedance controller and sensor values.</li>
+<li><strong>buffer_time</strong> (<code class="xref py py-obj docutils literal notranslate"><span class="pre">float</span></code>) – How much extra time the termination handler will wait
+before stopping the skill after duration has passed.</li>
+<li><strong>force_thresholds</strong> (<code class="xref py py-obj docutils literal notranslate"><span class="pre">list</span></code>) – List of 6 floats corresponding to force limits on translation
+(xyz) and rotation about (xyz) axes. Default is None.
+If None then will not stop on contact.</li>
+<li><strong>torque_thresholds</strong> (<code class="xref py py-obj docutils literal notranslate"><span class="pre">list</span></code>) – List of 7 floats corresponding to torque limits on each joint.
+Default is None. If None then will not stop on contact.</li>
+<li><strong>k_gains</strong> (<code class="xref py py-obj docutils literal notranslate"><span class="pre">list</span></code>) – List of 7 floats corresponding to the k_gains on each joint for
+our impedance controller. Default is None. If None then will use
+default k_gains.</li>
+<li><strong>d_gains</strong> (<code class="xref py py-obj docutils literal notranslate"><span class="pre">list</span></code>) – List of 7 floats corresponding to the d_gains on each joint for
+our impedance controller. Default is None. If None then will use
+default d_gains.</li>
+<li><strong>block</strong> (<code class="xref py py-obj docutils literal notranslate"><span class="pre">bool</span></code>) – Function blocks by default. If False, the function becomes
+asynchronous and can be preempted.</li>
+<li><strong>ignore_errors</strong> (<code class="xref py py-obj docutils literal notranslate"><span class="pre">bool</span></code>) – Function ignores errors by default. If False, errors and some
+exceptions can be thrown.</li>
+<li><strong>ignore_virtual_walls</strong> (<code class="xref py py-obj docutils literal notranslate"><span class="pre">bool</span></code>) – Function checks for collisions with virtual walls by default.
+If False, the robot no longer checks, which may be dangerous.</li>
+<li><strong>skill_desc</strong> (<code class="xref py py-obj docutils literal notranslate"><span class="pre">str</span></code>) – Skill description to use for logging on the Control PC.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Raises:</th><td class="field-body"><p class="first last"><code class="xref py py-exc docutils literal notranslate"><span class="pre">ValueError</span></code> – If is_joints_reachable(joints) returns False</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="frankapy.FrankaArm.execute_joint_dmp">
+<code class="descname">execute_joint_dmp</code><span class="sig-paren">(</span><em>joint_dmp_info</em>, <em>duration</em>, <em>initial_sensor_values=None</em>, <em>use_impedance=False</em>, <em>buffer_time=0.2</em>, <em>force_thresholds=None</em>, <em>torque_thresholds=None</em>, <em>cartesian_impedances=None</em>, <em>joint_impedances=None</em>, <em>k_gains=None</em>, <em>d_gains=None</em>, <em>block=True</em>, <em>ignore_errors=True</em>, <em>skill_desc='JointDmp'</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/frankapy/franka_arm.html#FrankaArm.execute_joint_dmp"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#frankapy.FrankaArm.execute_joint_dmp" title="Permalink to this definition">¶</a></dt>
+<dd><p>Commands Arm to execute a given joint dmp</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>joint_dmp_info</strong> (<code class="xref py py-obj docutils literal notranslate"><span class="pre">dict</span></code>) – Contains all the parameters of a joint DMP
+(tau, alpha, beta, num_basis, num_sensors, mu, h, and weights)</li>
+<li><strong>duration</strong> (<code class="xref py py-obj docutils literal notranslate"><span class="pre">float</span></code>) – How much time this robot motion should take.</li>
+<li><strong>initial_sensor_values</strong> (<code class="xref py py-obj docutils literal notranslate"><span class="pre">list</span></code>) – List of initial sensor values. If None it will default to ones.</li>
+<li><strong>use_impedance</strong> (<code class="xref py py-obj docutils literal notranslate"><span class="pre">bool</span></code>) – Function uses the Franka joint impedance controller by default.
+If True, uses our joint impedance controller.</li>
+<li><strong>buffer_time</strong> (<code class="xref py py-obj docutils literal notranslate"><span class="pre">float</span></code>) – How much extra time the termination handler will wait
+before stopping the skill after duration has passed.</li>
+<li><strong>force_thresholds</strong> (<code class="xref py py-obj docutils literal notranslate"><span class="pre">list</span></code>) – List of 6 floats corresponding to force limits on translation
+(xyz) and rotation about (xyz) axes. Default is None.
+If None then will not stop on contact.</li>
+<li><strong>torque_thresholds</strong> (<code class="xref py py-obj docutils literal notranslate"><span class="pre">list</span></code>) – List of 7 floats corresponding to torque limits on each joint.
+Default is None. If None then will not stop on contact.</li>
+<li><strong>cartesian_impedances</strong> (<code class="xref py py-obj docutils literal notranslate"><span class="pre">list</span></code>) – List of 6 floats corresponding to impedances on translation
+(xyz) and rotation about (xyz) axes. Default is None.
+If None then will use default impedances.</li>
+<li><strong>joint_impedances</strong> (<code class="xref py py-obj docutils literal notranslate"><span class="pre">list</span></code>) – List of 7 floats corresponding to impedances on each joint.
+This is used when use_impedance is False. Default is None.
+If None then will use default impedances.</li>
+<li><strong>k_gains</strong> (<code class="xref py py-obj docutils literal notranslate"><span class="pre">list</span></code>) – List of 7 floats corresponding to the k_gains on each joint
+for our impedance controller. This is used when use_impedance is
+True. Default is None. If None then will use default k_gains.</li>
+<li><strong>d_gains</strong> (<code class="xref py py-obj docutils literal notranslate"><span class="pre">list</span></code>) – List of 7 floats corresponding to the d_gains on each joint
+for our impedance controller. This is used when use_impedance is
+True. Default is None. If None then will use default d_gains.</li>
+<li><strong>block</strong> (<code class="xref py py-obj docutils literal notranslate"><span class="pre">bool</span></code>) – Function blocks by default. If False, the function
+becomes asynchronous and can be preempted.</li>
+<li><strong>ignore_errors</strong> (<code class="xref py py-obj docutils literal notranslate"><span class="pre">bool</span></code>) – Function ignores errors by default.
+If False, errors and some exceptions can be thrown.</li>
+<li><strong>skill_desc</strong> (<code class="xref py py-obj docutils literal notranslate"><span class="pre">str</span></code>) – Skill description to use for logging on control-pc.</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="frankapy.FrankaArm.execute_pose_dmp">
+<code class="descname">execute_pose_dmp</code><span class="sig-paren">(</span><em>pose_dmp_info</em>, <em>duration</em>, <em>use_goal_formulation=False</em>, <em>initial_sensor_values=None</em>, <em>orientation_only=False</em>, <em>position_only=False</em>, <em>ee_frame=False</em>, <em>use_impedance=True</em>, <em>buffer_time=0.2</em>, <em>force_thresholds=None</em>, <em>torque_thresholds=None</em>, <em>cartesian_impedances=None</em>, <em>joint_impedances=None</em>, <em>block=True</em>, <em>ignore_errors=True</em>, <em>skill_desc='PoseDmp'</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/frankapy/franka_arm.html#FrankaArm.execute_pose_dmp"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#frankapy.FrankaArm.execute_pose_dmp" title="Permalink to this definition">¶</a></dt>
+<dd><p>Commands Arm to execute a given pose dmp</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>pose_dmp_info</strong> (<code class="xref py py-obj docutils literal notranslate"><span class="pre">dict</span></code>) – Contains all the parameters of a pose DMP
+(tau, alpha, beta, num_basis, num_sensors, mu, h, and weights)</li>
+<li><strong>duration</strong> (<code class="xref py py-obj docutils literal notranslate"><span class="pre">float</span></code>) – How much time this robot motion should take.</li>
+<li><strong>use_goal_formulation</strong> (<code class="xref py py-obj docutils literal notranslate"><span class="pre">bool</span></code>) – Flag that represents whether to use the explicit goal pose
+dmp formulation.</li>
+<li><strong>initial_sensor_values</strong> (<code class="xref py py-obj docutils literal notranslate"><span class="pre">list</span></code>) – List of initial sensor values. If None it will default to ones.</li>
+<li><strong>orientation_only</strong> (<code class="xref py py-obj docutils literal notranslate"><span class="pre">bool</span></code>) – Flag that represents if the dmp weights are to generate a dmp
+only for orientation.</li>
+<li><strong>position_only</strong> (<code class="xref py py-obj docutils literal notranslate"><span class="pre">bool</span></code>) – Flag that represents if the dmp weights are to generate a dmp
+only for position.</li>
+<li><strong>ee_frame</strong> (<code class="xref py py-obj docutils literal notranslate"><span class="pre">bool</span></code>) – Flag that indicates whether the dmp is in terms of the
+end-effector frame.</li>
+<li><strong>use_impedance</strong> (<code class="xref py py-obj docutils literal notranslate"><span class="pre">bool</span></code>) – Function uses our impedance controller by default. If False,
+uses the Franka cartesian controller.</li>
+<li><strong>buffer_time</strong> (<code class="xref py py-obj docutils literal notranslate"><span class="pre">float</span></code>) – How much extra time the termination handler will wait
+before stopping the skill after duration has passed.</li>
+<li><strong>force_thresholds</strong> (<code class="xref py py-obj docutils literal notranslate"><span class="pre">list</span></code>) – List of 6 floats corresponding to force limits on translation
+(xyz) and rotation about (xyz) axes. Default is None.
+If None then will not stop on contact.</li>
+<li><strong>torque_thresholds</strong> (<code class="xref py py-obj docutils literal notranslate"><span class="pre">list</span></code>) – List of 7 floats corresponding to torque limits on each joint.
+Default is None. If None then will not stop on contact.</li>
+<li><strong>cartesian_impedances</strong> (<code class="xref py py-obj docutils literal notranslate"><span class="pre">list</span></code>) – List of 6 floats corresponding to impedances on translation
+(xyz) and rotation about (xyz) axes. Default is None.
+If None then will use default impedances.</li>
+<li><strong>joint_impedances</strong> (<code class="xref py py-obj docutils literal notranslate"><span class="pre">list</span></code>) – List of 7 floats corresponding to impedances on each joint.
+This is used when use_impedance is False. Default is None.
+If None then will use default impedances.</li>
+<li><strong>block</strong> (<code class="xref py py-obj docutils literal notranslate"><span class="pre">bool</span></code>) – Function blocks by default. If False, the function becomes
+asynchronous and can be preempted.</li>
+<li><strong>ignore_errors</strong> (<code class="xref py py-obj docutils literal notranslate"><span class="pre">bool</span></code>) – Function ignores errors by default. If False, errors and
+some exceptions can be thrown.</li>
+<li><strong>skill_desc</strong> (<code class="xref py py-obj docutils literal notranslate"><span class="pre">str</span></code>) – Skill description to use for logging on control-pc.</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="frankapy.FrankaArm.execute_quaternion_pose_dmp">
+<code class="descname">execute_quaternion_pose_dmp</code><span class="sig-paren">(</span><em>position_dmp_info</em>, <em>quat_dmp_info</em>, <em>duration</em>, <em>goal_quat</em>, <em>goal_quat_time</em>, <em>use_goal_formulation=False</em>, <em>initial_sensor_values=None</em>, <em>ee_frame=False</em>, <em>use_impedance=True</em>, <em>buffer_time=0.2</em>, <em>force_thresholds=None</em>, <em>torque_thresholds=None</em>, <em>cartesian_impedances=None</em>, <em>joint_impedances=None</em>, <em>block=True</em>, <em>ignore_errors=True</em>, <em>skill_desc='QuaternionPoseDmp'</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/frankapy/franka_arm.html#FrankaArm.execute_quaternion_pose_dmp"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#frankapy.FrankaArm.execute_quaternion_pose_dmp" title="Permalink to this definition">¶</a></dt>
+<dd><p>Commands Arm to execute a given quaternion pose dmp</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>position_dmp_info</strong> – <code class="xref py py-obj docutils literal notranslate"><span class="pre">dict</span></code>
+Contains all the parameters of a position DMP
+(tau, alpha, beta, num_basis, num_sensors, mu, h, and weights)</li>
+<li><strong>quat_dmp_info</strong> – <code class="xref py py-obj docutils literal notranslate"><span class="pre">dict</span></code>
+Contains all the parameters of a quaternion DMP
+(tau, alpha, beta, num_basis, num_sensors, mu, h, and weights)</li>
+<li><strong>duration</strong> – <code class="xref py py-obj docutils literal notranslate"><span class="pre">float</span></code>
+How much time this robot motion should take.</li>
+<li><strong>goal_quat</strong> – <code class="xref py py-obj docutils literal notranslate"><span class="pre">list</span></code>
+List of 4 floats that represents the quaternion goal to reach.
+This assumes an explicit goal formulation for the quaternion DMPs.</li>
+<li><strong>goal_quat_time</strong> – <code class="xref py py-obj docutils literal notranslate"><span class="pre">float</span></code>
+Time to reach goal for quaternion DMPs.</li>
+<li><strong>use_goal_formulation</strong> – <code class="xref py py-obj docutils literal notranslate"><span class="pre">bool</span></code>
+Flag that represents whether to use the explicit goal pose dmp formulation.</li>
+<li><strong>initial_sensor_values</strong> – <code class="xref py py-obj docutils literal notranslate"><span class="pre">list</span></code>
+List of initial sensor values. If None it will default to ones.</li>
+<li><strong>ee_frame</strong> – <code class="xref py py-obj docutils literal notranslate"><span class="pre">bool</span></code>
+Flag that indicates whether the dmp is in terms of the
+end-effector frame.</li>
+<li><strong>use_impedance</strong> – <code class="xref py py-obj docutils literal notranslate"><span class="pre">bool</span></code>
+Function uses our impedance controller by default. If False,
+uses the Franka cartesian controller.</li>
+<li><strong>buffer_time</strong> – <code class="xref py py-obj docutils literal notranslate"><span class="pre">float</span></code>
+How much extra time the termination handler will wait
+before stopping the skill after duration has passed.</li>
+<li><strong>force_thresholds</strong> – <code class="xref py py-obj docutils literal notranslate"><span class="pre">list</span></code>
+List of 6 floats corresponding to force limits on translation
+(xyz) and rotation about (xyz) axes. Default is None.
+If None then will not stop on contact.</li>
+<li><strong>torque_thresholds</strong> – <code class="xref py py-obj docutils literal notranslate"><span class="pre">list</span></code>
+List of 7 floats corresponding to torque limits on each joint.
+Default is None. If None then will not stop on contact.</li>
+<li><strong>cartesian_impedances</strong> – <code class="xref py py-obj docutils literal notranslate"><span class="pre">list</span></code>
+List of 6 floats corresponding to impedances on translation
+(xyz) and rotation about (xyz) axes. Default is None.
+If None then will use default impedances.</li>
+<li><strong>joint_impedances</strong> – <code class="xref py py-obj docutils literal notranslate"><span class="pre">list</span></code>
+List of 7 floats corresponding to impedances on each joint.
+This is used when use_impedance is False. Default is None.
+If None then will use default impedances.</li>
+<li><strong>block</strong> – <code class="xref py py-obj docutils literal notranslate"><span class="pre">bool</span></code>
+Function blocks by default. If False, the function becomes
+asynchronous and can be preempted.</li>
+<li><strong>ignore_errors</strong> – <code class="xref py py-obj docutils literal notranslate"><span class="pre">bool</span></code>
+Function ignores errors by default. If False, errors and some
+exceptions can be thrown.</li>
+<li><strong>skill_desc</strong> – <code class="xref py py-obj docutils literal notranslate"><span class="pre">str</span></code>
+Skill description to use for logging on control-pc.</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="frankapy.FrankaArm.apply_effector_forces_torques">
+<code class="descname">apply_effector_forces_torques</code><span class="sig-paren">(</span><em>run_duration</em>, <em>acc_duration</em>, <em>max_translation</em>, <em>max_rotation</em>, <em>forces=None</em>, <em>torques=None</em>, <em>buffer_time=0.2</em>, <em>force_thresholds=None</em>, <em>torque_thresholds=None</em>, <em>block=True</em>, <em>ignore_errors=True</em>, <em>skill_desc='ForceTorque'</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/frankapy/franka_arm.html#FrankaArm.apply_effector_forces_torques"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#frankapy.FrankaArm.apply_effector_forces_torques" title="Permalink to this definition">¶</a></dt>
+<dd><p>Applies the given end-effector forces and torques in N and Nm</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>run_duration</strong> (<code class="xref py py-obj docutils literal notranslate"><span class="pre">float</span></code>) – How much time this robot motion should take.</li>
+<li><strong>acc_duration</strong> (<code class="xref py py-obj docutils literal notranslate"><span class="pre">float</span></code>) – How long to acc/de-acc to achieve desired force.</li>
+<li><strong>max_translation</strong> (<code class="xref py py-obj docutils literal notranslate"><span class="pre">float</span></code>) – A float in the unit of meters. Max translation before the
+robot deaccelerates.</li>
+<li><strong>max_rotation</strong> (<code class="xref py py-obj docutils literal notranslate"><span class="pre">float</span></code>) – A float in the unit of rad. Max rotation before the robot
+deaccelerates.</li>
+<li><strong>forces</strong> (<code class="xref py py-obj docutils literal notranslate"><span class="pre">list</span></code>) – Optional (defaults to None). A list of 3 numbers that correspond
+to end-effector forces in (xyz) directions.</li>
+<li><strong>torques</strong> (<code class="xref py py-obj docutils literal notranslate"><span class="pre">list</span></code>) – Optional (defaults to None). A list of 3 numbers that correspond
+to end-effector torques in 3 rotational axes.</li>
+<li><strong>buffer_time</strong> (<code class="xref py py-obj docutils literal notranslate"><span class="pre">float</span></code>) – How much extra time the termination handler will wait
+before stopping the skill after duration has passed.</li>
+<li><strong>force_thresholds</strong> (<code class="xref py py-obj docutils literal notranslate"><span class="pre">list</span></code>) – List of 6 floats corresponding to force limits on translation
+(xyz) and rotation about (xyz) axes. Default is None.
+If None then will not stop on contact.</li>
+<li><strong>torque_thresholds</strong> (<code class="xref py py-obj docutils literal notranslate"><span class="pre">list</span></code>) – List of 7 floats corresponding to torque limits on each joint.
+Default is None. If None then will not stop on contact.</li>
+<li><strong>block</strong> (<code class="xref py py-obj docutils literal notranslate"><span class="pre">bool</span></code>) – Function blocks by default. If False, the function becomes
+asynchronous and can be preempted.</li>
+<li><strong>ignore_errors</strong> (<code class="xref py py-obj docutils literal notranslate"><span class="pre">bool</span></code>) – Function ignores errors by default. If False, errors and some
+exceptions can be thrown.</li>
+<li><strong>skill_desc</strong> (<code class="xref py py-obj docutils literal notranslate"><span class="pre">str</span></code>) – Skill description to use for logging on control-pc.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Raises:</th><td class="field-body"><ul class="first last simple">
+<li>ValueError if acc_duration &gt; 0.5*run_duration, or if forces are</li>
+<li>too large</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="frankapy.FrankaArm.apply_effector_forces_along_axis">
+<code class="descname">apply_effector_forces_along_axis</code><span class="sig-paren">(</span><em>run_duration</em>, <em>acc_duration</em>, <em>max_translation</em>, <em>forces</em>, <em>buffer_time=0.2</em>, <em>force_thresholds=None</em>, <em>torque_thresholds=None</em>, <em>block=True</em>, <em>ignore_errors=True</em>, <em>skill_desc='ForcesAlongAxis'</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/frankapy/franka_arm.html#FrankaArm.apply_effector_forces_along_axis"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#frankapy.FrankaArm.apply_effector_forces_along_axis" title="Permalink to this definition">¶</a></dt>
+<dd><p>Applies the given end-effector forces and torques in N and Nm</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>run_duration</strong> (<code class="xref py py-obj docutils literal notranslate"><span class="pre">float</span></code>) – How much time this robot motion should take.</li>
+<li><strong>acc_duration</strong> (<code class="xref py py-obj docutils literal notranslate"><span class="pre">float</span></code>) – How long to acc/de-acc to achieve desired force.</li>
+<li><strong>max_translation</strong> (<code class="xref py py-obj docutils literal notranslate"><span class="pre">float</span></code>) – A float in the unit of meters. Max translation before the
+robot deaccelerates.</li>
+<li><strong>forces</strong> (<code class="xref py py-obj docutils literal notranslate"><span class="pre">list</span></code>) – Optional (defaults to None). A list of 3 numbers that correspond
+to the magnitude of the end-effector forces and the axis.</li>
+<li><strong>buffer_time</strong> (<code class="xref py py-obj docutils literal notranslate"><span class="pre">float</span></code>) – How much extra time the termination handler will wait
+before stopping the skill after duration has passed.</li>
+<li><strong>force_thresholds</strong> (<code class="xref py py-obj docutils literal notranslate"><span class="pre">list</span></code>) – List of 6 floats corresponding to force limits on translation
+(xyz) and rotation about (xyz) axes. Default is None.
+If None then will not stop on contact.</li>
+<li><strong>torque_thresholds</strong> (<code class="xref py py-obj docutils literal notranslate"><span class="pre">list</span></code>) – List of 7 floats corresponding to torque limits on each joint.
+Default is None. If None then will not stop on contact.</li>
+<li><strong>block</strong> (<code class="xref py py-obj docutils literal notranslate"><span class="pre">bool</span></code>) – Function blocks by default. If False, the function becomes
+asynchronous and can be preempted.</li>
+<li><strong>ignore_errors</strong> (<code class="xref py py-obj docutils literal notranslate"><span class="pre">bool</span></code>) – Function ignores errors by default. If False, errors and some
+exceptions can be thrown.</li>
+<li><strong>skill_desc</strong> (<code class="xref py py-obj docutils literal notranslate"><span class="pre">str</span></code>) – Skill description to use for logging on control-pc.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Raises:</th><td class="field-body"><ul class="first last simple">
+<li>ValueError if acc_duration &gt; 0.5*run_duration, or if forces are</li>
+<li>too large</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="frankapy.FrankaArm.goto_gripper">
+<code class="descname">goto_gripper</code><span class="sig-paren">(</span><em>width</em>, <em>grasp=False</em>, <em>speed=0.04</em>, <em>force=0.0</em>, <em>epsilon_inner=0.08</em>, <em>epsilon_outer=0.08</em>, <em>block=True</em>, <em>ignore_errors=True</em>, <em>skill_desc='GoToGripper'</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/frankapy/franka_arm.html#FrankaArm.goto_gripper"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#frankapy.FrankaArm.goto_gripper" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="docutils">
+<dt>Commands gripper to goto a certain width, applying up to the given</dt>
+<dd>(default is max) force if needed</dd>
+</dl>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>width</strong> (<code class="xref py py-obj docutils literal notranslate"><span class="pre">float</span></code>) – Desired width of the gripper in the unit of meters.</li>
+<li><strong>grasp</strong> (<code class="xref py py-obj docutils literal notranslate"><span class="pre">bool</span></code>) – Flag that signals whether to grasp.</li>
+<li><strong>speed</strong> (<code class="xref py py-obj docutils literal notranslate"><span class="pre">float</span></code>) – Gripper operation speed in meters per sec.</li>
+<li><strong>force</strong> (<code class="xref py py-obj docutils literal notranslate"><span class="pre">float</span></code>) – Max gripper force to apply in N. Default to None,
+which gives acceptable force.</li>
+<li><strong>epsilon_inner</strong> (<code class="xref py py-obj docutils literal notranslate"><span class="pre">float</span></code>) – Max tolerated deviation when the actual grasped
+width is smaller than the commanded grasp width.</li>
+<li><strong>epsilon_outer</strong> (<code class="xref py py-obj docutils literal notranslate"><span class="pre">float</span></code>) – Max tolerated deviation when the actual grasped
+width is larger than the commanded grasp width.</li>
+<li><strong>block</strong> (<code class="xref py py-obj docutils literal notranslate"><span class="pre">bool</span></code>) – Function blocks by default. If False, the function
+becomes asynchronous and can be preempted.</li>
+<li><strong>ignore_errors</strong> (<code class="xref py py-obj docutils literal notranslate"><span class="pre">bool</span></code>) – Function ignores errors by default. If False, errors
+and some exceptions can be thrown.</li>
+<li><strong>skill_desc</strong> (<code class="xref py py-obj docutils literal notranslate"><span class="pre">str</span></code>) – Skill description to use for logging on control-pc.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Raises:</th><td class="field-body"><p class="first last"><code class="xref py py-exc docutils literal notranslate"><span class="pre">ValueError</span></code> – If width is less than 0 or greater than TODO(jacky)
+the maximum gripper opening</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="frankapy.FrankaArm.selective_guidance_mode">
+<code class="descname">selective_guidance_mode</code><span class="sig-paren">(</span><em>duration=5</em>, <em>use_joints=False</em>, <em>use_impedance=False</em>, <em>use_ee_frame=False</em>, <em>buffer_time=0.2</em>, <em>force_thresholds=None</em>, <em>torque_thresholds=None</em>, <em>cartesian_impedances=None</em>, <em>joint_impedances=None</em>, <em>k_gains=None</em>, <em>d_gains=None</em>, <em>block=True</em>, <em>ignore_errors=True</em>, <em>ignore_virtual_walls=False</em>, <em>skill_desc='SelectiveGuidance'</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/frankapy/franka_arm.html#FrankaArm.selective_guidance_mode"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#frankapy.FrankaArm.selective_guidance_mode" title="Permalink to this definition">¶</a></dt>
+<dd><p>Commands the Arm to stay in its current position with selective impedances
+that allow guidance in either certain joints or in cartesian pose.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>duration</strong> (<code class="xref py py-obj docutils literal notranslate"><span class="pre">float</span></code>) – How much time this guidance should take</li>
+<li><strong>use_joints</strong> (<code class="xref py py-obj docutils literal notranslate"><span class="pre">bool</span></code>) – Function uses cartesian impedance controller by default.
+If True, it uses joint impedance.</li>
+<li><strong>use_impedance</strong> (<code class="xref py py-obj docutils literal notranslate"><span class="pre">bool</span></code>) – Function uses the Franka joint impedance controller by default.
+If True, uses our joint impedance controller.</li>
+<li><strong>use_ee_frame</strong> (<code class="xref py py-obj docutils literal notranslate"><span class="pre">bool</span></code>) – Function uses the end-effector cartesian feedback controller
+only when use_impedance is True.</li>
+<li><strong>buffer_time</strong> (<code class="xref py py-obj docutils literal notranslate"><span class="pre">float</span></code>) – How much extra time the termination handler will wait
+before stopping the skill after duration has passed.</li>
+<li><strong>force_thresholds</strong> (<code class="xref py py-obj docutils literal notranslate"><span class="pre">list</span></code>) – List of 6 floats corresponding to force limits on translation
+(xyz) and rotation about (xyz) axes. Default is None.
+If None then will not stop on contact.</li>
+<li><strong>torque_thresholds</strong> (<code class="xref py py-obj docutils literal notranslate"><span class="pre">list</span></code>) – List of 7 floats corresponding to torque limits on each joint.
+Default is None. If None then will not stop on contact.</li>
+<li><strong>cartesian_impedances</strong> (<code class="xref py py-obj docutils literal notranslate"><span class="pre">list</span></code>) – List of 6 floats corresponding to impedances on translation
+(xyz) and rotation about (xyz) axes. Default is None.
+If None then will use default impedances.</li>
+<li><strong>joint_impedances</strong> (<code class="xref py py-obj docutils literal notranslate"><span class="pre">list</span></code>) – List of 7 floats corresponding to impedances on each joint.
+This is used when use_impedance is False. Default is None.
+If None then will use default impedances.</li>
+<li><strong>k_gains</strong> (<code class="xref py py-obj docutils literal notranslate"><span class="pre">list</span></code>) – List of 7 floats corresponding to the k_gains on each joint
+for our impedance controller. This is used when use_impedance is
+True. Default is None. If None then will use default k_gains.</li>
+<li><strong>d_gains</strong> (<code class="xref py py-obj docutils literal notranslate"><span class="pre">list</span></code>) – List of 7 floats corresponding to the d_gains on each joint
+for our impedance controller. This is used when use_impedance is
+True. Default is None. If None then will use default d_gains.</li>
+<li><strong>block</strong> (<code class="xref py py-obj docutils literal notranslate"><span class="pre">bool</span></code>) – Function blocks by default. If False, the function becomes
+asynchronous and can be preempted.</li>
+<li><strong>ignore_errors</strong> (<code class="xref py py-obj docutils literal notranslate"><span class="pre">bool</span></code>) – Function ignores errors by default. If False, errors and some
+exceptions can be thrown.</li>
+<li><strong>ignore_virtual_walls</strong> (<code class="xref py py-obj docutils literal notranslate"><span class="pre">bool</span></code>) – Function checks for collisions with virtual walls by default.
+If False, the robot no longer checks, which may be dangerous.</li>
+<li><strong>skill_desc</strong> (<code class="xref py py-obj docutils literal notranslate"><span class="pre">str</span></code>) – Skill description to use for logging on control-pc.</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="frankapy.FrankaArm.open_gripper">
+<code class="descname">open_gripper</code><span class="sig-paren">(</span><em>block=True</em>, <em>skill_desc='OpenGripper'</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/frankapy/franka_arm.html#FrankaArm.open_gripper"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#frankapy.FrankaArm.open_gripper" title="Permalink to this definition">¶</a></dt>
+<dd><p>Opens gripper to maximum width</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>block</strong> (<code class="xref py py-obj docutils literal notranslate"><span class="pre">bool</span></code>) – Function blocks by default. If False, the function becomes
+asynchronous and can be preempted.</li>
+<li><strong>skill_desc</strong> (<code class="xref py py-obj docutils literal notranslate"><span class="pre">str</span></code>) – Skill description to use for logging on control-pc.</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="frankapy.FrankaArm.close_gripper">
+<code class="descname">close_gripper</code><span class="sig-paren">(</span><em>grasp=True</em>, <em>block=True</em>, <em>skill_desc='CloseGripper'</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/frankapy/franka_arm.html#FrankaArm.close_gripper"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#frankapy.FrankaArm.close_gripper" title="Permalink to this definition">¶</a></dt>
+<dd><p>Closes the gripper as much as possible</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>grasp</strong> (<code class="xref py py-obj docutils literal notranslate"><span class="pre">bool</span></code>) – Flag that signals whether to grasp.</li>
+<li><strong>block</strong> (<code class="xref py py-obj docutils literal notranslate"><span class="pre">bool</span></code>) – Function blocks by default. If False, the function becomes
+asynchronous and can be preempted.</li>
+<li><strong>skill_desc</strong> (<code class="xref py py-obj docutils literal notranslate"><span class="pre">str</span></code>) – Skill description to use for logging on control-pc.</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="frankapy.FrankaArm.home_gripper">
+<code class="descname">home_gripper</code><span class="sig-paren">(</span><em>block=True</em>, <em>skill_desc='HomeGripper'</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/frankapy/franka_arm.html#FrankaArm.home_gripper"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#frankapy.FrankaArm.home_gripper" title="Permalink to this definition">¶</a></dt>
+<dd><p>Homes the gripper.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>block</strong> (<code class="xref py py-obj docutils literal notranslate"><span class="pre">bool</span></code>) – Function blocks by default. If False, the function becomes
+asynchronous and can be preempted.</li>
+<li><strong>skill_desc</strong> (<code class="xref py py-obj docutils literal notranslate"><span class="pre">str</span></code>) – Skill description to use for logging on control-pc.</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="frankapy.FrankaArm.stop_gripper">
+<code class="descname">stop_gripper</code><span class="sig-paren">(</span><em>block=True</em>, <em>skill_desc='StopGripper'</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/frankapy/franka_arm.html#FrankaArm.stop_gripper"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#frankapy.FrankaArm.stop_gripper" title="Permalink to this definition">¶</a></dt>
+<dd><p>Stops the gripper.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>block</strong> (<code class="xref py py-obj docutils literal notranslate"><span class="pre">bool</span></code>) – Function blocks by default. If False, the function becomes
+asynchronous and can be preempted.</li>
+<li><strong>skill_desc</strong> (<code class="xref py py-obj docutils literal notranslate"><span class="pre">str</span></code>) – Skill description to use for logging on control-pc.</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="frankapy.FrankaArm.run_guide_mode">
+<code class="descname">run_guide_mode</code><span class="sig-paren">(</span><em>duration=10</em>, <em>block=True</em>, <em>skill_desc='GuideMode'</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/frankapy/franka_arm.html#FrankaArm.run_guide_mode"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#frankapy.FrankaArm.run_guide_mode" title="Permalink to this definition">¶</a></dt>
+<dd><p>Runs guide mode which allows you to move the robot freely.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>duration</strong> (<code class="xref py py-obj docutils literal notranslate"><span class="pre">float</span></code>) – How much time this guidance should take</li>
+<li><strong>block</strong> (<code class="xref py py-obj docutils literal notranslate"><span class="pre">bool</span></code>) – Function blocks by default. If False, the function becomes
+asynchronous and can be preempted.</li>
+<li><strong>skill_desc</strong> (<code class="xref py py-obj docutils literal notranslate"><span class="pre">str</span></code>) – Skill description to use for logging on control-pc.</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="frankapy.FrankaArm.run_dynamic_force_position">
+<code class="descname">run_dynamic_force_position</code><span class="sig-paren">(</span><em>duration=3, buffer_time=0.2, force_thresholds=None, torque_thresholds=None, position_kps_cart=[600.0, 600.0, 600.0, 50.0, 50.0, 50.0], force_kps_cart=[0.1, 0.1, 0.1, 0.1, 0.1, 0.1], position_kps_joint=[600.0, 600.0, 600.0, 600.0, 250.0, 150.0, 50.0], force_kps_joint=[0.1, 0.1, 0.1, 0.1, 0.1, 0.1], S=[1, 1, 1, 1, 1, 1], interpolate=False, use_cartesian_gains=True, ignore_errors=True, ignore_virtual_walls=False, skill_desc=''</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/frankapy/franka_arm.html#FrankaArm.run_dynamic_force_position"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#frankapy.FrankaArm.run_dynamic_force_position" title="Permalink to this definition">¶</a></dt>
+<dd><p>Commands Arm to run dynamic hybrid force position control</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>duration</strong> (<code class="xref py py-obj docutils literal notranslate"><span class="pre">float</span></code>) – How much time this robot motion should take.</li>
+<li><strong>use_impedance</strong> (<code class="xref py py-obj docutils literal notranslate"><span class="pre">bool</span></code>) – Function uses our impedance controller by default.
+If False, uses the Franka cartesian controller.</li>
+<li><strong>buffer_time</strong> (<code class="xref py py-obj docutils literal notranslate"><span class="pre">float</span></code>) – How much extra time the termination handler will wait
+before stopping the skill after duration has passed.</li>
+<li><strong>force_thresholds</strong> (<code class="xref py py-obj docutils literal notranslate"><span class="pre">list</span></code>) – List of 6 floats corresponding to force limits on translation
+(xyz) and rotation about (xyz) axes. Default is None.
+If None then will not stop on contact.</li>
+<li><strong>torque_thresholds</strong> (<code class="xref py py-obj docutils literal notranslate"><span class="pre">list</span></code>) – List of 7 floats corresponding to torque limits on each joint.
+Default is None. If None then will not stop on contact.</li>
+<li><strong>position_kp_cart</strong> (<code class="xref py py-obj docutils literal notranslate"><span class="pre">list</span></code>) – List of 6 floats corresponding to proportional gain used for
+position errors in cartesian space.</li>
+<li><strong>force_kp_cart</strong> (<code class="xref py py-obj docutils literal notranslate"><span class="pre">list</span></code>) – List of 6 floats corresponding to proportional gain used for
+force errors in cartesian space.</li>
+<li><strong>position_kp_joint</strong> (<code class="xref py py-obj docutils literal notranslate"><span class="pre">list</span></code>) – List of 7 floats corresponding to proportional gain used for
+position errors in joint space.</li>
+<li><strong>force_kp_joint</strong> (<code class="xref py py-obj docutils literal notranslate"><span class="pre">list</span></code>) – List of 6 floats corresponding to proportional gain used for
+force errors in joint space.</li>
+<li><strong>S</strong> (<code class="xref py py-obj docutils literal notranslate"><span class="pre">list</span></code>) – List of 6 numbers between 0 and 1 for the HFPC selection matrix.</li>
+<li><strong>interpolate</strong> (<code class="xref py py-obj docutils literal notranslate"><span class="pre">bool</span></code>) – Whether or not to perform linear interpolation in between way points.</li>
+<li><strong>use_cartesian_gains</strong> (<code class="xref py py-obj docutils literal notranslate"><span class="pre">bool</span></code>) – Whether to use cartesian gains or joint gains.</li>
+<li><strong>ignore_errors</strong> (<code class="xref py py-obj docutils literal notranslate"><span class="pre">bool</span></code>) – Function ignores errors by default. If False, errors and some
+exceptions can be thrown.</li>
+<li><strong>ignore_virtual_walls</strong> (<code class="xref py py-obj docutils literal notranslate"><span class="pre">bool</span></code>) – Function checks for collisions with virtual walls by default.
+If False, the robot no longer checks, which may be dangerous.</li>
+<li><strong>skill_desc</strong> (<code class="xref py py-obj docutils literal notranslate"><span class="pre">str</span></code>) – Skill description to use for logging on control-pc.</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="frankapy.FrankaArm.get_robot_state">
+<code class="descname">get_robot_state</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/frankapy/franka_arm.html#FrankaArm.get_robot_state"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#frankapy.FrankaArm.get_robot_state" title="Permalink to this definition">¶</a></dt>
+<dd><table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body"><strong>robot_state</strong> – Dict that contains all of the robot’s current
+state information.</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Return type:</th><td class="field-body"><code class="xref py py-obj docutils literal notranslate"><span class="pre">dict</span></code></td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="frankapy.FrankaArm.get_pose">
+<code class="descname">get_pose</code><span class="sig-paren">(</span><em>include_tool_offset=True</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/frankapy/franka_arm.html#FrankaArm.get_pose"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#frankapy.FrankaArm.get_pose" title="Permalink to this definition">¶</a></dt>
+<dd><table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body"><strong>pose</strong> – Current pose of the end-effector including the transform
+to the end of the tool.</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Return type:</th><td class="field-body"><code class="xref py py-obj docutils literal notranslate"><span class="pre">autolab_core.RigidTransform</span></code></td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="frankapy.FrankaArm.get_joints">
+<code class="descname">get_joints</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/frankapy/franka_arm.html#FrankaArm.get_joints"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#frankapy.FrankaArm.get_joints" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns the current joint positions.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body"><strong>joint_positions</strong> – 7 floats that represent each joint’s position in radians.</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Return type:</th><td class="field-body"><code class="xref py py-obj docutils literal notranslate"><span class="pre">numpy.ndarray</span></code></td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="frankapy.FrankaArm.get_joint_torques">
+<code class="descname">get_joint_torques</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/frankapy/franka_arm.html#FrankaArm.get_joint_torques"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#frankapy.FrankaArm.get_joint_torques" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns the current joint torques.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body"><strong>joint_torques</strong> – 7 floats that represent each joint’s torque in Nm.</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Return type:</th><td class="field-body"><code class="xref py py-obj docutils literal notranslate"><span class="pre">numpy.ndarray</span></code></td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="frankapy.FrankaArm.get_joint_velocities">
+<code class="descname">get_joint_velocities</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/frankapy/franka_arm.html#FrankaArm.get_joint_velocities"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#frankapy.FrankaArm.get_joint_velocities" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns the current joint velocities.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body"><strong>joint_velocities</strong> – 7 floats that represent each joint’s velocity in rads/s.</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Return type:</th><td class="field-body"><code class="xref py py-obj docutils literal notranslate"><span class="pre">numpy.ndarray</span></code></td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="frankapy.FrankaArm.get_gripper_width">
+<code class="descname">get_gripper_width</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/frankapy/franka_arm.html#FrankaArm.get_gripper_width"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#frankapy.FrankaArm.get_gripper_width" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns the current gripper width.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body"><strong>gripper_width</strong> – Robot gripper width in meters.</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Return type:</th><td class="field-body"><code class="xref py py-obj docutils literal notranslate"><span class="pre">float</span></code></td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="frankapy.FrankaArm.get_gripper_is_grasped">
+<code class="descname">get_gripper_is_grasped</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/frankapy/franka_arm.html#FrankaArm.get_gripper_is_grasped"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#frankapy.FrankaArm.get_gripper_is_grasped" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns a flag that represents if the gripper is grasping something.</p>
+<p>WARNING: THIS FUNCTION HAS BEEN DEPRECATED WHEN WE SWITCHED
+TO THE FRANKA_ROS GRIPPER CONTROLLER BECAUSE IT DOES NOT PUBLISH
+THE IS GRASPED FLAG. YOU WILL NEED TO DETERMINE WHEN THE ROBOT
+IS GRASPING AN ITEM YOURSELF USING THE GRIPPER WIDTH.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body"><strong>is_grasped</strong> – Returns True if gripper is grasping something. False otherwise.</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Return type:</th><td class="field-body"><code class="xref py py-obj docutils literal notranslate"><span class="pre">bool</span></code></td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="frankapy.FrankaArm.get_tool_base_pose">
+<code class="descname">get_tool_base_pose</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/frankapy/franka_arm.html#FrankaArm.get_tool_base_pose"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#frankapy.FrankaArm.get_tool_base_pose" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns the tool delta pose.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body"><strong>tool_delta_pose</strong> – RigidTransform that represents the transform between the
+end-effector and the end of the tool.</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Return type:</th><td class="field-body"><code class="xref py py-obj docutils literal notranslate"><span class="pre">autolab_core.RigidTransform</span></code></td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="frankapy.FrankaArm.get_ee_force_torque">
+<code class="descname">get_ee_force_torque</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/frankapy/franka_arm.html#FrankaArm.get_ee_force_torque"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#frankapy.FrankaArm.get_ee_force_torque" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns the current end-effector’s sensed force_torque.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body"><strong>ee_force_torque</strong> – A numpy ndarray of 6 floats that represents the current
+end-effector’s sensed force_torque.</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Return type:</th><td class="field-body"><code class="xref py py-obj docutils literal notranslate"><span class="pre">numpy.ndarray</span></code></td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="frankapy.FrankaArm.get_finger_poses">
+<code class="descname">get_finger_poses</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/frankapy/franka_arm.html#FrankaArm.get_finger_poses"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#frankapy.FrankaArm.get_finger_poses" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns the current poses of the left and right fingers.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body"><ul class="simple">
+<li><strong>left_finger_pose</strong> (<code class="xref py py-obj docutils literal notranslate"><span class="pre">autolab_core.RigidTransform</span></code>) – RigidTransform that represents the transform of the left finger.
+The left finger is +y from the gripper pose</li>
+<li><strong>right_finger_pose</strong> (<code class="xref py py-obj docutils literal notranslate"><span class="pre">autolab_core.RigidTransform</span></code>) – RigidTransform that represents the transform of the right finger.
+The right finger is -y from the gripper pose</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="frankapy.FrankaArm.set_tool_delta_pose">
+<code class="descname">set_tool_delta_pose</code><span class="sig-paren">(</span><em>tool_delta_pose</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/frankapy/franka_arm.html#FrankaArm.set_tool_delta_pose"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#frankapy.FrankaArm.set_tool_delta_pose" title="Permalink to this definition">¶</a></dt>
+<dd><p>Sets the tool pose relative to the end-effector pose</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>tool_delta_pose</strong> (<code class="xref py py-obj docutils literal notranslate"><span class="pre">autolab_core.RigidTransform</span></code>) – RigidTransform that represents the transform between the
+end-effector and the end of the tool.</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="frankapy.FrankaArm.get_links_transforms">
+<code class="descname">get_links_transforms</code><span class="sig-paren">(</span><em>joints</em>, <em>use_rigid_transforms=False</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/frankapy/franka_arm.html#FrankaArm.get_links_transforms"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#frankapy.FrankaArm.get_links_transforms" title="Permalink to this definition">¶</a></dt>
+<dd><p>Computes the forward kinematics of all links and the end-effector</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>joints</strong> (<code class="xref py py-obj docutils literal notranslate"><span class="pre">list</span></code>) – A list of 7 numbers that correspond to to the joint angles in radians</li>
+<li><strong>use_rigid_transforms</strong> (<code class="xref py py-obj docutils literal notranslate"><span class="pre">bool</span></code>) – Optional: Defaults to False.
+If True, converts result to RigidTransform objects. This is slower.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first"><strong>transforms</strong> – A list of 9 RigidTransforms or ndarrays in panda_link0 to panda_link7,
+the franka_tool_base, and franka_tool frames.</p>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last"><code class="xref py py-obj docutils literal notranslate"><span class="pre">list</span></code></p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="frankapy.FrankaArm.get_jacobian">
+<code class="descname">get_jacobian</code><span class="sig-paren">(</span><em>joints</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/frankapy/franka_arm.html#FrankaArm.get_jacobian"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#frankapy.FrankaArm.get_jacobian" title="Permalink to this definition">¶</a></dt>
+<dd><p>Computes the geometric jacobian</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>joints</strong> (<code class="xref py py-obj docutils literal notranslate"><span class="pre">list</span></code>) – A list of 7 numbers that correspond to the joint angles in radians.</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><strong>jacobian</strong> – A 6 by 7 jacobian matrix.</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><code class="xref py py-obj docutils literal notranslate"><span class="pre">numpy.ndarray</span></code></td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="frankapy.FrankaArm.get_collision_boxes_poses">
+<code class="descname">get_collision_boxes_poses</code><span class="sig-paren">(</span><em>joints=None</em>, <em>use_rigid_transforms=False</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/frankapy/franka_arm.html#FrankaArm.get_collision_boxes_poses"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#frankapy.FrankaArm.get_collision_boxes_poses" title="Permalink to this definition">¶</a></dt>
+<dd><p>Computes the transforms of all collision boxes in world frame.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>joints</strong> (<code class="xref py py-obj docutils literal notranslate"><span class="pre">list</span></code>) – Optional: Defaults to None
+A list of 7 numbers that correspond to to the joint angles in radians
+If None, will use current real robot joints.</li>
+<li><strong>use_rigid_transforms</strong> (<code class="xref py py-obj docutils literal notranslate"><span class="pre">bool</span></code>) – Optional: Defaults to False.
+If True, converts result to RigidTransform objects. This is slower.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first"><strong>transforms</strong> – A list of RigidTransforms or ndarrays for all collision boxes in world frame.</p>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last"><code class="xref py py-obj docutils literal notranslate"><span class="pre">list</span></code></p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="frankapy.FrankaArm.publish_joints">
+<code class="descname">publish_joints</code><span class="sig-paren">(</span><em>joints=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/frankapy/franka_arm.html#FrankaArm.publish_joints"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#frankapy.FrankaArm.publish_joints" title="Permalink to this definition">¶</a></dt>
+<dd><p>Publish the Franka joints to ROS</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>joints</strong> (<code class="xref py py-obj docutils literal notranslate"><span class="pre">list</span></code>) – Optional: Defaults to None
+A list of 7 numbers that correspond to to the joint angles in radians
+If None, will use current real robot joints.</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="frankapy.FrankaArm.publish_collision_boxes">
+<code class="descname">publish_collision_boxes</code><span class="sig-paren">(</span><em>joints=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/frankapy/franka_arm.html#FrankaArm.publish_collision_boxes"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#frankapy.FrankaArm.publish_collision_boxes" title="Permalink to this definition">¶</a></dt>
+<dd><p>Publish the Franka collsion boxes to ROS</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>joints</strong> (<code class="xref py py-obj docutils literal notranslate"><span class="pre">list</span></code>) – Optional: Defaults to None
+A list of 7 numbers that correspond to to the joint angles in radians.
+If None, will use current real robot joints.</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="frankapy.FrankaArm.check_box_collision">
+<code class="descname">check_box_collision</code><span class="sig-paren">(</span><em>box</em>, <em>joints=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/frankapy/franka_arm.html#FrankaArm.check_box_collision"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#frankapy.FrankaArm.check_box_collision" title="Permalink to this definition">¶</a></dt>
+<dd><p>Checks if the given joint configuration is in collision with a box</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>joints</strong> (<code class="xref py py-obj docutils literal notranslate"><span class="pre">list</span></code>) – Optional: Defaults to None
+A list of 7 numbers that correspond to to the joint angles in radians
+If None, will use current real robot joints.</li>
+<li><strong>box</strong> (<code class="xref py py-obj docutils literal notranslate"><span class="pre">list</span></code>) – The position of the center of the box [x, y, z, r, p, y] and the
+length, width, and height [l, w, h].</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first"><strong>in_collision</strong> – Flag that indicates whether the robot would be in collision.</p>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last"><code class="xref py py-obj docutils literal notranslate"><span class="pre">bool</span></code></p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="frankapy.FrankaArm.is_joints_in_collision_with_boxes">
+<code class="descname">is_joints_in_collision_with_boxes</code><span class="sig-paren">(</span><em>joints=None</em>, <em>boxes=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/frankapy/franka_arm.html#FrankaArm.is_joints_in_collision_with_boxes"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#frankapy.FrankaArm.is_joints_in_collision_with_boxes" title="Permalink to this definition">¶</a></dt>
+<dd><p>Checks if the given joint configuration is in collision with boxes
+or the workspace walls.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>joints</strong> (<code class="xref py py-obj docutils literal notranslate"><span class="pre">list</span></code>) – Optional: Defaults to None
+A list of 7 numbers that correspond to the joint angles in radians
+If None, will use current real robot joints.</li>
+<li><strong>boxes</strong> (<code class="xref py py-obj docutils literal notranslate"><span class="pre">list</span></code>) – List of boxes where each box is a list of 9 floats that contains
+the position of the center of the box [x, y, z, r, p, y] and the
+length, width, and height [l, w, h].</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first"><strong>in_collision</strong> – Flag that indicates whether the robot would be in collision.</p>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last"><code class="xref py py-obj docutils literal notranslate"><span class="pre">bool</span></code></p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="frankapy.FrankaArm.reset_joints">
+<code class="descname">reset_joints</code><span class="sig-paren">(</span><em>duration=5</em>, <em>block=True</em>, <em>ignore_errors=True</em>, <em>skill_desc=''</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/frankapy/franka_arm.html#FrankaArm.reset_joints"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#frankapy.FrankaArm.reset_joints" title="Permalink to this definition">¶</a></dt>
+<dd><p>Commands Arm to go to hardcoded home joint configuration</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>duration</strong> (<code class="xref py py-obj docutils literal notranslate"><span class="pre">float</span></code>) – How much time this robot motion should take.</li>
+<li><strong>block</strong> (<code class="xref py py-obj docutils literal notranslate"><span class="pre">bool</span></code>) – Function blocks by default. If False, the function becomes
+asynchronous and can be preempted.</li>
+<li><strong>ignore_errors</strong> (<code class="xref py py-obj docutils literal notranslate"><span class="pre">bool</span></code>) – Function ignores errors by default. If False, errors and some
+exceptions can be thrown.</li>
+<li><strong>skill_desc</strong> (<code class="xref py py-obj docutils literal notranslate"><span class="pre">str</span></code>) – Skill description to use for logging on control-pc.</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="frankapy.FrankaArm.reset_pose">
+<code class="descname">reset_pose</code><span class="sig-paren">(</span><em>duration=5</em>, <em>block=True</em>, <em>ignore_errors=True</em>, <em>skill_desc=''</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/frankapy/franka_arm.html#FrankaArm.reset_pose"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#frankapy.FrankaArm.reset_pose" title="Permalink to this definition">¶</a></dt>
+<dd><p>Commands Arm to go to hardcoded home pose</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>duration</strong> (<code class="xref py py-obj docutils literal notranslate"><span class="pre">float</span></code>) – How much time this robot motion should take.</li>
+<li><strong>block</strong> (<code class="xref py py-obj docutils literal notranslate"><span class="pre">bool</span></code>) – Function blocks by default. If False, the function becomes
+asynchronous and can be preempted.</li>
+<li><strong>ignore_errors</strong> (<code class="xref py py-obj docutils literal notranslate"><span class="pre">bool</span></code>) – Function ignores errors by default. If False, errors and some
+exceptions can be thrown.</li>
+<li><strong>skill_desc</strong> (<code class="xref py py-obj docutils literal notranslate"><span class="pre">str</span></code>) – Skill description to use for logging on control-pc.</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="frankapy.FrankaArm.is_joints_reachable">
+<code class="descname">is_joints_reachable</code><span class="sig-paren">(</span><em>joints</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/frankapy/franka_arm.html#FrankaArm.is_joints_reachable"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#frankapy.FrankaArm.is_joints_reachable" title="Permalink to this definition">¶</a></dt>
+<dd><p>Checks if the given joint configuration is within joint limits.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>joints</strong> (<code class="xref py py-obj docutils literal notranslate"><span class="pre">list</span></code>) – A list of 7 numbers that correspond to the joint angles in radians.</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><strong>joints_reachable</strong> – Flag that is True if all joints are within joint limits.</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><code class="xref py py-obj docutils literal notranslate"><span class="pre">bool</span></code></td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="frankapy.FrankaArm.apply_joint_torques">
+<code class="descname">apply_joint_torques</code><span class="sig-paren">(</span><em>torques</em>, <em>duration</em>, <em>ignore_errors=True</em>, <em>skill_desc=''</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/frankapy/franka_arm.html#FrankaArm.apply_joint_torques"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#frankapy.FrankaArm.apply_joint_torques" title="Permalink to this definition">¶</a></dt>
+<dd><p>NOT IMPLEMENTED YET</p>
+<p>Commands the arm to apply given joint torques for duration seconds.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>torques</strong> (<code class="xref py py-obj docutils literal notranslate"><span class="pre">list</span></code>) – A list of 7 numbers that correspond to torques in Nm.</li>
+<li><strong>duration</strong> (<code class="xref py py-obj docutils literal notranslate"><span class="pre">float</span></code>) – How much time this robot motion should take.</li>
+<li><strong>skill_desc</strong> (<code class="xref py py-obj docutils literal notranslate"><span class="pre">str</span></code>) – Skill description to use for logging on control-pc.</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="frankapy.FrankaArm.set_speed">
+<code class="descname">set_speed</code><span class="sig-paren">(</span><em>speed</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/frankapy/franka_arm.html#FrankaArm.set_speed"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#frankapy.FrankaArm.set_speed" title="Permalink to this definition">¶</a></dt>
+<dd><p>NOT IMPLEMENTED YET</p>
+<p>Sets the current target speed parameter</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>speed</strong> (<code class="xref py py-obj docutils literal notranslate"><span class="pre">float</span></code>) – Current target speed parameter</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="frankapy.FrankaArm.get_speed">
+<code class="descname">get_speed</code><span class="sig-paren">(</span><em>speed</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/frankapy/franka_arm.html#FrankaArm.get_speed"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#frankapy.FrankaArm.get_speed" title="Permalink to this definition">¶</a></dt>
+<dd><p>NOT IMPLEMENTED YET</p>
+<p>Returns the current target speed parameter</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body"><strong>speed</strong> – Current target speed parameter</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Return type:</th><td class="field-body"><code class="xref py py-obj docutils literal notranslate"><span class="pre">float</span></code></td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+</div>
+
+
+           </div>
+           
+          </div>
+          <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+        <a href="support.html" class="btn btn-neutral float-right" title="Support" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
+      
+      
+        <a href="running.html" class="btn btn-neutral float-left" title="Running the Robot" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+      
+    </div>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2024, Kevin Zhang, Mohit Sharma, Jacky Liang, Oliver Kroemer
+
+    </p>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/rtfd/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+
+  
+  
+    
+   
+
+</body>
+</html>
