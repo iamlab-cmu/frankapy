@@ -26,7 +26,6 @@ rosdep update
 sudo -H pip3 install --upgrade pip
 sudo -H pip3 install --upgrade packaging>=24 ordered-set>=3.1.1 more_itertools>=8.8 jaraco.text>=3.7 importlib_resources>=5.10.2 importlib_metadata>=6 tomli>=2.0.1 wheel>=0.43.0 platformdirs>=2.6.2
 sudo -H pip3 install .
-sudo -H pip install numpy==1.20 --upgrade
 
 source /opt/ros/noetic/setup.bash
 
