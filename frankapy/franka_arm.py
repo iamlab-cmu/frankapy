@@ -16,7 +16,7 @@ roslib.load_manifest('franka_interface_msgs')
 import rospy
 from actionlib import SimpleActionClient
 from sensor_msgs.msg import JointState
-from franka_interface_msgs.msg import ExecuteSkillAction
+from franka_interface_msgs.msg import ExecuteSkillAction, SensorDataGroup
 from franka_interface_msgs.srv import GetCurrentFrankaInterfaceStatusCmd
 from franka_gripper.msg import *
 
@@ -82,7 +82,13 @@ class FrankaArm:
                 '/franka_gripper_{}/grasp'.format(robot_num)
         self._gripper_joint_states_name = \
                 '/franka_gripper_{}/joint_states'.format(robot_num)
-
+        if robot_num == 1:
+            self._sensor_publisher_name = \
+                '/franka_ros_interface/sensor'
+        else:
+            self._sensor_publisher_name = \
+                '/franka_ros_interface_{}/sensor'.format(robot_num)
+                
         self._connected = False
         self._in_skill = False
         self._offline = offline
@@ -97,6 +103,7 @@ class FrankaArm:
                             log_level=ros_log_level)
         self._collision_boxes_pub = BoxesPublisher('franka_collision_boxes_{}'.format(robot_num))
         self._joint_state_pub = rospy.Publisher('franka_virtual_joints_{}'.format(robot_num), JointState, queue_size=10)
+        self._sensor_pub = rospy.Publisher(self._sensor_publisher_name, SensorDataGroup, queue_size=100)
         
         self._state_client = FrankaArmStateClient(
                 new_ros_node=False,
@@ -2185,6 +2192,20 @@ class FrankaArm:
             return box_transforms
         else:
             return box_poses
+            
+    def publish_sensor_values(self, sensor_values=None):
+        """ 
+        Publish sensor values to franka-interface
+
+        Parameters
+        ----------
+            sensor_values : :obj:`SensorDataGroup` 
+                A SensorDataGroup message.
+        """
+        if sensor_values is None:
+            return False
+            
+        self._sensor_pub.publish(sensor_values)
 
     def publish_joints(self, joints=None):
         """ 
