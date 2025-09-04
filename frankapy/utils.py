@@ -51,3 +51,13 @@ def min_jerk_delta(xi, xf, t, T, dt):
 
 def transform_to_list(T):
     return T.matrix.T.flatten().tolist()
+
+import cv2
+def save_video_from_images(bgr_imgs, output_path, fps=15):
+    height, width = bgr_imgs[0].shape[:2]
+    fourcc = cv2.VideoWriter_fourcc(*'mp4v')  # Or 'avc1', 'H264' if supported
+    out = cv2.VideoWriter(output_path, fourcc, fps, (width, height))
+    for img in bgr_imgs:
+        out.write(img)
+    out.release()
+    print(f"Saved video to {output_path}")

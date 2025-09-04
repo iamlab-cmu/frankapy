@@ -1,0 +1,35 @@
+gpu: 0
+
+detection:
+  visualize: True
+  save_dir: '/home/saumyas/franka/frankapy/data/detection_test'
+  detector_type: GroundedSAM2 # GroundedSAM2
+  labels: 'a coffee cup' # 'box. ball. coffee cup.'
+  GroundedSAM2:
+    sam2_checkpoint: "/home/saumyas/Projects/semnav/Grounded-SAM-2/checkpoints/sam2.1_hiera_large.pt"
+    model_cfg: "configs/sam2.1/sam2.1_hiera_l.yaml"
+    model_id: "IDEA-Research/grounding-dino-tiny"
+  OwlViT:
+    model_id: "google/owlvit-base-patch32"
+    
+    
+
+sensors:
+  kinect2_front_tilt:
+    intrinsics_file: '/home/saumyas/franka/azure_kinect_calibration/calib/kinect2_front_tilt/ir_intrinsics_azure_kinect_tilt_720.intr'
+    extrinsics_tf: '/home/saumyas/franka/azure_kinect_calibration/calib/kinect2_front_tilt/kinect2_front_tilt_to_world.tf'
+    sensor_config:
+      pipeline_mode: 0 # opengl
+      type: bridged_kinect2
+      device_num: 0
+      flip_images: 0
+      quality: 'hd'
+  # kinect2_overhead:
+  #   intrinsics_file: '/home/saumyas/franka/azure_kinect_calibration/calib/azure_kinect_overhead/ir_intrinsics_azure_kinect.intr'
+  #   extrinsics_tf: '/home/saumyas/franka/azure_kinect_calibration/calib/kinect2_overhead/kinect2_overhead_to_world.tf'
+  #   sensor_config:
+  #     pipeline_mode: 0 # opengl
+  #     type: bridged_kinect2
+  #     device_num: 0
+  #     flip_images: 0
+  #     quality: 'hd'

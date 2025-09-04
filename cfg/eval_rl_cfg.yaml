@@ -1,0 +1,71 @@
+tag: ${now:%Y-%m-%d-%H-%M-%S}
+debug: True # TODO: always true since we are not using wandb during eval
+prefix: 6obj_LessCrowding'
+seeds: [20, 0, 45]
+out_folder: /home/saumyas/franka/frankapy/data/franka_exp_data/
+
+
+eval_cfg:
+  gpu: 0
+  seed: 20
+  save_video: True
+  preset_rollouts: False
+  wandb_load:
+    project: safety_rl_manip
+    # run_path: iam-lab/safety_rl_manip/8oc8cvgn # 6obj with mask
+    # file: model/step_1807999_test_return_-9318.80_succRate_0.93.pth
+    # run_path: iam-lab/safety_rl_manip/ix4s2zfn # 6obj without mask
+    # file: model/step_1215999_test_return_-9403.89_succRate_0.88.pth
+    # run_path: iam-lab/safety_rl_manip/orxs1gfs # All constraint types sampled, masking, multigoal
+    # file: model/step_1623999_test_return_-8801.52_succRate_0.81.pth
+    # run_path: iam-lab/safety_rl_manip/3x4qr9p0  # Preset All constraint types, masking, multigoal
+    # file: model/step_1063999_test_return_-9215.89_succRate_0.78.pth
+    # run_path: iam-lab/safety_rl_manip/2evhjbes # All no contact constraints, masking3, multigoal
+    # file: model/step_591999_test_return_-8351.36_succRate_0.76.pth
+    run_path: iam-lab/safety_rl_manip/asfhk5r2 # Mask3, MultiConst, multiGoal, crowded training
+    file: model/step_4135999_test_return_-9411.04_succRate_0.59.pth # Mask3, MultiConst, multiGoal, crowded training
+  eval_value_fn: False
+  eval_safe_rollouts: True
+  save_rollout_gifs: True
+  num_visualization_rollouts: 10
+  num_eval_episodes: 100
+
+# remove below if using the same env as during training
+# env_cfg:
+#   n_rel_objs: 12
+#   doneType: 'real'
+#   less_crowded: True
+#   # block_bottom:
+#   #   state_ranges: # x, y
+#   #     low: [0.4, 0.45] # [0.0, 0.45]
+#   #     high: [0.5, 0.75] # [0.5, 0.75]
+#   objects:
+#     names: ['porcelain_mug', 'blue_mug', 'red_mug', 'supplement0', 'supplement2', 'toy_sheep',  'can', 'blue_mug1', 'red_mug1', 'porcelain_mug1', 'toy_sheep1', 'plant_pot1'] # , 'toy_elephant_small', 'can',  'blue_mug1', 'red_mug1', 'porcelain_mug1', 'toy_sheep1', 'plant_pot1'
+#     initial_poses: 
+#       - [0.5, 0.4]
+#       - [-0.2, 0.85]
+#       - [-0.4, 0.4]
+#       - [0.5, 0.8]
+#       - [0.0, 0.8]
+#       - [0.2, 0.8]
+#       - [0.2, 0.8]
+#       - [0.2, 0.8]
+#       - [0.2, 0.8]
+#       - [0.2, 0.8]
+#       - [0.2, 0.8]
+#       - [0.2, 0.8]
+#       - [0.2, 0.8]
+#       - [0.2, 0.8]
+#       - [0.2, 0.8]
+#       - [0.2, 0.8]
+#       - [0.2, 0.8]
+#       - [0.2, 0.8]
+#       - [0.2, 0.8]
+#       - [0.2, 0.8]
+
+# env_cfg:
+#   thresh: 0.005 # 0.01
+#   objects:
+#     state_ranges: # x, y
+#       low: [-0.3, 0.3]
+#       high: [0.7, 0.9]

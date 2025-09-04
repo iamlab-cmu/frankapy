@@ -1,0 +1,126 @@
+save_folder: /home/saumyas/franka/frankapy/data/franka_exp_data
+filename: test_rollout
+
+sensor_cfg:
+  sensors:
+    kinect2_front_tilt:
+      intrinsics_file: '/home/saumyas/franka/azure_kinect_calibration/calib/kinect2_front_tilt/ir_intrinsics_azure_kinect_tilt_720.intr'
+      extrinsics_tf: '/home/saumyas/franka/azure_kinect_calibration/calib/kinect2_front_tilt/kinect2_front_tilt_to_world.tf'
+      sensor_config:
+        pipeline_mode: 0 # opengl
+        type: bridged_kinect2
+        device_num: 0
+        flip_images: 0
+        quality: 'hd'
+
+tapnet_cfg:
+  checkpoint_path: /home/saumyas/Projects/IAM-Vision/tapnet/tapnet/checkpoints/causal_tapir_checkpoint.npy
+  visualize: True
+  save_video: False
+  out_folder: /home/saumyas/franka/frankapy/data/franka_exp_data
+  n_rel_objs: ${env_cfg.n_rel_objs}
+  object_names: ${env_cfg.objects.names}
+
+env_cfg:
+  drag_z_height: 0.13
+  tok_k_mask: 3
+  dt: 0.02 # check with mujoco env
+  max_ep_len: 1000 # 10s change
+  n_rel_objs: 4 # check
+  multi_goal: True # check
+  normalize_pos: False
+  constraint_type_repr: 'int'
+  constraint_types: ['no_contact'] # , 'soft_contact', 'any_contact', 'no_over'
+  randomize_constraint_types: True 
+  obj_to_constraint_map: # used randomize_constraint_types=False
+    bowl: 'any_contact'
+    ball: 'any_contact'
+    loofah: 'any_contact'
+    white_cup: 'no_contact'
+    blue_dice: 'any_contact'
+    controller: 'no_contact'
+    supplement: 'any_contact'
+    octopus_toy: 'any_contact'
+    tape: 'any_contact'
+    mouse: 'no_contact'
+    burger: 'no_contact'
+    tomato: 'no_contact'
+    squash: 'no_contact'
+  vel_thresh: 1.0
+  thresh: 0.005 # 0.01
+  control_low: [-1.,-1.,-1.]
+  control_high: [1.,1.,1.]
+  action_scale: [0.047, 0.047, 0.047] # 0.0478
+  mocap_low: [0.33, -0.65, 0.14] # in world frame - without z-offset
+  mocap_high: [0.8, 0.7, 0.60] 
+  mocap_del_low: [-0.047, -0.047, -0.047]
+  mocap_del_high: [0.047, 0.047, 0.047]
+  env_bounds:
+    low: [0.2, -0.4, 0.07] 
+    high: [0.7, 0.4, 1.25]
+  block_bottom:
+    block_name: 'blue_bottom_box' # 'red_lunch_pack' # 'block_bottom', 'orange_cereal_pack', purple_lego_set
+    mass: 0.408
+    size: [0.13, 0.1, 0.025] # half-dimensions #change 29.5cm, 23cm, 5.1cm
+    target_set_type: 'absolute' # 'absolute', 'relative'
+    chosen_target_set: target_set0 # check
+    target_set:
+      low: [0.25, 0.3, 0.02] # absolute 0.06-0.07 #change
+      high: [0.8, 0.8, 0.15] # absolute 0.06+0.07 #change
+    multi_goal_target_sets:
+      target_set0:
+        low: [0.2, 0.3, 0.02] # absolute 0.06-0.07 #change
+        high: [0.5, 0.6, 0.20] # absolute 0.06+0.07 #change
+      target_set1:
+        low: [0.5, 0.3, 0.02] # absolute 0.06-0.07 #change
+        high: [0.8, 0.6, 0.20] # absolute 0.06+0.07 #change
+  block_top:
+    block_name: 'red_top_box' # 'blue_lunch_pack' # 'block_top', 'blue_cereal_pack', yellow_lego_set
+    mass: 0.1958
+    size: [0.1125, 0.0775, 0.0325] # half-dimensions #change 22.5cm, 15.5cm, 6.5cm
+    safety_set:
+      low: [-0.4, -0.4, -1.0] # added to initial block state to get safety boundary #change
+      high: [0.4, 0.4, 0.03] # added to initial block state to get safety boundary #change
+  objects:
+    names: ['controller', 'white_cup', 'mouse', 'supplement'] # 'octopus_toy', 'loofah', 'blue_dice', 'controller', 'supplement'
+    blue_bottom_box:
+      size: ${env_cfg.block_bottom.size} # half-dimensions
+    red_top_box:
+      size: ${env_cfg.block_top.size} # half-dimensions
+    bowl:
+      size: [0.02, 0.02, 0.03] # half-dimensions
+    loofah:
+      size: [0.05, 0.05, 0.03] # half-dimensions
+    ball:
+      size: [0.05, 0.05, 0.03] # half-dimensions
+    white_cup:
+      size: [0.05, 0.05, 0.03] # half-dimensions
+    yellow_bottle:
+      size: [0.05, 0.05, 0.03] # half-dimensions
+    blue_dice:
+      size: [0.05, 0.05, 0.03] # half-dimensions
+    controller:
+      size: [0.02, 0.02, 0.03] # half-dimensions
+    supplement:
+      size: [0.05, 0.05, 0.03] # half-dimensions
+    octopus_toy:
+      size: [0.05, 0.05, 0.03] # half-dimensions
+    tape:
+      size: [0.05, 0.05, 0.03] # half-dimensions
+    mouse:
+      size: [0.05, 0.05, 0.03] # half-dimensions
+    burger:
+      size: [0.03, 0.03, 0.03] # half-dimensions
+    tomato:
+      size: [0.03, 0.05, 0.03] # half-dimensions
+    squash:
+      size: [0.05, 0.05, 0.03] # half-dimensions
+  observations:
+    low_dim: ['robot_state', 'objects_state', 'objects_mask'] # check
+    rgb: []
+  costType: 'max_ell_g'
+  scaling_target: 1.0
+  scaling_safety: 1.0
+  return_type: 'reward'
+  mode: 'lagrange'
+  doneType: 'all' # 'all', 'real'
